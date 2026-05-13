@@ -5,18 +5,24 @@ import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.item.HookahHoseType;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import com.mojang.math.Axis;
 import org.joml.Matrix4f;
 
 import java.util.UUID;
@@ -51,6 +57,39 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
             renderActiveHose(pose, vc, connectorLocal, pos, player, partialTick, type, packedLight);
         } else {
             renderIdleHose(pose, vc, connectorLocal, facing, packedLight);
+        }
+
+        renderConsumablesOnTop(be, pose, buffer, packedLight, packedOverlay, partialTick);
+    }
+
+    private void renderConsumablesOnTop(HookahBlockEntity be, PoseStack pose, MultiBufferSource buffer,
+                                        int packedLight, int packedOverlay, float partialTick) {
+        ItemStack coal = be.getInventory().getItem(HookahBlockEntity.SLOT_COAL);
+        ItemStack tobacco = be.getInventory().getItem(HookahBlockEntity.SLOT_TOBACCO);
+        if (coal.isEmpty() && tobacco.isEmpty()) return;
+
+        ItemRenderer ir = Minecraft.getInstance().getItemRenderer();
+        Level lvl = be.getLevel();
+        long time = lvl == null ? 0L : lvl.getGameTime();
+        float angle = (time + partialTick) * 1.5F;
+
+        if (!tobacco.isEmpty()) {
+            pose.pushPose();
+            pose.translate(0.5, 1.47, 0.5);
+            pose.scale(0.32F, 0.32F, 0.32F);
+            pose.mulPose(Axis.XP.rotationDegrees(90));
+            pose.mulPose(Axis.ZP.rotationDegrees(angle * 0.3F));
+            ir.renderStatic(tobacco, ItemDisplayContext.FIXED, packedLight, packedOverlay, pose, buffer, lvl, 0);
+            pose.popPose();
+        }
+        if (!coal.isEmpty()) {
+            pose.pushPose();
+            pose.translate(0.5, 1.62, 0.5);
+            pose.scale(0.38F, 0.38F, 0.38F);
+            pose.mulPose(Axis.YP.rotationDegrees(angle * 0.6F));
+            int glow = LightTexture.pack(15, 0);
+            ir.renderStatic(coal, ItemDisplayContext.FIXED, glow, packedOverlay, pose, buffer, lvl, 0);
+            pose.popPose();
         }
     }
 

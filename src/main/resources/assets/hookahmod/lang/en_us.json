@@ -31,5 +31,6 @@
   "message.hookahmod.hose_already_installed": "Hose already installed",
   "message.hookahmod.cannot_remove_hose_in_use": "Cannot remove hose — mouthpiece is in use",
   "message.hookahmod.no_mouthpiece": "You need a mouthpiece in inventory",
-  "message.hookahmod.lost_mouthpiece": "Mouthpiece lost from your hand"
+  "message.hookahmod.lost_mouthpiece": "Mouthpiece lost from your hand",
+  "message.hookahmod.claim_first": "First press 'Take' in the hookah GUI"
 }

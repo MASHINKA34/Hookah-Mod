@@ -2,6 +2,7 @@ package com.hookahmod.network;
 
 import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlockEntity;
+import com.hookahmod.event.ActiveSessions;
 import com.hookahmod.item.HookahHoseType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -40,6 +41,17 @@ public record HookahSyncPayload(BlockPos pos, HookahHoseType hoseType, Optional<
             BlockEntity be = level.getBlockEntity(payload.pos);
             if (be instanceof HookahBlockEntity hbe) {
                 hbe.applySync(payload.hoseType, payload.activePlayer.orElse(null));
+            }
+            // Keep client-side ActiveSessions in sync so mouthpiece use() can check it
+            UUID localUuid = ctx.player().getUUID();
+            UUID activeUuid = payload.activePlayer.orElse(null);
+            if (localUuid.equals(activeUuid)) {
+                ActiveSessions.register(localUuid, level.dimension(), payload.pos);
+            } else {
+                var gp = ActiveSessions.get(localUuid);
+                if (gp != null && gp.pos().equals(payload.pos)) {
+                    ActiveSessions.unregister(localUuid);
+                }
             }
         });
     }

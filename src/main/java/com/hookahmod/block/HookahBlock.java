@@ -129,6 +129,27 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
             if (!player.getAbilities().instabuild) stack.shrink(1);
             return ItemInteractionResult.CONSUME;
         }
+        if (stack.getItem() instanceof com.hookahmod.item.HookahMouthpieceItem) {
+            if (level.isClientSide) return ItemInteractionResult.SUCCESS;
+            if (!be.getHoseType().isPresent()) {
+                player.displayClientMessage(Component.translatable("message.hookahmod.install_hose"), true);
+                return ItemInteractionResult.CONSUME;
+            }
+            if (be.getActivePlayerUuid() == null) {
+                player.displayClientMessage(Component.translatable("message.hookahmod.claim_first"), true);
+                return ItemInteractionResult.CONSUME;
+            }
+            if (!player.getUUID().equals(be.getActivePlayerUuid())) {
+                player.displayClientMessage(Component.translatable("message.hookahmod.busy"), true);
+                return ItemInteractionResult.CONSUME;
+            }
+            if (!be.hasAllConsumables()) {
+                player.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
+                return ItemInteractionResult.CONSUME;
+            }
+            player.startUsingItem(hand);
+            return ItemInteractionResult.SUCCESS;
+        }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
 

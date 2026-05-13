@@ -31,5 +31,6 @@
   "message.hookahmod.hose_already_installed": "Шланг уже установлен",
   "message.hookahmod.cannot_remove_hose_in_use": "Нельзя снять шланг — трубка в использовании",
   "message.hookahmod.no_mouthpiece": "Нужен мундштук в инвентаре",
-  "message.hookahmod.lost_mouthpiece": "Мундштук потерян из рук"
+  "message.hookahmod.lost_mouthpiece": "Мундштук потерян из рук",
+  "message.hookahmod.claim_first": "Сначала нажмите «Взять» в GUI кальяна"
 }

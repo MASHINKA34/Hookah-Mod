@@ -26,8 +26,8 @@ public class HookahMenu extends AbstractContainerMenu {
     public static final int COAL_X = 76;
     public static final int WATER_X = 117;
 
-    public static final int INV_ROW_Y = 192;
-    public static final int INV_HOTBAR_Y = 246;
+    public static final int INV_ROW_Y = 162;
+    public static final int INV_HOTBAR_Y = 218;
 
     private final ContainerLevelAccess access;
     private final BlockPos pos;

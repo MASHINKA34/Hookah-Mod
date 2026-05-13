@@ -155,10 +155,10 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
 
         VertexConsumer vc = buffer.getBuffer(RenderType.entitySolid(COAL_TEX));
         pose.pushPose();
-        pose.translate(0.5, 1.50, 0.5);
+        pose.translate(0.5, 1.5625, 0.5);
         float angle = t * 0.6F;
         pose.mulPose(Axis.YP.rotationDegrees(angle));
-        float s = 0.16F; // half-extent
+        float s = 0.095F; // half-extent → 0.19 cube
         drawTintedCube(pose, vc, -s, 0, -s, s, 2 * s, s, packedLight, packedOverlay, rTint, gTint, bTint, 255);
         pose.popPose();
     }

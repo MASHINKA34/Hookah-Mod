@@ -96,11 +96,10 @@ public class HookahBlockEntity extends BlockEntity {
             return false;
         }
         if (activePlayerUuid != null) {
-            returnMouthpieceFromOffhand(player);
             releaseMouthpiece();
             return true;
         }
-        if (!moveMouthpieceToOffhand(player)) {
+        if (!playerHasMouthpiece(player)) {
             player.displayClientMessage(Component.translatable("message.hookahmod.no_mouthpiece"), true);
             return false;
         }
@@ -112,44 +111,14 @@ public class HookahBlockEntity extends BlockEntity {
         return true;
     }
 
-    private static boolean moveMouthpieceToOffhand(ServerPlayer player) {
+    private static boolean playerHasMouthpiece(Player player) {
         Item mp = ModItems.HOOKAH_MOUTHPIECE.get();
+        if (player.getMainHandItem().is(mp)) return true;
         if (player.getOffhandItem().is(mp)) return true;
-        int slot = -1;
-        ItemStack found = ItemStack.EMPTY;
-        if (player.getMainHandItem().is(mp)) {
-            found = player.getMainHandItem();
-            slot = -2;
-        } else {
-            for (int i = 0; i < player.getInventory().items.size(); i++) {
-                if (player.getInventory().items.get(i).is(mp)) {
-                    found = player.getInventory().items.get(i);
-                    slot = i;
-                    break;
-                }
-            }
+        for (ItemStack s : player.getInventory().items) {
+            if (s.is(mp)) return true;
         }
-        if (found.isEmpty()) return false;
-        ItemStack one = found.copyWithCount(1);
-        found.shrink(1);
-        ItemStack old = player.getOffhandItem();
-        player.setItemInHand(InteractionHand.OFF_HAND, one);
-        if (!old.isEmpty()) {
-            if (!player.getInventory().add(old)) {
-                player.drop(old, false);
-            }
-        }
-        return true;
-    }
-
-    private static void returnMouthpieceFromOffhand(ServerPlayer player) {
-        ItemStack off = player.getOffhandItem();
-        if (!off.is(ModItems.HOOKAH_MOUTHPIECE.get())) return;
-        ItemStack back = off.copy();
-        player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
-        if (!player.getInventory().add(back)) {
-            player.drop(back, false);
-        }
+        return false;
     }
 
     public void releaseMouthpiece() {
@@ -187,40 +156,38 @@ public class HookahBlockEntity extends BlockEntity {
             releaseMouthpiece();
             return;
         }
-        // Mouthpiece must remain in offhand
-        if (!player.getOffhandItem().is(ModItems.HOOKAH_MOUTHPIECE.get())) {
-            player.displayClientMessage(Component.translatable("message.hookahmod.lost_mouthpiece"), true);
-            releaseMouthpiece();
-            return;
-        }
         int maxLength = getHoseType().getMaxLength();
         if (maxLength <= 0) { releaseMouthpiece(); return; }
         double distSq = player.distanceToSqr(Vec3.atCenterOf(pos));
         if (distSq > (double) maxLength * (double) maxLength) {
             releaseMouthpiece();
             player.displayClientMessage(Component.translatable("message.hookahmod.slipped"), true);
-            return;
         }
+    }
 
-        if (hasAllConsumables() && level instanceof ServerLevel server) {
-            smokeTimer++;
-            if (smokeTimer >= CONSUME_INTERVAL_TICKS) {
-                smokeTimer = 0;
-                items.get(SLOT_TOBACCO).shrink(1);
-                items.get(SLOT_COAL).shrink(1);
-                items.get(SLOT_WATER).shrink(1);
-                setChangedAndSync();
-            }
-            if (level.getGameTime() % PARTICLE_INTERVAL_TICKS == 0) {
-                server.sendParticles(ParticleTypes.CAMPFIRE_COSY_SMOKE,
-                        pos.getX() + 0.5, pos.getY() + 1.6, pos.getZ() + 0.5,
-                        2, 0.07, 0.05, 0.07, 0.015);
-            }
-            if (player instanceof ServerPlayer sp) {
-                sp.addEffect(new MobEffectInstance(MobEffects.REGENERATION, EFFECT_DURATION_TICKS, 0, true, false, true));
-            }
-        } else {
+    public void applyPuff(ServerPlayer player) {
+        if (level == null) return;
+        if (level instanceof ServerLevel server) {
+            server.sendParticles(net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE,
+                    worldPosition.getX() + 0.5, worldPosition.getY() + 1.75, worldPosition.getZ() + 0.5,
+                    4, 0.15, 0.05, 0.15, 0.02);
+            net.minecraft.world.phys.Vec3 look = player.getLookAngle();
+            double mx = player.getX() + look.x * 0.35;
+            double my = player.getY() + player.getEyeHeight() - 0.10;
+            double mz = player.getZ() + look.z * 0.35;
+            server.sendParticles(net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE,
+                    mx, my, mz, 6, 0.08, 0.03, 0.08, 0.04);
+        }
+        level.playSound(null, worldPosition, net.minecraft.sounds.SoundEvents.GENERIC_DRINK,
+                net.minecraft.sounds.SoundSource.PLAYERS, 0.25F, 1.7F);
+        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 80, 0, true, false, true));
+        smokeTimer++;
+        if (smokeTimer >= 20) {
             smokeTimer = 0;
+            items.get(SLOT_TOBACCO).shrink(1);
+            items.get(SLOT_COAL).shrink(1);
+            items.get(SLOT_WATER).shrink(1);
+            setChangedAndSync();
         }
     }
 

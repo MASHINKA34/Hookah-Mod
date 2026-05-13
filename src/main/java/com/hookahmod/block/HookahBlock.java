@@ -145,7 +145,7 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
                     player.displayClientMessage(Component.translatable("message.hookahmod.cannot_remove_hose_in_use"), true);
                     return net.minecraft.world.InteractionResult.CONSUME;
                 }
-                be.dropHoseAndClear(level, pos, player);
+                be.dropHoseToPlayer(level, pos, player);
                 return net.minecraft.world.InteractionResult.CONSUME;
             }
             return net.minecraft.world.InteractionResult.PASS;
@@ -178,10 +178,6 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
             if (level.getBlockEntity(pos) instanceof HookahBlockEntity be) {
                 be.releaseMouthpiece();
                 Containers.dropContents(level, pos, be.getInventory());
-                if (be.getHoseType().isPresent()) {
-                    ItemStack hoseStack = HookahHoseItem.stackFor(be.getHoseType());
-                    if (!hoseStack.isEmpty()) Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), hoseStack);
-                }
             }
             super.onRemove(state, level, pos, newState, moved);
         }

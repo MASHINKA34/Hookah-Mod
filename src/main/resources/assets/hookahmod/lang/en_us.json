@@ -1,0 +1,19 @@
+{
+  "itemGroup.hookahmod": "Hookah Mod",
+  "block.hookahmod.hookah": "Hookah",
+  "item.hookahmod.hookah": "Hookah",
+  "item.hookahmod.short_hookah_hose": "Short Hookah Hose (5 blocks)",
+  "item.hookahmod.long_hookah_hose": "Long Hookah Hose (10 blocks)",
+  "item.hookahmod.hookah_mouthpiece": "Hookah Mouthpiece",
+  "container.hookahmod.hookah": "Hookah",
+  "gui.hookahmod.take_mouthpiece": "Take Mouthpiece",
+  "gui.hookahmod.release_mouthpiece": "Release Mouthpiece",
+  "gui.hookahmod.status_free": "Free",
+  "gui.hookahmod.status_busy": "Busy",
+  "gui.hookahmod.status_yours": "Your turn",
+  "message.hookahmod.install_hose": "Install a hose first",
+  "message.hookahmod.busy": "Mouthpiece is taken by another player",
+  "message.hookahmod.slipped": "The mouthpiece slipped from your hand",
+  "message.hookahmod.hose_already_installed": "Hose already installed",
+  "message.hookahmod.cannot_remove_hose_in_use": "Cannot remove hose — mouthpiece is in use"
+}

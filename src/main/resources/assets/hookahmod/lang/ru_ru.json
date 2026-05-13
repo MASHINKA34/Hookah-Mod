@@ -1,0 +1,19 @@
+{
+  "itemGroup.hookahmod": "Hookah Mod",
+  "block.hookahmod.hookah": "Кальян",
+  "item.hookahmod.hookah": "Кальян",
+  "item.hookahmod.short_hookah_hose": "Короткий шланг (5 блоков)",
+  "item.hookahmod.long_hookah_hose": "Длинный шланг (10 блоков)",
+  "item.hookahmod.hookah_mouthpiece": "Мундштук кальяна",
+  "container.hookahmod.hookah": "Кальян",
+  "gui.hookahmod.take_mouthpiece": "Взять трубку",
+  "gui.hookahmod.release_mouthpiece": "Освободить трубку",
+  "gui.hookahmod.status_free": "Свободен",
+  "gui.hookahmod.status_busy": "Занят",
+  "gui.hookahmod.status_yours": "Курит вы",
+  "message.hookahmod.install_hose": "Установите шланг",
+  "message.hookahmod.busy": "Трубка занята другим игроком",
+  "message.hookahmod.slipped": "Трубка выскользнула из рук",
+  "message.hookahmod.hose_already_installed": "Шланг уже установлен",
+  "message.hookahmod.cannot_remove_hose_in_use": "Нельзя снять шланг — трубка в использовании"
+}

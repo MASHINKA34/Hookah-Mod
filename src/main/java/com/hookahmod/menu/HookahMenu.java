@@ -2,6 +2,7 @@ package com.hookahmod.menu;
 
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.registry.ModBlocks;
+import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
@@ -17,13 +18,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class HookahMenu extends AbstractContainerMenu {
 
-    public static final int HOSE_SLOT_X = 78;
-    public static final int HOSE_SLOT_Y = 52;
+    public static final int HOSE_SLOT_X = 76;
+    public static final int HOSE_SLOT_Y = 42;
 
-    public static final int CONSUME_ROW_Y = 82;
-    public static final int TOBACCO_X = 47;
-    public static final int COAL_X = 78;
-    public static final int WATER_X = 109;
+    public static final int CONSUME_ROW_Y = 85;
+    public static final int TOBACCO_X = 35;
+    public static final int COAL_X = 76;
+    public static final int WATER_X = 117;
 
     public static final int INV_ROW_Y = 192;
     public static final int INV_HOTBAR_Y = 246;
@@ -46,9 +47,9 @@ public class HookahMenu extends AbstractContainerMenu {
         } else {
             this.addSlot(new Slot(container, HookahBlockEntity.SLOT_HOSE, HOSE_SLOT_X, HOSE_SLOT_Y));
         }
-        this.addSlot(new Slot(container, HookahBlockEntity.SLOT_TOBACCO, TOBACCO_X, CONSUME_ROW_Y));
-        this.addSlot(new Slot(container, HookahBlockEntity.SLOT_COAL, COAL_X, CONSUME_ROW_Y));
-        this.addSlot(new Slot(container, HookahBlockEntity.SLOT_WATER, WATER_X, CONSUME_ROW_Y));
+        this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_TOBACCO, TOBACCO_X, CONSUME_ROW_Y, ModItems.HOOKAH_TOBACCO.get()));
+        this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_COAL, COAL_X, CONSUME_ROW_Y, ModItems.HOOKAH_CHARCOAL.get()));
+        this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_WATER, WATER_X, CONSUME_ROW_Y, ModItems.HOOKAH_WATER_BOTTLE.get()));
 
         for (int row = 0; row < 3; ++row) {
             for (int col = 0; col < 9; ++col) {
@@ -75,13 +76,18 @@ public class HookahMenu extends AbstractContainerMenu {
         if (slotIndex < containerSize) {
             if (!this.moveItemStackTo(stack, containerSize, this.slots.size(), true)) return ItemStack.EMPTY;
         } else {
-            boolean placed = false;
+            // Try to route the item into its matching filtered slot
             if (stack.getItem() instanceof com.hookahmod.item.HookahHoseItem) {
-                placed = this.moveItemStackTo(stack, HookahBlockEntity.SLOT_HOSE, HookahBlockEntity.SLOT_HOSE + 1, false);
+                if (this.moveItemStackTo(stack, HookahBlockEntity.SLOT_HOSE, HookahBlockEntity.SLOT_HOSE + 1, false)) {
+                    if (stack.isEmpty()) slot.set(ItemStack.EMPTY); else slot.setChanged();
+                    return copy;
+                }
             }
-            if (!placed && !this.moveItemStackTo(stack, HookahBlockEntity.SLOT_TOBACCO, containerSize, false)) {
-                return ItemStack.EMPTY;
-            }
+            int target = -1;
+            if (stack.is(ModItems.HOOKAH_TOBACCO.get())) target = HookahBlockEntity.SLOT_TOBACCO;
+            else if (stack.is(ModItems.HOOKAH_CHARCOAL.get())) target = HookahBlockEntity.SLOT_COAL;
+            else if (stack.is(ModItems.HOOKAH_WATER_BOTTLE.get())) target = HookahBlockEntity.SLOT_WATER;
+            if (target == -1 || !this.moveItemStackTo(stack, target, target + 1, false)) return ItemStack.EMPTY;
         }
         if (stack.isEmpty()) slot.set(ItemStack.EMPTY); else slot.setChanged();
         return copy;

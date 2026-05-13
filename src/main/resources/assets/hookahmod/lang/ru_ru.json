@@ -29,5 +29,7 @@
   "message.hookahmod.busy": "Трубка занята другим игроком",
   "message.hookahmod.slipped": "Трубка выскользнула из рук",
   "message.hookahmod.hose_already_installed": "Шланг уже установлен",
-  "message.hookahmod.cannot_remove_hose_in_use": "Нельзя снять шланг — трубка в использовании"
+  "message.hookahmod.cannot_remove_hose_in_use": "Нельзя снять шланг — трубка в использовании",
+  "message.hookahmod.no_mouthpiece": "Нужен мундштук в инвентаре",
+  "message.hookahmod.lost_mouthpiece": "Мундштук потерян из рук"
 }

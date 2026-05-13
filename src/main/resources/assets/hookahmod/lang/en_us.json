@@ -29,5 +29,7 @@
   "message.hookahmod.busy": "Mouthpiece is taken by another player",
   "message.hookahmod.slipped": "The mouthpiece slipped from your hand",
   "message.hookahmod.hose_already_installed": "Hose already installed",
-  "message.hookahmod.cannot_remove_hose_in_use": "Cannot remove hose — mouthpiece is in use"
+  "message.hookahmod.cannot_remove_hose_in_use": "Cannot remove hose — mouthpiece is in use",
+  "message.hookahmod.no_mouthpiece": "You need a mouthpiece in inventory",
+  "message.hookahmod.lost_mouthpiece": "Mouthpiece lost from your hand"
 }

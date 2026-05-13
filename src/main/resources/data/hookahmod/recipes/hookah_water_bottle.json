@@ -1,0 +1,11 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:glass_bottle" },
+    { "item": "minecraft:lily_pad" }
+  ],
+  "result": {
+    "id": "hookahmod:hookah_water_bottle",
+    "count": 1
+  }
+}

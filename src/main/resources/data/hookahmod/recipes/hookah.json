@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "GIG",
+    "GBG",
+    "III"
+  ],
+  "key": {
+    "G": { "item": "minecraft:glass" },
+    "I": { "item": "minecraft:iron_ingot" },
+    "B": { "item": "minecraft:water_bucket" }
+  },
+  "result": {
+    "id": "hookahmod:hookah",
+    "count": 1
+  }
+}

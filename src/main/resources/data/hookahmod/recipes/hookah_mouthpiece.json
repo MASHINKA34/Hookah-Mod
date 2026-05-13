@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " G ",
+    "GSG",
+    " S "
+  ],
+  "key": {
+    "G": { "item": "minecraft:gold_nugget" },
+    "S": { "item": "minecraft:stick" }
+  },
+  "result": {
+    "id": "hookahmod:hookah_mouthpiece",
+    "count": 1
+  }
+}

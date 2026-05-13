@@ -1,7 +1,10 @@
 package com.hookahmod.registry;
 
 import com.hookahmod.HookahMod;
+import com.hookahmod.item.HookahCharcoalItem;
 import com.hookahmod.item.HookahMouthpieceItem;
+import com.hookahmod.item.HookahTobaccoItem;
+import com.hookahmod.item.HookahWaterBottleItem;
 import com.hookahmod.item.LongHookahHoseItem;
 import com.hookahmod.item.ShortHookahHoseItem;
 import net.minecraft.world.item.BlockItem;
@@ -28,6 +31,21 @@ public final class ModItems {
     public static final DeferredItem<HookahMouthpieceItem> HOOKAH_MOUTHPIECE = ITEMS.register(
             "hookah_mouthpiece",
             () -> new HookahMouthpieceItem(new Item.Properties().stacksTo(1))
+    );
+
+    public static final DeferredItem<HookahTobaccoItem> HOOKAH_TOBACCO = ITEMS.register(
+            "hookah_tobacco",
+            () -> new HookahTobaccoItem(new Item.Properties().stacksTo(64))
+    );
+
+    public static final DeferredItem<HookahCharcoalItem> HOOKAH_CHARCOAL = ITEMS.register(
+            "hookah_charcoal",
+            () -> new HookahCharcoalItem(new Item.Properties().stacksTo(64))
+    );
+
+    public static final DeferredItem<HookahWaterBottleItem> HOOKAH_WATER_BOTTLE = ITEMS.register(
+            "hookah_water_bottle",
+            () -> new HookahWaterBottleItem(new Item.Properties().stacksTo(16))
     );
 
     private ModItems() {}

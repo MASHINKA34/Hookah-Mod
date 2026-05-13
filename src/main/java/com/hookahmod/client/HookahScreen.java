@@ -3,7 +3,9 @@ package com.hookahmod.client;
 import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.item.HookahHoseType;
+import com.hookahmod.menu.FilteredSlot;
 import com.hookahmod.menu.HookahMenu;
+import com.hookahmod.menu.HoseSlot;
 import com.hookahmod.network.ToggleMouthpiecePayload;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -13,6 +15,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.UUID;
@@ -23,17 +26,14 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
     private static final int KALYAN_W = 176;
     private static final int KALYAN_H = 176;
 
-    // Button panel (brass) coords in image
     private static final int BUTTON_X = 98;
-    private static final int BUTTON_Y = 110;
+    private static final int BUTTON_Y = 117;
     private static final int BUTTON_W = 70;
-    private static final int BUTTON_H = 30;
+    private static final int BUTTON_H = 24;
 
-    // Status panel (dark inner) coords in image
-    private static final int STATUS_X = 12;
-    private static final int STATUS_Y = 118;
+    private static final int STATUS_X = 14;
+    private static final int STATUS_Y = 124;
 
-    // Hose status text (between title and hose slot)
     private static final int HOSE_INFO_Y = 22;
 
     private Button toggleButton;
@@ -54,7 +54,7 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
         this.toggleButton = new TransparentButton(
                 this.leftPos + BUTTON_X, this.topPos + BUTTON_Y,
                 BUTTON_W, BUTTON_H,
-                Component.translatable("gui.hookahmod.take_mouthpiece"),
+                Component.translatable("gui.hookahmod.btn_take"),
                 btn -> onToggle());
         this.addRenderableWidget(toggleButton);
     }
@@ -84,8 +84,8 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
     protected void containerTick() {
         super.containerTick();
         Component label = isInUseByMe()
-                ? Component.translatable("gui.hookahmod.release_mouthpiece")
-                : Component.translatable("gui.hookahmod.take_mouthpiece");
+                ? Component.translatable("gui.hookahmod.btn_release")
+                : Component.translatable("gui.hookahmod.btn_take");
         toggleButton.setMessage(label);
         toggleButton.active = !isBusyByOther();
     }
@@ -120,12 +120,10 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
     protected void renderLabels(GuiGraphics gg, int mouseX, int mouseY) {
         int labelColor = 0xFFE6D6B0;
 
-        // Centered title
         int tw = this.font.width(this.title);
         gg.drawString(this.font, this.title, (this.imageWidth - tw) / 2, this.titleLabelY, labelColor, false);
         gg.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, labelColor, false);
 
-        // Hose status (between title and hose slot)
         HookahBlockEntity be = be();
         HookahHoseType type = be != null ? be.getHoseType() : HookahHoseType.NONE;
         Component hoseLine;
@@ -143,7 +141,6 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
         int hw = this.font.width(hoseLine);
         gg.drawString(this.font, hoseLine, (this.imageWidth - hw) / 2, HOSE_INFO_Y, hoseColor, false);
 
-        // Status text inside dark status panel
         Component status;
         int statusColor;
         if (isInUseByMe()) {
@@ -158,7 +155,6 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
         }
         gg.drawString(this.font, status, STATUS_X, STATUS_Y, statusColor, false);
 
-        // Button text — dark text on brass background
         Component btnText = toggleButton.getMessage();
         int btnW = this.font.width(btnText);
         int btnColor = toggleButton.active ? 0xFF1F140A : 0xFF5C4A36;
@@ -167,8 +163,32 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
         if (isInUseByMe() && be != null && !be.hasAllConsumables()) {
             Component hint = Component.translatable("gui.hookahmod.fill_slots").withStyle(ChatFormatting.ITALIC);
             int hwt = this.font.width(hint);
-            gg.drawString(this.font, hint, (this.imageWidth - hwt) / 2, 158, 0xFFB0B0B0, false);
+            gg.drawString(this.font, hint, (this.imageWidth - hwt) / 2, 156, 0xFFB0B0B0, false);
         }
+    }
+
+    @Override
+    protected void renderTooltip(GuiGraphics gg, int mouseX, int mouseY) {
+        super.renderTooltip(gg, mouseX, mouseY);
+        Slot s = this.hoveredSlot;
+        if (s == null || s.hasItem()) return;
+        Component hint = emptySlotHint(s);
+        if (hint != null) {
+            gg.renderTooltip(this.font, hint, mouseX, mouseY);
+        }
+    }
+
+    private static Component emptySlotHint(Slot s) {
+        if (s instanceof HoseSlot) return Component.translatable("gui.hookahmod.hint_hose");
+        if (s instanceof FilteredSlot fs) {
+            if (fs.allowedItem() == com.hookahmod.registry.ModItems.HOOKAH_TOBACCO.get())
+                return Component.translatable("gui.hookahmod.hint_tobacco");
+            if (fs.allowedItem() == com.hookahmod.registry.ModItems.HOOKAH_CHARCOAL.get())
+                return Component.translatable("gui.hookahmod.hint_coal");
+            if (fs.allowedItem() == com.hookahmod.registry.ModItems.HOOKAH_WATER_BOTTLE.get())
+                return Component.translatable("gui.hookahmod.hint_water");
+        }
+        return null;
     }
 
     @Override
@@ -186,7 +206,7 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
         @Override
         protected void renderWidget(GuiGraphics gg, int mouseX, int mouseY, float partialTick) {
             if (this.isHovered() && this.active) {
-                gg.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), 0x40FFFFFF);
+                gg.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), 0x30FFFFFF);
             }
         }
     }

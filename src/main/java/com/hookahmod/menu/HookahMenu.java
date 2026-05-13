@@ -17,13 +17,13 @@ import org.jetbrains.annotations.Nullable;
 
 public class HookahMenu extends AbstractContainerMenu {
 
-    public static final int HOSE_SLOT_X = 79;
-    public static final int HOSE_SLOT_Y = 30;
+    public static final int HOSE_SLOT_X = 78;
+    public static final int HOSE_SLOT_Y = 52;
 
-    public static final int CONSUME_ROW_Y = 64;
-    public static final int TOBACCO_X = 41;
-    public static final int COAL_X = 79;
-    public static final int WATER_X = 117;
+    public static final int CONSUME_ROW_Y = 82;
+    public static final int TOBACCO_X = 47;
+    public static final int COAL_X = 78;
+    public static final int WATER_X = 109;
 
     public static final int INV_ROW_Y = 192;
     public static final int INV_HOTBAR_Y = 246;

@@ -23,13 +23,18 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
     private static final int KALYAN_W = 176;
     private static final int KALYAN_H = 176;
 
-    private static final int BUTTON_X = 108;
-    private static final int BUTTON_Y = 120;
-    private static final int BUTTON_W = 60;
-    private static final int BUTTON_H = 26;
+    // Button panel (brass) coords in image
+    private static final int BUTTON_X = 98;
+    private static final int BUTTON_Y = 110;
+    private static final int BUTTON_W = 70;
+    private static final int BUTTON_H = 30;
 
+    // Status panel (dark inner) coords in image
     private static final int STATUS_X = 12;
-    private static final int STATUS_Y = 138;
+    private static final int STATUS_Y = 118;
+
+    // Hose status text (between title and hose slot)
+    private static final int HOSE_INFO_Y = 22;
 
     private Button toggleButton;
 
@@ -37,7 +42,8 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
         super(menu, inv, title);
         this.imageWidth = 176;
         this.imageHeight = 266;
-        this.titleLabelY = -100;       // image has the title already; hide vanilla one
+        this.titleLabelY = 6;
+        this.titleLabelX = 8;
         this.inventoryLabelY = 180;
         this.inventoryLabelX = 8;
     }
@@ -88,9 +94,8 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
     protected void renderBg(GuiGraphics gg, float partialTicks, int mouseX, int mouseY) {
         int x = this.leftPos;
         int y = this.topPos;
-        // kalyan area – the designed image
         gg.blit(BG_TEXTURE, x, y, 0, 0, KALYAN_W, KALYAN_H, 256, 256);
-        // inventory area background – simple dark frame matching the kalyan style
+
         int invTop = y + KALYAN_H;
         gg.fill(x, invTop, x + this.imageWidth, y + this.imageHeight, 0xFF1F140A);
         gg.fill(x + 2, invTop + 2, x + this.imageWidth - 2, y + this.imageHeight - 2, 0xFF3A2516);
@@ -115,26 +120,12 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
     protected void renderLabels(GuiGraphics gg, int mouseX, int mouseY) {
         int labelColor = 0xFFE6D6B0;
 
+        // Centered title
+        int tw = this.font.width(this.title);
+        gg.drawString(this.font, this.title, (this.imageWidth - tw) / 2, this.titleLabelY, labelColor, false);
         gg.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, labelColor, false);
 
-        // Dynamic status text (image has "СТАТУС:" label area; overdraw the value)
-        Component status;
-        int statusColor;
-        if (isInUseByMe()) {
-            status = Component.translatable("gui.hookahmod.status_yours");
-            statusColor = 0xFF7FE07F;
-        } else if (isBusyByOther()) {
-            status = Component.translatable("gui.hookahmod.status_busy");
-            statusColor = 0xFFE08080;
-        } else {
-            status = Component.translatable("gui.hookahmod.status_free");
-            statusColor = 0xFF80C0FF;
-        }
-        // Cover image-baked text by drawing onto baseline
-        gg.fill(STATUS_X - 1, STATUS_Y - 1, STATUS_X + 90, STATUS_Y + 10, 0xFF20140A);
-        gg.drawString(this.font, status, STATUS_X, STATUS_Y, statusColor, false);
-
-        // Hose type indicator (top-right under title)
+        // Hose status (between title and hose slot)
         HookahBlockEntity be = be();
         HookahHoseType type = be != null ? be.getHoseType() : HookahHoseType.NONE;
         Component hoseLine;
@@ -150,19 +141,33 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
             hoseColor = 0xFFC0E080;
         }
         int hw = this.font.width(hoseLine);
-        gg.drawString(this.font, hoseLine, (this.imageWidth - hw) / 2, 92, hoseColor, false);
+        gg.drawString(this.font, hoseLine, (this.imageWidth - hw) / 2, HOSE_INFO_Y, hoseColor, false);
 
-        // Button text overlay (image baked-in "ВЗЯТЬ ТРУБКУ" — we cover and redraw current)
+        // Status text inside dark status panel
+        Component status;
+        int statusColor;
+        if (isInUseByMe()) {
+            status = Component.translatable("gui.hookahmod.status_yours");
+            statusColor = 0xFF7FE07F;
+        } else if (isBusyByOther()) {
+            status = Component.translatable("gui.hookahmod.status_busy");
+            statusColor = 0xFFE08080;
+        } else {
+            status = Component.translatable("gui.hookahmod.status_free");
+            statusColor = 0xFF80C0FF;
+        }
+        gg.drawString(this.font, status, STATUS_X, STATUS_Y, statusColor, false);
+
+        // Button text — dark text on brass background
         Component btnText = toggleButton.getMessage();
         int btnW = this.font.width(btnText);
-        gg.fill(BUTTON_X + 2, BUTTON_Y + 8, BUTTON_X + BUTTON_W - 2, BUTTON_Y + 20, 0xFF3A2516);
-        int btnColor = toggleButton.active ? 0xFFFFE7A0 : 0xFF8A7A60;
-        gg.drawString(this.font, btnText, BUTTON_X + (BUTTON_W - btnW) / 2, BUTTON_Y + 10, btnColor, false);
+        int btnColor = toggleButton.active ? 0xFF1F140A : 0xFF5C4A36;
+        gg.drawString(this.font, btnText, BUTTON_X + (BUTTON_W - btnW) / 2, BUTTON_Y + (BUTTON_H - 8) / 2, btnColor, false);
 
         if (isInUseByMe() && be != null && !be.hasAllConsumables()) {
             Component hint = Component.translatable("gui.hookahmod.fill_slots").withStyle(ChatFormatting.ITALIC);
             int hwt = this.font.width(hint);
-            gg.drawString(this.font, hint, (this.imageWidth - hwt) / 2, 156, 0xFFB0B0B0, false);
+            gg.drawString(this.font, hint, (this.imageWidth - hwt) / 2, 158, 0xFFB0B0B0, false);
         }
     }
 
@@ -181,7 +186,7 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
         @Override
         protected void renderWidget(GuiGraphics gg, int mouseX, int mouseY, float partialTick) {
             if (this.isHovered() && this.active) {
-                gg.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), 0x30FFFFFF);
+                gg.fill(getX(), getY(), getX() + getWidth(), getY() + getHeight(), 0x40FFFFFF);
             }
         }
     }

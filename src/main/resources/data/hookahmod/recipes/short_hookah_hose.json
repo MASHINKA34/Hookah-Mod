@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "LLM",
+    "LL ",
+    "LL "
+  ],
+  "key": {
+    "L": { "item": "minecraft:leather" },
+    "M": { "item": "hookahmod:hookah_mouthpiece" }
+  },
+  "result": {
+    "id": "hookahmod:short_hookah_hose",
+    "count": 1
+  }
+}

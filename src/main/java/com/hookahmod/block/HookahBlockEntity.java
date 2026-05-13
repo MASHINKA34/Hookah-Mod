@@ -4,6 +4,9 @@ import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.network.HookahSyncPayload;
 import com.hookahmod.registry.ModBlockEntities;
+import com.hookahmod.registry.ModItems;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.Item;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
@@ -93,8 +96,13 @@ public class HookahBlockEntity extends BlockEntity {
             return false;
         }
         if (activePlayerUuid != null) {
+            returnMouthpieceFromOffhand(player);
             releaseMouthpiece();
             return true;
+        }
+        if (!moveMouthpieceToOffhand(player)) {
+            player.displayClientMessage(Component.translatable("message.hookahmod.no_mouthpiece"), true);
+            return false;
         }
         activePlayerUuid = player.getUUID();
         if (level != null) {
@@ -102,6 +110,46 @@ public class HookahBlockEntity extends BlockEntity {
         }
         setChangedAndSync();
         return true;
+    }
+
+    private static boolean moveMouthpieceToOffhand(ServerPlayer player) {
+        Item mp = ModItems.HOOKAH_MOUTHPIECE.get();
+        if (player.getOffhandItem().is(mp)) return true;
+        int slot = -1;
+        ItemStack found = ItemStack.EMPTY;
+        if (player.getMainHandItem().is(mp)) {
+            found = player.getMainHandItem();
+            slot = -2;
+        } else {
+            for (int i = 0; i < player.getInventory().items.size(); i++) {
+                if (player.getInventory().items.get(i).is(mp)) {
+                    found = player.getInventory().items.get(i);
+                    slot = i;
+                    break;
+                }
+            }
+        }
+        if (found.isEmpty()) return false;
+        ItemStack one = found.copyWithCount(1);
+        found.shrink(1);
+        ItemStack old = player.getOffhandItem();
+        player.setItemInHand(InteractionHand.OFF_HAND, one);
+        if (!old.isEmpty()) {
+            if (!player.getInventory().add(old)) {
+                player.drop(old, false);
+            }
+        }
+        return true;
+    }
+
+    private static void returnMouthpieceFromOffhand(ServerPlayer player) {
+        ItemStack off = player.getOffhandItem();
+        if (!off.is(ModItems.HOOKAH_MOUTHPIECE.get())) return;
+        ItemStack back = off.copy();
+        player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+        if (!player.getInventory().add(back)) {
+            player.drop(back, false);
+        }
     }
 
     public void releaseMouthpiece() {
@@ -136,6 +184,12 @@ public class HookahBlockEntity extends BlockEntity {
         Player player = level.getPlayerByUUID(activePlayerUuid);
         if (player == null || player.isRemoved() || player.isDeadOrDying()
                 || !player.level().dimension().equals(level.dimension())) {
+            releaseMouthpiece();
+            return;
+        }
+        // Mouthpiece must remain in offhand
+        if (!player.getOffhandItem().is(ModItems.HOOKAH_MOUTHPIECE.get())) {
+            player.displayClientMessage(Component.translatable("message.hookahmod.lost_mouthpiece"), true);
             releaseMouthpiece();
             return;
         }

@@ -1,23 +1,21 @@
 package com.hookahmod.client;
 
+import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlock;
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.item.HookahHoseType;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -32,64 +30,49 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
     private static final int SEGMENTS = 28;
     private static final float HOSE_THICKNESS = 0.05F;
     private static final float MAX_SAG = 1.1F;
-    private static final ResourceLocation HOSE_TEX = ResourceLocation.fromNamespaceAndPath("hookahmod", "textures/entity/hookah_hose.png");
+    private static final ResourceLocation HOSE_TEX = HookahMod.id("textures/entity/hookah_hose.png");
+    private static final ResourceLocation COAL_TEX = HookahMod.id("textures/entity/hookah_charcoal_cube.png");
+    private static final ResourceLocation WATER_TEX = HookahMod.id("textures/entity/water_fill.png");
 
     public HookahBlockEntityRenderer(BlockEntityRendererProvider.Context ctx) {}
 
     @Override
     public void render(HookahBlockEntity be, float partialTick, PoseStack pose, MultiBufferSource buffer,
                        int packedLight, int packedOverlay) {
-        HookahHoseType type = be.getHoseType();
-        if (type == HookahHoseType.NONE) return;
-
         BlockState state = be.getBlockState();
         Direction facing = state.hasProperty(HookahBlock.FACING) ? state.getValue(HookahBlock.FACING) : Direction.NORTH;
-        BlockPos pos = be.getBlockPos();
-        Vec3 connectorLocal = rotateLocal(new Vec3(0.3125, 0.96875, 0.5), facing);
-
-        UUID active = be.getActivePlayerUuid();
         Level level = be.getLevel();
-        if (level == null) return;
 
-        VertexConsumer vc = buffer.getBuffer(RenderType.entitySolid(HOSE_TEX));
-
-        if (active != null && level.getPlayerByUUID(active) instanceof AbstractClientPlayer player) {
-            renderActiveHose(pose, vc, connectorLocal, pos, player, partialTick, type, packedLight);
-        } else {
-            renderIdleHose(pose, vc, connectorLocal, facing, packedLight);
+        // Hose render
+        HookahHoseType type = be.getHoseType();
+        if (type != HookahHoseType.NONE) {
+            BlockPos pos = be.getBlockPos();
+            Vec3 connectorLocal = rotateLocal(new Vec3(0.3125, 0.96875, 0.5), facing);
+            UUID active = be.getActivePlayerUuid();
+            VertexConsumer hvc = buffer.getBuffer(RenderType.entitySolid(HOSE_TEX));
+            if (level != null && active != null && level.getPlayerByUUID(active) instanceof AbstractClientPlayer player) {
+                renderActiveHose(pose, hvc, connectorLocal, pos, player, partialTick, type, packedLight);
+            } else {
+                renderIdleHose(pose, hvc, connectorLocal, facing, packedLight);
+            }
         }
 
-        renderConsumablesOnTop(be, pose, buffer, packedLight, packedOverlay, partialTick);
-    }
+        // Water in glass body
+        ItemStack water = be.getInventory().getItem(HookahBlockEntity.SLOT_WATER);
+        if (!water.isEmpty()) {
+            renderWater(pose, buffer, packedLight, packedOverlay, level, partialTick);
+        }
 
-    private void renderConsumablesOnTop(HookahBlockEntity be, PoseStack pose, MultiBufferSource buffer,
-                                        int packedLight, int packedOverlay, float partialTick) {
-        ItemStack coal = be.getInventory().getItem(HookahBlockEntity.SLOT_COAL);
+        // Tobacco (flat sprite on bowl)
         ItemStack tobacco = be.getInventory().getItem(HookahBlockEntity.SLOT_TOBACCO);
-        if (coal.isEmpty() && tobacco.isEmpty()) return;
-
-        ItemRenderer ir = Minecraft.getInstance().getItemRenderer();
-        Level lvl = be.getLevel();
-        long time = lvl == null ? 0L : lvl.getGameTime();
-        float angle = (time + partialTick) * 1.5F;
-
         if (!tobacco.isEmpty()) {
-            pose.pushPose();
-            pose.translate(0.5, 1.47, 0.5);
-            pose.scale(0.32F, 0.32F, 0.32F);
-            pose.mulPose(Axis.XP.rotationDegrees(90));
-            pose.mulPose(Axis.ZP.rotationDegrees(angle * 0.3F));
-            ir.renderStatic(tobacco, ItemDisplayContext.FIXED, packedLight, packedOverlay, pose, buffer, lvl, 0);
-            pose.popPose();
+            renderTobaccoFlat(pose, buffer, packedLight, packedOverlay);
         }
+
+        // 3D charcoal cube on top with pulsing emissive
+        ItemStack coal = be.getInventory().getItem(HookahBlockEntity.SLOT_COAL);
         if (!coal.isEmpty()) {
-            pose.pushPose();
-            pose.translate(0.5, 1.62, 0.5);
-            pose.scale(0.38F, 0.38F, 0.38F);
-            pose.mulPose(Axis.YP.rotationDegrees(angle * 0.6F));
-            int glow = LightTexture.pack(15, 0);
-            ir.renderStatic(coal, ItemDisplayContext.FIXED, glow, packedOverlay, pose, buffer, lvl, 0);
-            pose.popPose();
+            renderCoalCube(pose, buffer, packedOverlay, level, partialTick);
         }
     }
 
@@ -123,6 +106,60 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
         pose.pushPose();
         drawBezier(pose, vc, p0, p1, p2, p3, packedLight);
         drawCap(pose, vc, p3, packedLight);
+        pose.popPose();
+    }
+
+    private void renderWater(PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay,
+                             Level level, float partialTick) {
+        VertexConsumer vc = buffer.getBuffer(RenderType.entityTranslucent(WATER_TEX));
+        // subtle bob: animate water surface y over time
+        float t = level == null ? 0 : (level.getGameTime() + partialTick);
+        float wave = (float) (Math.sin(t * 0.08) * 0.005);
+        float yMax = 0.32F + wave;
+        // Cuboid inside glass body
+        pose.pushPose();
+        drawTintedCube(pose, vc,
+                0.34F, 0.08F, 0.34F,
+                0.66F, yMax,   0.66F,
+                packedLight, packedOverlay,
+                60, 140, 210, 180);
+        pose.popPose();
+    }
+
+    private void renderTobaccoFlat(PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay) {
+        VertexConsumer vc = buffer.getBuffer(RenderType.entitySolid(HookahMod.id("textures/item/hookah_tobacco.png")));
+        pose.pushPose();
+        Matrix4f mat = pose.last().pose();
+        // Flat disc at top of bowl (y ≈ 1.47)
+        float y = 1.47F;
+        float a = 0.36F, b = 0.64F;
+        addVertex(mat, vc, a, y, a, 0, 0, 0, 1, 0, packedLight, packedOverlay, 255, 255, 255, 255);
+        addVertex(mat, vc, a, y, b, 0, 1, 0, 1, 0, packedLight, packedOverlay, 255, 255, 255, 255);
+        addVertex(mat, vc, b, y, b, 1, 1, 0, 1, 0, packedLight, packedOverlay, 255, 255, 255, 255);
+        addVertex(mat, vc, b, y, a, 1, 0, 0, 1, 0, packedLight, packedOverlay, 255, 255, 255, 255);
+        pose.popPose();
+    }
+
+    private void renderCoalCube(PoseStack pose, MultiBufferSource buffer, int packedOverlay,
+                                Level level, float partialTick) {
+        float t = level == null ? 0 : (level.getGameTime() + partialTick);
+        // Pulse 0..1 with sine
+        double pulse = 0.5 + 0.5 * Math.sin(t * 0.15);
+        int blockLight = 12 + (int) (pulse * 3);   // 12..15 — emissive glow
+        int packedLight = LightTexture.pack(blockLight, 15);
+
+        // Color tint pulses orange when fully bright
+        int rTint = 255;
+        int gTint = (int) (200 + (1.0 - pulse) * 55); // 200..255
+        int bTint = (int) (160 + (1.0 - pulse) * 95); // 160..255
+
+        VertexConsumer vc = buffer.getBuffer(RenderType.entitySolid(COAL_TEX));
+        pose.pushPose();
+        pose.translate(0.5, 1.50, 0.5);
+        float angle = t * 0.6F;
+        pose.mulPose(Axis.YP.rotationDegrees(angle));
+        float s = 0.16F; // half-extent
+        drawTintedCube(pose, vc, -s, 0, -s, s, 2 * s, s, packedLight, packedOverlay, rTint, gTint, bTint, 255);
         pose.popPose();
     }
 
@@ -189,19 +226,71 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
     }
 
     private static void quad(Matrix4f mat, VertexConsumer vc, Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4, int light) {
-        vert(mat, vc, v1, 0, 0, light);
-        vert(mat, vc, v2, 0, 1, light);
-        vert(mat, vc, v3, 1, 1, light);
-        vert(mat, vc, v4, 1, 0, light);
+        vertHose(mat, vc, v1, 0, 0, light);
+        vertHose(mat, vc, v2, 0, 1, light);
+        vertHose(mat, vc, v3, 1, 1, light);
+        vertHose(mat, vc, v4, 1, 0, light);
     }
 
-    private static void vert(Matrix4f mat, VertexConsumer vc, Vec3 v, float u, float vTex, int light) {
+    private static void vertHose(Matrix4f mat, VertexConsumer vc, Vec3 v, float u, float vTex, int light) {
         vc.addVertex(mat, (float) v.x, (float) v.y, (float) v.z)
                 .setColor(255, 255, 255, 255)
                 .setUv(u, vTex)
                 .setOverlay(0)
                 .setLight(light)
                 .setNormal(0, 1, 0);
+    }
+
+    private static void drawTintedCube(PoseStack pose, VertexConsumer vc,
+                                       float minX, float minY, float minZ,
+                                       float maxX, float maxY, float maxZ,
+                                       int light, int overlay,
+                                       int r, int g, int b, int a) {
+        Matrix4f m = pose.last().pose();
+        // Top (+Y)
+        addVertex(m, vc, minX, maxY, minZ, 0, 0,  0,  1, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, minX, maxY, maxZ, 0, 1,  0,  1, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, maxY, maxZ, 1, 1,  0,  1, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, maxY, minZ, 1, 0,  0,  1, 0, light, overlay, r, g, b, a);
+        // Bottom (-Y)
+        addVertex(m, vc, minX, minY, minZ, 0, 0,  0, -1, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, minY, minZ, 1, 0,  0, -1, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, minY, maxZ, 1, 1,  0, -1, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, minX, minY, maxZ, 0, 1,  0, -1, 0, light, overlay, r, g, b, a);
+        // North (-Z)
+        addVertex(m, vc, minX, minY, minZ, 0, 1,  0,  0, -1, light, overlay, r, g, b, a);
+        addVertex(m, vc, minX, maxY, minZ, 0, 0,  0,  0, -1, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, maxY, minZ, 1, 0,  0,  0, -1, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, minY, minZ, 1, 1,  0,  0, -1, light, overlay, r, g, b, a);
+        // South (+Z)
+        addVertex(m, vc, minX, minY, maxZ, 0, 1,  0,  0, 1, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, minY, maxZ, 1, 1,  0,  0, 1, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, maxY, maxZ, 1, 0,  0,  0, 1, light, overlay, r, g, b, a);
+        addVertex(m, vc, minX, maxY, maxZ, 0, 0,  0,  0, 1, light, overlay, r, g, b, a);
+        // East (+X)
+        addVertex(m, vc, maxX, minY, minZ, 0, 1,  1,  0, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, maxY, minZ, 0, 0,  1,  0, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, maxY, maxZ, 1, 0,  1,  0, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, maxX, minY, maxZ, 1, 1,  1,  0, 0, light, overlay, r, g, b, a);
+        // West (-X)
+        addVertex(m, vc, minX, minY, minZ, 0, 1, -1,  0, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, minX, minY, maxZ, 1, 1, -1,  0, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, minX, maxY, maxZ, 1, 0, -1,  0, 0, light, overlay, r, g, b, a);
+        addVertex(m, vc, minX, maxY, minZ, 0, 0, -1,  0, 0, light, overlay, r, g, b, a);
+    }
+
+    private static void addVertex(Matrix4f mat, VertexConsumer vc,
+                                  float x, float y, float z,
+                                  float u, float v,
+                                  float nx, float ny, float nz,
+                                  int light, int overlay,
+                                  int r, int g, int b, int a) {
+        vc.addVertex(mat, x, y, z)
+                .setColor(r, g, b, a)
+                .setUv(u, v)
+                .setOverlay(overlay)
+                .setLight(light)
+                .setNormal(nx, ny, nz);
     }
 
     private static Vec3 getPlayerHandPoint(AbstractClientPlayer player, float partialTick) {

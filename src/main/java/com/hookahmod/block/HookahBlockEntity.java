@@ -219,11 +219,31 @@ public class HookahBlockEntity extends BlockEntity {
         }
     }
 
+    public void clientTick(Level level, BlockPos pos, BlockState state) {
+        if (items.get(SLOT_COAL).isEmpty()) return;
+        if (level.random.nextInt(6) == 0) {
+            double px = pos.getX() + 0.35 + level.random.nextDouble() * 0.30;
+            double py = pos.getY() + 1.67 + level.random.nextDouble() * 0.09;
+            double pz = pos.getZ() + 0.35 + level.random.nextDouble() * 0.30;
+            level.addParticle(net.minecraft.core.particles.ParticleTypes.SMALL_FLAME,
+                    px, py, pz,
+                    (level.random.nextDouble() - 0.5) * 0.01,
+                    0.01 + level.random.nextDouble() * 0.02,
+                    (level.random.nextDouble() - 0.5) * 0.01);
+        }
+    }
+
     public void setChangedAndSync() {
         setChanged();
         if (level instanceof ServerLevel server) {
             BlockState s = getBlockState();
-            server.sendBlockUpdated(worldPosition, s, s, 3);
+            boolean hasCoal = !items.get(SLOT_COAL).isEmpty();
+            if (s.hasProperty(com.hookahmod.block.HookahBlock.HAS_COAL)
+                    && s.getValue(com.hookahmod.block.HookahBlock.HAS_COAL) != hasCoal) {
+                server.setBlock(worldPosition, s.setValue(com.hookahmod.block.HookahBlock.HAS_COAL, hasCoal), 3);
+            } else {
+                server.sendBlockUpdated(worldPosition, s, s, 3);
+            }
             HookahSyncPayload payload = new HookahSyncPayload(worldPosition, getHoseType(), activePlayerUuid);
             for (ServerPlayer p : server.players()) {
                 if (p.distanceToSqr(Vec3.atCenterOf(worldPosition)) < 128.0 * 128.0) {

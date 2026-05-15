@@ -3,15 +3,18 @@
 	"animations": {
 		"animation.hookah_mouthpiece.smoking": {
 			"loop": "hold_on_last_frame",
-			"animation_length": 0.4,
+			"animation_length": 1.05,
 			"bones": {
 				"bone": {
 					"rotation": {
 						"0.0": {
 							"vector": [0, 0, 0]
 						},
-						"0.4": {
-							"vector": [-35, 0, 10]
+						"0.3": {
+							"vector": [30, 0, 15]
+						},
+						"1.05": {
+							"vector": [30, 0, 15]
 						}
 					}
 				}

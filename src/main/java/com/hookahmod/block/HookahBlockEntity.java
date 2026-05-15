@@ -165,22 +165,50 @@ public class HookahBlockEntity extends BlockEntity {
         }
     }
 
-    public void applyPuff(ServerPlayer player) {
-        if (level == null) return;
-        if (level instanceof ServerLevel server) {
-            server.sendParticles(net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE,
-                    worldPosition.getX() + 0.5, worldPosition.getY() + 1.75, worldPosition.getZ() + 0.5,
-                    4, 0.15, 0.05, 0.15, 0.02);
-            net.minecraft.world.phys.Vec3 look = player.getLookAngle();
-            double mx = player.getX() + look.x * 0.35;
-            double my = player.getY() + player.getEyeHeight() - 0.10;
-            double mz = player.getZ() + look.z * 0.35;
-            server.sendParticles(net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE,
-                    mx, my, mz, 6, 0.08, 0.03, 0.08, 0.04);
+    // charge: 0.0 (short puff) .. 1.0 (full 5-second inhale)
+    public void applyExhale(ServerPlayer player, float charge) {
+        if (level == null || !(level instanceof ServerLevel server)) return;
+
+        // Smoke at hookah top — send to each nearby player with overrideLimiter=true
+        int hookahPuffs = 2 + (int) (charge * 5); // 2..7
+        double hx = worldPosition.getX() + 0.5, hy = worldPosition.getY() + 1.75, hz = worldPosition.getZ() + 0.5;
+        net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket hookahPkt =
+            new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(
+                net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE, true,
+                hx, hy, hz, 0.12f, 0.05f, 0.12f, 0.02f, hookahPuffs);
+        for (net.minecraft.server.level.ServerPlayer sp : server.players()) {
+            if (sp.distanceToSqr(hx, hy, hz) <= 128 * 128) sp.connection.send(hookahPkt);
         }
+
+        // Smoke burst from player mouth — send to each nearby player with overrideLimiter=true
+        int mouthPuffs = 6 + (int) (charge * 20); // 6..26
+        float spread = 0.08f + charge * 0.20f;
+        float speed  = 0.025f + charge * 0.08f;
+        net.minecraft.world.phys.Vec3 look = player.getLookAngle();
+        double mx = player.getX() + look.x * 0.5;
+        double my = player.getY() + player.getEyeHeight() - 0.08;
+        double mz = player.getZ() + look.z * 0.5;
+        net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket mouthPkt =
+            new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(
+                net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE, true,
+                mx, my, mz, spread, 0.06f, spread, speed, mouthPuffs);
+        for (net.minecraft.server.level.ServerPlayer sp : server.players()) {
+            if (sp.distanceToSqr(mx, my, mz) <= 128 * 128) sp.connection.send(mouthPkt);
+        }
+
+        // Sound: louder with more charge
+        float volume = 0.15f + charge * 0.4f;
         level.playSound(null, worldPosition, net.minecraft.sounds.SoundEvents.GENERIC_DRINK,
-                net.minecraft.sounds.SoundSource.PLAYERS, 0.25F, 1.7F);
-        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 80, 0, true, false, true));
+                net.minecraft.sounds.SoundSource.PLAYERS, volume, 1.6f);
+
+        // Effects scale with charge: regen 2-8 s; speed bonus at 50%+ charge
+        int effectTicks = 40 + (int) (charge * 120);
+        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, effectTicks, 0, true, false, true));
+        if (charge >= 0.5f) {
+            player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, effectTicks, 0, true, false, true));
+        }
+
+        // Consume one "puff" toward resource depletion (every 20 exhales uses 1 of each)
         smokeTimer++;
         if (smokeTimer >= 20) {
             smokeTimer = 0;

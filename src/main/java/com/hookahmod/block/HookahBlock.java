@@ -28,6 +28,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
@@ -39,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final BooleanProperty HAS_COAL = BooleanProperty.create("has_coal");
 
     private static final VoxelShape SHAPE = Shapes.or(
             Block.box(4, 0, 4, 12, 1, 12),
@@ -54,7 +56,9 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
 
     public HookahBlock(Properties props) {
         super(props);
-        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+        this.registerDefaultState(this.stateDefinition.any()
+                .setValue(FACING, Direction.NORTH)
+                .setValue(HAS_COAL, false));
     }
 
     @Override
@@ -64,7 +68,7 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING);
+        builder.add(FACING, HAS_COAL);
     }
 
     @Override
@@ -95,7 +99,10 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
     @Override
     @Nullable
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
-        if (level.isClientSide) return null;
+        if (level.isClientSide) {
+            return createTickerHelper(type, ModBlockEntities.HOOKAH.get(),
+                    (lvl, pos, st, be) -> be.clientTick(lvl, pos, st));
+        }
         return createTickerHelper(type, ModBlockEntities.HOOKAH.get(),
                 (lvl, pos, st, be) -> be.serverTick(lvl, pos, st));
     }

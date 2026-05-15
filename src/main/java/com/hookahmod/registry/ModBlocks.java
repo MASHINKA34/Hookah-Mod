@@ -19,7 +19,8 @@ public final class ModBlocks {
                     .mapColor(MapColor.METAL)
                     .strength(2.5F)
                     .sound(SoundType.METAL)
-                    .noOcclusion())
+                    .noOcclusion()
+                    .lightLevel(state -> state.getValue(HookahBlock.HAS_COAL) ? 8 : 0))
     );
 
     private ModBlocks() {}

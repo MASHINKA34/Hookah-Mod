@@ -19,6 +19,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import com.mojang.math.Axis;
 import org.joml.Matrix4f;
@@ -337,6 +338,15 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
         double fwdX = -Math.sin(yawRad) * 0.2;
         double fwdZ =  Math.cos(yawRad) * 0.2;
         return new Vec3(x + rightX + fwdX, y, z + rightZ + fwdZ);
+    }
+
+    // Coal cube, tobacco disc and the (possibly long, draped) hose render
+    // outside the 1x1x1 block cell. Without a widened box the BER gets
+    // frustum-culled the moment the block's own cell leaves view — e.g. the
+    // coal vanishes when you tilt the camera up at close range.
+    @Override
+    public AABB getRenderBoundingBox(HookahBlockEntity be) {
+        return new AABB(be.getBlockPos()).inflate(10.0);
     }
 
     @Override

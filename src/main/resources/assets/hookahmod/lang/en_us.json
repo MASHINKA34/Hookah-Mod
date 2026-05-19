@@ -25,6 +25,10 @@
   "gui.hookahmod.hint_coal": "Coal slot",
   "gui.hookahmod.hint_water": "Water slot",
 
+  "tooltip.hookahmod.hold_shift": "Hold [Shift] for details",
+  "tooltip.hookahmod.consumption.solid": "Consumed: 1 per 20 puffs",
+  "tooltip.hookahmod.consumption.water": "Consumed: 1 per 200 puffs",
+
   "message.hookahmod.install_hose": "Install a hose first",
   "message.hookahmod.busy": "Mouthpiece is taken by another player",
   "message.hookahmod.slipped": "The mouthpiece slipped from your hand",

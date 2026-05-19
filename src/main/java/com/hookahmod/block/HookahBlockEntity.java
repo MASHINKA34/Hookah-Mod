@@ -21,8 +21,6 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -42,9 +40,8 @@ public class HookahBlockEntity extends BlockEntity {
     public static final int SLOT_WATER = 3;
     public static final int SLOT_COUNT = 4;
 
-    private static final int CONSUME_INTERVAL_TICKS = 200; // 10s
-    private static final int PARTICLE_INTERVAL_TICKS = 10;
-    private static final int EFFECT_DURATION_TICKS = 220;
+    private static final int PUFFS_PER_SOLID = 20;  // tobacco + coal
+    private static final int PUFFS_PER_WATER = 200;  // water bottle
 
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final Container inventory = new HookahContainer(items, this::setChangedAndSync, this);
@@ -53,6 +50,7 @@ public class HookahBlockEntity extends BlockEntity {
     private UUID activePlayerUuid;
 
     private int smokeTimer = 0;
+    private int waterTimer = 0;
 
     public HookahBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.HOOKAH.get(), pos, state);
@@ -125,7 +123,9 @@ public class HookahBlockEntity extends BlockEntity {
         if (activePlayerUuid == null) return;
         com.hookahmod.event.ActiveSessions.unregister(activePlayerUuid);
         activePlayerUuid = null;
-        smokeTimer = 0;
+        // smokeTimer/waterTimer intentionally NOT reset: bowl depletion is
+        // tied to the hookah and persists across sessions, so partial puffs
+        // can't be reset by un-claiming or re-seating the consumables.
         setChangedAndSync();
     }
 
@@ -201,22 +201,25 @@ public class HookahBlockEntity extends BlockEntity {
         level.playSound(null, worldPosition, net.minecraft.sounds.SoundEvents.GENERIC_DRINK,
                 net.minecraft.sounds.SoundSource.PLAYERS, volume, 1.6f);
 
-        // Effects scale with charge: regen 2-8 s; speed bonus at 50%+ charge
-        int effectTicks = 40 + (int) (charge * 120);
-        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, effectTicks, 0, true, false, true));
-        if (charge >= 0.5f) {
-            player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, effectTicks, 0, true, false, true));
-        }
+        // Smoking buffs intentionally disabled for now — tobacco-specific
+        // effects will be added later.
 
-        // Consume one "puff" toward resource depletion (every 20 exhales uses 1 of each)
+        // Resource depletion: tobacco + coal every 20 exhales, water every 200.
+        boolean changed = false;
         smokeTimer++;
-        if (smokeTimer >= 20) {
+        if (smokeTimer >= PUFFS_PER_SOLID) {
             smokeTimer = 0;
             items.get(SLOT_TOBACCO).shrink(1);
             items.get(SLOT_COAL).shrink(1);
-            items.get(SLOT_WATER).shrink(1);
-            setChangedAndSync();
+            changed = true;
         }
+        waterTimer++;
+        if (waterTimer >= PUFFS_PER_WATER) {
+            waterTimer = 0;
+            items.get(SLOT_WATER).shrink(1);
+            changed = true;
+        }
+        if (changed) setChangedAndSync();
     }
 
     public void clientTick(Level level, BlockPos pos, BlockState state) {
@@ -260,6 +263,7 @@ public class HookahBlockEntity extends BlockEntity {
         ContainerHelper.loadAllItems(tag, items, lookup);
         activePlayerUuid = tag.hasUUID("ActivePlayer") ? tag.getUUID("ActivePlayer") : null;
         smokeTimer = tag.getInt("SmokeTimer");
+        waterTimer = tag.getInt("WaterTimer");
     }
 
     @Override
@@ -268,6 +272,7 @@ public class HookahBlockEntity extends BlockEntity {
         ContainerHelper.saveAllItems(tag, items, lookup);
         if (activePlayerUuid != null) tag.putUUID("ActivePlayer", activePlayerUuid);
         tag.putInt("SmokeTimer", smokeTimer);
+        tag.putInt("WaterTimer", waterTimer);
     }
 
     @Override

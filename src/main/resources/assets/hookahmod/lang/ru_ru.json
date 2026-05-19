@@ -25,6 +25,10 @@
   "gui.hookahmod.hint_coal": "Слот угля",
   "gui.hookahmod.hint_water": "Слот воды",
 
+  "tooltip.hookahmod.hold_shift": "Зажмите [Shift] для подробностей",
+  "tooltip.hookahmod.consumption.solid": "Расходуется: 1 шт. за 20 тяг",
+  "tooltip.hookahmod.consumption.water": "Расходуется: 1 шт. за 200 тяг",
+
   "message.hookahmod.install_hose": "Сначала установите шланг",
   "message.hookahmod.busy": "Трубка занята другим игроком",
   "message.hookahmod.slipped": "Трубка выскользнула из рук",

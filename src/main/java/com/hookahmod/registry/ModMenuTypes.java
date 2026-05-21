@@ -19,6 +19,10 @@ public final class ModMenuTypes {
     public static final DeferredHolder<MenuType<?>, MenuType<HookahMenu>> HOOKAH =
             MENUS.register("hookah", () -> new MenuType<>(
                     (IContainerFactory<HookahMenu>) (windowId, inv, data) -> {
+                        boolean wearable = data != null && data.readBoolean();
+                        if (wearable) {
+                            return new HookahMenu(windowId, inv, inv.player.getUUID());
+                        }
                         BlockPos pos = data != null ? data.readBlockPos() : BlockPos.ZERO;
                         return new HookahMenu(windowId, inv, pos);
                     },

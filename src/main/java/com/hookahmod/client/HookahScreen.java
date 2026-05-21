@@ -1,6 +1,7 @@
 package com.hookahmod.client;
 
 import com.hookahmod.block.HookahBlockEntity;
+import com.hookahmod.event.ActiveSessions;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.menu.FilteredSlot;
 import com.hookahmod.menu.HookahMenu;
@@ -78,7 +79,11 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
     }
 
     private void onToggle() {
-        PacketDistributor.sendToServer(new ToggleMouthpiecePayload(menu.getPos()));
+        if (menu.isWearable()) {
+            PacketDistributor.sendToServer(ToggleMouthpiecePayload.worn(menu.getWearerUuid()));
+        } else {
+            PacketDistributor.sendToServer(new ToggleMouthpiecePayload(menu.getPos()));
+        }
     }
 
     private HookahBlockEntity be() { return menu.getBlockEntity(); }
@@ -88,14 +93,15 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
     }
 
     private boolean isInUseByMe() {
-        HookahBlockEntity be = be();
         UUID my = myUuid();
-        return be != null && my != null && my.equals(be.getActivePlayerUuid());
+        if (menu.isWearable()) {
+            return my != null && ActiveSessions.getWornWearer(my) != null;
+        }
+        return my != null && my.equals(menu.getActivePlayerUuid());
     }
 
     private boolean isBusyByOther() {
-        HookahBlockEntity be = be();
-        return be != null && be.isInUse() && !isInUseByMe();
+        return menu.isInUse() && !isInUseByMe();
     }
 
     @Override
@@ -207,7 +213,7 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
 
         // Hose info
         HookahBlockEntity be = be();
-        HookahHoseType type = be != null ? be.getHoseType() : HookahHoseType.NONE;
+        HookahHoseType type = menu.getHoseType();
         Component hoseLine;
         int hoseColor;
         if (type == HookahHoseType.NONE) {
@@ -245,7 +251,7 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
         gg.drawString(this.font, btnText, BUTTON_X + (BUTTON_W - btnW) / 2, BUTTON_TEXT_Y, btnColor, false);
 
         // "Fill slots" hint
-        if (isInUseByMe() && be != null && !be.hasAllConsumables()) {
+        if (isInUseByMe() && !menu.hasAllConsumables()) {
             Component hint = Component.translatable("gui.hookahmod.fill_slots").withStyle(ChatFormatting.ITALIC);
             int hwt = this.font.width(hint);
             gg.drawString(this.font, hint, (this.imageWidth - hwt) / 2, this.inventoryLabelY - 12, 0xFFB0B0B0, false);

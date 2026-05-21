@@ -3,11 +3,14 @@ package com.hookahmod.block;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.registry.ModBlockEntities;
+import com.hookahmod.registry.ModItems;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
+import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.MenuProvider;
@@ -168,21 +171,36 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
         }
         if (player.isShiftKeyDown()) {
             if (level.isClientSide) return net.minecraft.world.InteractionResult.SUCCESS;
-            if (be.getHoseType().isPresent()) {
-                if (be.isInUse()) {
-                    player.displayClientMessage(Component.translatable("message.hookahmod.cannot_remove_hose_in_use"), true);
-                    return net.minecraft.world.InteractionResult.CONSUME;
-                }
-                be.dropHoseToPlayer(level, pos, player);
+            if (!player.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) {
+                player.displayClientMessage(Component.translatable("message.hookahmod.chest_slot_occupied"), true);
                 return net.minecraft.world.InteractionResult.CONSUME;
             }
-            return net.minecraft.world.InteractionResult.PASS;
+
+            ItemStack stack = new ItemStack(ModItems.HOOKAH.get());
+            be.releaseMouthpiece();
+            be.saveItemsToStack(stack);
+            be.clearItemsForPickup();
+            level.removeBlock(pos, false);
+            player.setItemSlot(EquipmentSlot.CHEST, stack);
+            player.displayClientMessage(Component.translatable("message.hookahmod.worn"), true);
+            return net.minecraft.world.InteractionResult.CONSUME;
         }
         if (level.isClientSide) return net.minecraft.world.InteractionResult.SUCCESS;
         if (player instanceof ServerPlayer sp) {
-            sp.openMenu(getMenuProvider(state, level, pos), buf -> buf.writeBlockPos(pos));
+            sp.openMenu(getMenuProvider(state, level, pos), buf -> {
+                buf.writeBoolean(false);
+                buf.writeBlockPos(pos);
+            });
         }
         return net.minecraft.world.InteractionResult.CONSUME;
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof HookahBlockEntity be
+                && stack.has(DataComponents.CONTAINER)) {
+            be.loadItemsFromStack(stack);
+        }
     }
 
     public MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {

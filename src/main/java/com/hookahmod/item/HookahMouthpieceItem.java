@@ -5,6 +5,7 @@ import com.hookahmod.event.ActiveSessions;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
@@ -33,6 +34,8 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
 
     private static final RawAnimation SMOKING_ANIM =
             RawAnimation.begin().thenPlay("animation.hookah_mouthpiece.smoking");
+    private static final RawAnimation RETURN_ANIM =
+            RawAnimation.begin().thenPlay("animation.hookah_mouthpiece.return");
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
@@ -47,6 +50,7 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
         controllers.add(
                 new AnimationController<>(this, "controller", 2, state -> PlayState.STOP)
                         .triggerableAnim("smoking", SMOKING_ANIM)
+                        .triggerableAnim("return", RETURN_ANIM)
         );
     }
 
@@ -60,28 +64,52 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
     @Override
     public int getUseDuration(ItemStack stack, LivingEntity entity) { return MAX_CHARGE_TICKS; }
 
+    private void triggerMouthpieceAnimation(Level level, Player player, ItemStack stack, String triggerName) {
+        if (level instanceof ServerLevel serverLevel) {
+            long animId = GeoItem.getOrAssignId(stack, serverLevel);
+            this.triggerAnim(player, animId, "controller", triggerName);
+        }
+    }
+
     // ── Start using ─────────────────────────────────────────────────
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (ActiveSessions.get(player.getUUID()) == null) {
-            if (!level.isClientSide) {
-                player.displayClientMessage(Component.translatable("message.hookahmod.claim_first"), true);
-            }
+        if (level.isClientSide
+                && ActiveSessions.get(player.getUUID()) == null
+                && ActiveSessions.getWornWearer(player.getUUID()) == null) {
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
+        }
+        if (!level.isClientSide
+                && ActiveSessions.get(player.getUUID()) == null
+                && ActiveSessions.getWornWearer(player.getUUID()) == null) {
+            player.displayClientMessage(Component.translatable("message.hookahmod.claim_first"), true);
             return InteractionResultHolder.fail(player.getItemInHand(hand));
         }
         if (!level.isClientSide) {
             HookahBlockEntity be = findClaimedHookah(player, level);
-            if (be == null) return InteractionResultHolder.fail(player.getItemInHand(hand));
-            if (player.distanceToSqr(Vec3.atCenterOf(be.getBlockPos())) > be.getHoseType().getMaxLength() * be.getHoseType().getMaxLength()) {
-                player.displayClientMessage(Component.translatable("message.hookahmod.slipped"), true);
-                return InteractionResultHolder.fail(player.getItemInHand(hand));
+            if (be != null) {
+                if (player.distanceToSqr(Vec3.atCenterOf(be.getBlockPos())) > be.getHoseType().getMaxLength() * be.getHoseType().getMaxLength()) {
+                    player.displayClientMessage(Component.translatable("message.hookahmod.slipped"), true);
+                    return InteractionResultHolder.fail(player.getItemInHand(hand));
+                }
+                if (!be.hasAllConsumables()) {
+                    player.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
+                    return InteractionResultHolder.fail(player.getItemInHand(hand));
+                }
+            } else {
+                Player wearer = WornHookah.findClaimedWearer(player, level);
+                ItemStack wornHookah = WornHookah.findClaimedStack(player, level);
+                if (wearer == null || wornHookah.isEmpty()) return InteractionResultHolder.fail(player.getItemInHand(hand));
+                if (!WornHookah.isUserInRange(player, wearer, wornHookah)) {
+                    player.displayClientMessage(Component.translatable("message.hookahmod.slipped"), true);
+                    return InteractionResultHolder.fail(player.getItemInHand(hand));
+                }
+                if (!WornHookah.hasAllConsumables(wornHookah)) {
+                    player.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
+                    return InteractionResultHolder.fail(player.getItemInHand(hand));
+                }
             }
-            if (!be.hasAllConsumables()) {
-                player.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
-                return InteractionResultHolder.fail(player.getItemInHand(hand));
-            }
-            this.triggerAnim(player, (long) player.getId(), "controller", "smoking");
-            this.triggerAnim(player, 0L, "controller", "smoking");
+            triggerMouthpieceAnimation(level, player, player.getItemInHand(hand), "smoking");
         }
         player.startUsingItem(hand);
         return InteractionResultHolder.consume(player.getItemInHand(hand));
@@ -94,14 +122,30 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
         if (level.isClientSide || remainingTicks % 5 != 0) return;
 
         HookahBlockEntity be = findClaimedHookah(player, level);
-        if (be == null) { player.stopUsingItem(); return; }
-        if (player.distanceToSqr(Vec3.atCenterOf(be.getBlockPos())) > be.getHoseType().getMaxLength() * be.getHoseType().getMaxLength()) {
-            player.stopUsingItem();
+        if (be != null) {
+            if (player.distanceToSqr(Vec3.atCenterOf(be.getBlockPos())) > be.getHoseType().getMaxLength() * be.getHoseType().getMaxLength()) {
+                triggerMouthpieceAnimation(level, player, stack, "return");
+                player.stopUsingItem();
+                return;
+            }
+            if (!be.hasAllConsumables()) {
+                if (player instanceof ServerPlayer sp)
+                    sp.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
+                triggerMouthpieceAnimation(level, player, stack, "return");
+                player.stopUsingItem();
+            }
             return;
         }
-        if (!be.hasAllConsumables()) {
-            if (player instanceof ServerPlayer sp)
+
+        Player wearer = WornHookah.findClaimedWearer(player, level);
+        ItemStack wornHookah = WornHookah.findClaimedStack(player, level);
+        if (wearer == null || wornHookah.isEmpty()
+                || !WornHookah.isUserInRange(player, wearer, wornHookah)
+                || !WornHookah.hasAllConsumables(wornHookah)) {
+            if (player instanceof ServerPlayer sp && !wornHookah.isEmpty() && !WornHookah.hasAllConsumables(wornHookah)) {
                 sp.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
+            }
+            triggerMouthpieceAnimation(level, player, stack, "return");
             player.stopUsingItem();
         }
     }
@@ -110,6 +154,7 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
     @Override
     public void releaseUsing(ItemStack stack, Level level, LivingEntity entity, int timeCharged) {
         if (!(entity instanceof Player player)) return;
+        triggerMouthpieceAnimation(level, player, stack, "return");
         int held = MAX_CHARGE_TICKS - timeCharged;
         if (held < 5) return;
         float charge = Math.min(held, MAX_CHARGE_TICKS) / (float) MAX_CHARGE_TICKS;
@@ -121,6 +166,7 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
     public ItemStack finishUsingItem(ItemStack stack, Level level, LivingEntity entity) {
         if (entity instanceof Player player) {
             exhale(player, level, 1.0f);
+            triggerMouthpieceAnimation(level, player, stack, "return");
         }
         return stack;
     }
@@ -149,8 +195,18 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
 
         if (!(player instanceof ServerPlayer sp)) return;
         HookahBlockEntity be = findClaimedHookah(player, level);
-        if (be == null || !be.hasAllConsumables()) return;
-        be.applyExhale(sp, charge);
+        if (be != null) {
+            if (be.hasAllConsumables()) be.applyExhale(sp, charge);
+            return;
+        }
+
+        Player wearer = WornHookah.findClaimedWearer(player, level);
+        ItemStack wornHookah = WornHookah.findClaimedStack(player, level);
+        if (wearer instanceof ServerPlayer serverWearer
+                && !wornHookah.isEmpty()
+                && WornHookah.hasAllConsumables(wornHookah)) {
+            WornHookah.applyExhale(sp, serverWearer, wornHookah, charge);
+        }
     }
 
     public static HookahBlockEntity findClaimedHookah(Player player, Level level) {

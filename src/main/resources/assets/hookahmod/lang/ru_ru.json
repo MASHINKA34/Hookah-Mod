@@ -8,6 +8,9 @@
   "item.hookahmod.hookah_tobacco": "Табак",
   "item.hookahmod.hookah_charcoal": "Кальянный уголь",
   "item.hookahmod.hookah_water_bottle": "Вода для кальяна",
+  "item.hookahmod.hookah_flask": "Колба кальяна",
+  "item.hookahmod.hookah_shaft": "Шахта кальяна",
+  "item.hookahmod.hookah_bowl": "Чаша кальяна",
   "container.hookahmod.hookah": "Кальян",
 
   "gui.hookahmod.btn_take": "Взять",
@@ -20,7 +23,7 @@
   "gui.hookahmod.hose_long": "Шланг: длинный (10 бл.)",
   "gui.hookahmod.fill_slots": "Положите табак, уголь и воду",
 
-  "gui.hookahmod.hint_hose": "Слот шланга — короткий или длинный",
+  "gui.hookahmod.hint_hose": "Слот шланга - короткий или длинный",
   "gui.hookahmod.hint_tobacco": "Слот табака",
   "gui.hookahmod.hint_coal": "Слот угля",
   "gui.hookahmod.hint_water": "Слот воды",
@@ -33,8 +36,14 @@
   "message.hookahmod.busy": "Трубка занята другим игроком",
   "message.hookahmod.slipped": "Трубка выскользнула из рук",
   "message.hookahmod.hose_already_installed": "Шланг уже установлен",
-  "message.hookahmod.cannot_remove_hose_in_use": "Нельзя снять шланг — трубка в использовании",
+  "message.hookahmod.cannot_remove_hose_in_use": "Нельзя снять шланг - трубка используется",
   "message.hookahmod.no_mouthpiece": "Нужен мундштук в инвентаре",
   "message.hookahmod.lost_mouthpiece": "Мундштук потерян из рук",
-  "message.hookahmod.claim_first": "Сначала нажмите «Взять» в GUI кальяна"
+  "message.hookahmod.claim_first": "Сначала нажмите \"Взять\" в GUI кальяна",
+  "message.hookahmod.chest_slot_occupied": "Слот нагрудника занят",
+  "message.hookahmod.worn": "Кальян надет на спину",
+  "message.hookahmod.no_worn_hookah": "На спине нет кальяна",
+
+  "key.categories.hookahmod": "Hookah Mod",
+  "key.hookahmod.open_worn_hookah": "Открыть кальян на спине"
 }

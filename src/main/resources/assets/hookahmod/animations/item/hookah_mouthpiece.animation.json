@@ -19,6 +19,22 @@
 					}
 				}
 			}
+		},
+		"animation.hookah_mouthpiece.return": {
+			"loop": false,
+			"animation_length": 0.35,
+			"bones": {
+				"bone": {
+					"rotation": {
+						"0.0": {
+							"vector": [30, 0, 15]
+						},
+						"0.35": {
+							"vector": [0, 0, 0]
+						}
+					}
+				}
+			}
 		}
 	}
 }

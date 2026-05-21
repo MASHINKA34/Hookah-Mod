@@ -17,10 +17,22 @@ public final class NetworkHandler {
                 ToggleMouthpiecePayload::handle
         );
 
+        registrar.playToServer(
+                OpenWornHookahPayload.TYPE,
+                OpenWornHookahPayload.STREAM_CODEC,
+                OpenWornHookahPayload::handle
+        );
+
         registrar.playToClient(
                 HookahSyncPayload.TYPE,
                 HookahSyncPayload.STREAM_CODEC,
                 HookahSyncPayload::handle
+        );
+
+        registrar.playToClient(
+                WornHookahSyncPayload.TYPE,
+                WornHookahSyncPayload.STREAM_CODEC,
+                WornHookahSyncPayload::handle
         );
     }
 }

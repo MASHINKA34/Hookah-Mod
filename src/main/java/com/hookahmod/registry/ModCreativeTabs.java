@@ -19,6 +19,9 @@ public final class ModCreativeTabs {
                     .icon(() -> ModItems.HOOKAH.get().getDefaultInstance())
                     .displayItems((params, output) -> {
                         output.accept(ModItems.HOOKAH.get());
+                        output.accept(ModItems.HOOKAH_FLASK.get());
+                        output.accept(ModItems.HOOKAH_SHAFT.get());
+                        output.accept(ModItems.HOOKAH_BOWL.get());
                         output.accept(ModItems.HOOKAH_MOUTHPIECE.get());
                         output.accept(ModItems.SHORT_HOOKAH_HOSE.get());
                         output.accept(ModItems.LONG_HOOKAH_HOSE.get());

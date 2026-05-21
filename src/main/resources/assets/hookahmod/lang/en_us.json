@@ -8,6 +8,9 @@
   "item.hookahmod.hookah_tobacco": "Tobacco",
   "item.hookahmod.hookah_charcoal": "Hookah Charcoal",
   "item.hookahmod.hookah_water_bottle": "Hookah Water Bottle",
+  "item.hookahmod.hookah_flask": "Hookah Flask",
+  "item.hookahmod.hookah_shaft": "Hookah Shaft",
+  "item.hookahmod.hookah_bowl": "Hookah Bowl",
   "container.hookahmod.hookah": "Hookah",
 
   "gui.hookahmod.btn_take": "Take",
@@ -36,5 +39,10 @@
   "message.hookahmod.cannot_remove_hose_in_use": "Cannot remove hose — mouthpiece is in use",
   "message.hookahmod.no_mouthpiece": "You need a mouthpiece in inventory",
   "message.hookahmod.lost_mouthpiece": "Mouthpiece lost from your hand",
-  "message.hookahmod.claim_first": "First press 'Take' in the hookah GUI"
+  "message.hookahmod.claim_first": "First press 'Take' in the hookah GUI",
+  "message.hookahmod.chest_slot_occupied": "Chest armor slot is occupied",
+  "message.hookahmod.worn": "Hookah equipped on your back",
+  "message.hookahmod.no_worn_hookah": "No hookah on your back",
+  "key.categories.hookahmod": "Hookah Mod",
+  "key.hookahmod.open_worn_hookah": "Open worn hookah"
 }

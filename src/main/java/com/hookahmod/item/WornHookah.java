@@ -4,9 +4,9 @@ import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.event.ActiveSessions;
 import com.hookahmod.network.WornHookahSyncPayload;
 import com.hookahmod.registry.ModItems;
+import com.hookahmod.smoke.HookahSmoke;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -161,28 +161,7 @@ public final class WornHookah {
         if (!(player.level() instanceof ServerLevel server)) return;
 
         Vec3 hookahPoint = wearer.position().add(0, wearer.getBbHeight() * 0.72, 0);
-        int hookahPuffs = 2 + (int) (charge * 5);
-        var hookahPkt = new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(
-                ParticleTypes.CAMPFIRE_COSY_SMOKE, true,
-                hookahPoint.x, hookahPoint.y, hookahPoint.z,
-                0.12f, 0.05f, 0.12f, 0.02f, hookahPuffs);
-        for (ServerPlayer sp : server.players()) {
-            if (sp.distanceToSqr(hookahPoint) <= 128 * 128) sp.connection.send(hookahPkt);
-        }
-
-        int mouthPuffs = 6 + (int) (charge * 20);
-        float spread = 0.08f + charge * 0.20f;
-        float speed = 0.025f + charge * 0.08f;
-        Vec3 look = player.getLookAngle();
-        double mx = player.getX() + look.x * 0.5;
-        double my = player.getY() + player.getEyeHeight() - 0.08;
-        double mz = player.getZ() + look.z * 0.5;
-        var mouthPkt = new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(
-                ParticleTypes.CAMPFIRE_COSY_SMOKE, true,
-                mx, my, mz, spread, 0.06f, spread, speed, mouthPuffs);
-        for (ServerPlayer sp : server.players()) {
-            if (sp.distanceToSqr(mx, my, mz) <= 128 * 128) sp.connection.send(mouthPkt);
-        }
+        HookahSmoke.spawnExhaleSmoke(server, hookahPoint, player, charge);
 
         player.level().playSound(null, wearer.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_DRINK,
                 net.minecraft.sounds.SoundSource.PLAYERS, 0.15f + charge * 0.4f, 1.6f);

@@ -3,6 +3,7 @@ package com.hookahmod.event;
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.item.HookahBlockItem;
 import com.hookahmod.item.WornHookah;
+import com.hookahmod.smoke.HookahSmoke;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -17,12 +18,18 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.UUID;
 
 public final class ServerEvents {
 
     private ServerEvents() {}
+
+    @SubscribeEvent
+    public static void onServerTick(ServerTickEvent.Post event) {
+        HookahSmoke.serverTick(event.getServer());
+    }
 
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {

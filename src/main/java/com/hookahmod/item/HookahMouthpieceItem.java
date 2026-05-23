@@ -2,6 +2,7 @@ package com.hookahmod.item;
 
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.event.ActiveSessions;
+import com.hookahmod.smoke.HookahSmoke;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -174,21 +175,22 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
     // ── Core exhale logic ───────────────────────────────────────────
     private void exhale(Player player, Level level, float charge) {
         if (level.isClientSide) {
-            int count = 4 + (int) (charge * 14);
+            int count = HookahSmoke.clientMouthPuffs(charge);
+            float speed = HookahSmoke.clientMouthSpeed(charge);
             Vec3 look = player.getLookAngle();
             double eyeY = player.getY() + player.getEyeHeight() - 0.1;
             for (int i = 0; i < count; i++) {
                 double dist = 0.6 + i * 0.06;
-                double jx = (Math.random() - 0.5) * 0.15;
-                double jy = (Math.random() - 0.5) * 0.15;
-                double jz = (Math.random() - 0.5) * 0.15;
+                double jx = (level.random.nextDouble() - 0.5) * 0.18;
+                double jy = (level.random.nextDouble() - 0.5) * 0.18;
+                double jz = (level.random.nextDouble() - 0.5) * 0.18;
                 level.addParticle(ParticleTypes.CAMPFIRE_COSY_SMOKE,
                         player.getX() + look.x * dist + jx,
                         eyeY          + look.y * dist + jy,
                         player.getZ() + look.z * dist + jz,
-                        look.x * (0.02 + charge * 0.04),
-                        0.015 + charge * 0.01,
-                        look.z * (0.02 + charge * 0.04));
+                        look.x * speed,
+                        0.012 + HookahSmoke.chargeStrength(charge) * 0.012,
+                        look.z * speed);
             }
             return;
         }

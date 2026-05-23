@@ -5,13 +5,13 @@ import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.network.HookahSyncPayload;
 import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModItems;
+import com.hookahmod.smoke.HookahSmoke;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
@@ -186,32 +186,8 @@ public class HookahBlockEntity extends BlockEntity {
     public void applyExhale(ServerPlayer player, float charge) {
         if (level == null || !(level instanceof ServerLevel server)) return;
 
-        // Smoke at hookah top — send to each nearby player with overrideLimiter=true
-        int hookahPuffs = 2 + (int) (charge * 5); // 2..7
-        double hx = worldPosition.getX() + 0.5, hy = worldPosition.getY() + 1.75, hz = worldPosition.getZ() + 0.5;
-        net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket hookahPkt =
-            new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(
-                net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE, true,
-                hx, hy, hz, 0.12f, 0.05f, 0.12f, 0.02f, hookahPuffs);
-        for (net.minecraft.server.level.ServerPlayer sp : server.players()) {
-            if (sp.distanceToSqr(hx, hy, hz) <= 128 * 128) sp.connection.send(hookahPkt);
-        }
-
-        // Smoke burst from player mouth — send to each nearby player with overrideLimiter=true
-        int mouthPuffs = 6 + (int) (charge * 20); // 6..26
-        float spread = 0.08f + charge * 0.20f;
-        float speed  = 0.025f + charge * 0.08f;
-        net.minecraft.world.phys.Vec3 look = player.getLookAngle();
-        double mx = player.getX() + look.x * 0.5;
-        double my = player.getY() + player.getEyeHeight() - 0.08;
-        double mz = player.getZ() + look.z * 0.5;
-        net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket mouthPkt =
-            new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(
-                net.minecraft.core.particles.ParticleTypes.CAMPFIRE_COSY_SMOKE, true,
-                mx, my, mz, spread, 0.06f, spread, speed, mouthPuffs);
-        for (net.minecraft.server.level.ServerPlayer sp : server.players()) {
-            if (sp.distanceToSqr(mx, my, mz) <= 128 * 128) sp.connection.send(mouthPkt);
-        }
+        Vec3 hookahPoint = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.75, worldPosition.getZ() + 0.5);
+        HookahSmoke.spawnExhaleSmoke(server, hookahPoint, player, charge);
 
         // Sound: louder with more charge
         float volume = 0.15f + charge * 0.4f;

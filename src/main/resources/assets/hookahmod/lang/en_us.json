@@ -44,5 +44,7 @@
   "message.hookahmod.worn": "Hookah equipped on your back",
   "message.hookahmod.no_worn_hookah": "No hookah on your back",
   "key.categories.hookahmod": "Hookah Mod",
-  "key.hookahmod.open_worn_hookah": "Open worn hookah"
+  "key.hookahmod.open_worn_hookah": "Open worn hookah",
+
+  "subtitles.hookahmod.smoking": "Hookah bubbling"
 }

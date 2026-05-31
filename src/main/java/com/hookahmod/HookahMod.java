@@ -7,6 +7,7 @@ import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.registry.ModCreativeTabs;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModMenuTypes;
+import com.hookahmod.registry.ModSounds;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
@@ -26,6 +27,7 @@ public final class HookahMod {
         ModBlockEntities.BLOCK_ENTITIES.register(modBus);
         ModMenuTypes.MENUS.register(modBus);
         ModCreativeTabs.TABS.register(modBus);
+        ModSounds.SOUNDS.register(modBus);
 
         modBus.addListener(NetworkHandler::register);
 

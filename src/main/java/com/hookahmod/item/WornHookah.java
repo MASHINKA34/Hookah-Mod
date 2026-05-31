@@ -89,7 +89,7 @@ public final class WornHookah {
 
     public static void releaseMouthpiece(ServerPlayer wearer, ItemStack stack) {
         UUID active = getActivePlayerUuid(stack);
-        if (active != null) ActiveSessions.unregister(active);
+        if (active != null) ActiveSessions.of(wearer.level()).unregister(active);
         setActivePlayerUuid(stack, null);
         wearer.setItemSlot(EquipmentSlot.CHEST, stack);
         if (active != null) {
@@ -122,7 +122,7 @@ public final class WornHookah {
         }
 
         setActivePlayerUuid(stack, player.getUUID());
-        ActiveSessions.registerWorn(player.getUUID(), wearer.getUUID());
+        ActiveSessions.of(player.level()).registerWorn(player.getUUID(), wearer.getUUID());
         wearer.setItemSlot(EquipmentSlot.CHEST, stack);
         PacketDistributor.sendToPlayer(player, WornHookahSyncPayload.claim(wearer.getUUID()));
         return true;
@@ -140,7 +140,7 @@ public final class WornHookah {
 
     @Nullable
     public static Player findClaimedWearer(Player user, Level level) {
-        UUID wearerUuid = ActiveSessions.getWornWearer(user.getUUID());
+        UUID wearerUuid = ActiveSessions.of(level).getWornWearer(user.getUUID());
         return wearerUuid == null ? null : level.getPlayerByUUID(wearerUuid);
     }
 

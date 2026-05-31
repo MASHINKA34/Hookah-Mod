@@ -95,7 +95,7 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
     private boolean isInUseByMe() {
         UUID my = myUuid();
         if (menu.isWearable()) {
-            return my != null && ActiveSessions.getWornWearer(my) != null;
+            return my != null && ActiveSessions.client().getWornWearer(my) != null;
         }
         return my != null && my.equals(menu.getActivePlayerUuid());
     }

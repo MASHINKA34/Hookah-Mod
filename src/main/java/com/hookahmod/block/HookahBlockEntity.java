@@ -120,7 +120,7 @@ public class HookahBlockEntity extends BlockEntity {
         }
         activePlayerUuid = player.getUUID();
         if (level != null) {
-            com.hookahmod.event.ActiveSessions.register(activePlayerUuid, level.dimension(), worldPosition);
+            com.hookahmod.event.ActiveSessions.of(level).register(activePlayerUuid, level.dimension(), worldPosition);
         }
         setChangedAndSync();
         return true;
@@ -138,7 +138,7 @@ public class HookahBlockEntity extends BlockEntity {
 
     public void releaseMouthpiece() {
         if (activePlayerUuid == null) return;
-        com.hookahmod.event.ActiveSessions.unregister(activePlayerUuid);
+        if (level != null) com.hookahmod.event.ActiveSessions.of(level).unregister(activePlayerUuid);
         activePlayerUuid = null;
         // smokeTimer/waterTimer intentionally NOT reset: bowl depletion is
         // tied to the hookah and persists across sessions, so partial puffs
@@ -240,7 +240,7 @@ public class HookahBlockEntity extends BlockEntity {
             } else {
                 server.sendBlockUpdated(worldPosition, s, s, 3);
             }
-            HookahSyncPayload payload = new HookahSyncPayload(worldPosition, getHoseType(), activePlayerUuid);
+            HookahSyncPayload payload = new HookahSyncPayload(worldPosition, activePlayerUuid);
             for (ServerPlayer p : server.players()) {
                 if (p.distanceToSqr(Vec3.atCenterOf(worldPosition)) < 128.0 * 128.0) {
                     PacketDistributor.sendToPlayer(p, payload);
@@ -294,11 +294,6 @@ public class HookahBlockEntity extends BlockEntity {
     public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookup) {
         CompoundTag tag = pkt.getTag();
         if (tag != null) handleUpdateTag(tag, lookup);
-    }
-
-    public void applySync(HookahHoseType type, @Nullable UUID active) {
-        items.set(SLOT_HOSE, HookahHoseItem.stackFor(type));
-        this.activePlayerUuid = active;
     }
 
     public static final class HookahContainer implements Container {

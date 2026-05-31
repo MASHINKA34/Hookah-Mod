@@ -1,6 +1,7 @@
 package com.hookahmod.client;
 
 import com.hookahmod.HookahMod;
+import com.hookahmod.block.HookahBlock;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.registry.ModBlocks;
@@ -50,16 +51,19 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         ItemStack stack = player.getItemBySlot(EquipmentSlot.CHEST);
         if (!WornHookah.isHookahStack(stack)) return;
 
-        renderHookahBlockModel(pose, buffer, packedLight);
+        boolean lit = WornHookah.hasCoal(stack);
+        int light = lit ? litBlockLight(packedLight, 8) : packedLight;
 
-        if (WornHookah.hasCoal(stack)) {
-            renderCoal(pose, buffer, packedLight, player);
+        renderHookahBlockModel(pose, buffer, light, lit);
+
+        if (lit) {
+            renderCoal(pose, buffer, light, player);
             spawnCoalParticles(player, partialTick);
         }
 
         HookahHoseType hoseType = WornHookah.getHoseType(stack);
         if (hoseType.isPresent()) {
-            renderHose(pose, buffer, packedLight, player, stack, partialTick);
+            renderHose(pose, buffer, light, player, stack, partialTick);
         }
     }
 
@@ -71,11 +75,11 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         pose.scale(BACK_SCALE, BACK_SCALE, BACK_SCALE);
     }
 
-    private void renderHookahBlockModel(PoseStack pose, MultiBufferSource buffer, int packedLight) {
+    private void renderHookahBlockModel(PoseStack pose, MultiBufferSource buffer, int packedLight, boolean lit) {
         pose.pushPose();
         applyBackHookahTransform(pose);
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(
-                ModBlocks.HOOKAH.get().defaultBlockState(),
+                ModBlocks.HOOKAH.get().defaultBlockState().setValue(HookahBlock.HAS_COAL, lit),
                 pose,
                 buffer,
                 packedLight,
@@ -202,6 +206,12 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
                 0.0,
                 0.015 + player.clientLevel.random.nextDouble() * 0.02,
                 0.0);
+    }
+
+    private static int litBlockLight(int packedLight, int min) {
+        int block = Math.max((packedLight >> 4) & 0xF, min);
+        int sky = (packedLight >> 20) & 0xF;
+        return LightTexture.pack(block, sky);
     }
 
     private static void drawTintedCube(PoseStack pose, VertexConsumer vc,

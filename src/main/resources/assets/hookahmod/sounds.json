@@ -1,0 +1,11 @@
+{
+  "smoking": {
+    "subtitle": "subtitles.hookahmod.smoking",
+    "sounds": [
+      {
+        "name": "hookahmod:smoking",
+        "attenuation_distance": 12
+      }
+    ]
+  }
+}

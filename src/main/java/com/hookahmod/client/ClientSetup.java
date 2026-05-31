@@ -19,6 +19,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -39,6 +40,7 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onClientSetup(FMLClientSetupEvent event) {
         NeoForge.EVENT_BUS.addListener(ClientSetup::onKeyInput);
+        NeoForge.EVENT_BUS.addListener(ClientSetup::onClientTick);
     }
 
     @SubscribeEvent
@@ -85,5 +87,9 @@ public final class ClientSetup {
                 PacketDistributor.sendToServer(new OpenWornHookahPayload());
             }
         }
+    }
+
+    private static void onClientTick(ClientTickEvent.Post event) {
+        HookahSmokingSound.tickLocal();
     }
 }

@@ -140,7 +140,10 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
             return ItemInteractionResult.CONSUME;
         }
         if (stack.getItem() instanceof com.hookahmod.item.HookahMouthpieceItem) {
-            if (level.isClientSide) return ItemInteractionResult.SUCCESS;
+            if (level.isClientSide) {
+                player.startUsingItem(hand);
+                return ItemInteractionResult.SUCCESS;
+            }
             if (!be.getHoseType().isPresent()) {
                 player.displayClientMessage(Component.translatable("message.hookahmod.install_hose"), true);
                 return ItemInteractionResult.CONSUME;

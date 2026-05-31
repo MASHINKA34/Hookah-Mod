@@ -35,10 +35,11 @@ public record WornHookahSyncPayload(Optional<UUID> wearer) implements CustomPack
     public static void handle(WornHookahSyncPayload payload, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             UUID player = ctx.player().getUUID();
+            ActiveSessions sessions = ActiveSessions.of(ctx.player().level());
             if (payload.wearer.isPresent()) {
-                ActiveSessions.registerWorn(player, payload.wearer.get());
+                sessions.registerWorn(player, payload.wearer.get());
             } else {
-                ActiveSessions.unregister(player);
+                sessions.unregister(player);
             }
         });
     }

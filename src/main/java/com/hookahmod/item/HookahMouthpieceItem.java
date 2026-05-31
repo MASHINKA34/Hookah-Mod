@@ -76,13 +76,13 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (level.isClientSide
-                && ActiveSessions.get(player.getUUID()) == null
-                && ActiveSessions.getWornWearer(player.getUUID()) == null) {
+                && ActiveSessions.of(level).get(player.getUUID()) == null
+                && ActiveSessions.of(level).getWornWearer(player.getUUID()) == null) {
             return InteractionResultHolder.fail(player.getItemInHand(hand));
         }
         if (!level.isClientSide
-                && ActiveSessions.get(player.getUUID()) == null
-                && ActiveSessions.getWornWearer(player.getUUID()) == null) {
+                && ActiveSessions.of(level).get(player.getUUID()) == null
+                && ActiveSessions.of(level).getWornWearer(player.getUUID()) == null) {
             player.displayClientMessage(Component.translatable("message.hookahmod.claim_first"), true);
             return InteractionResultHolder.fail(player.getItemInHand(hand));
         }
@@ -212,7 +212,7 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
     }
 
     public static HookahBlockEntity findClaimedHookah(Player player, Level level) {
-        GlobalPos gp = ActiveSessions.get(player.getUUID());
+        GlobalPos gp = ActiveSessions.of(level).get(player.getUUID());
         if (gp == null || !gp.dimension().equals(level.dimension())) return null;
         BlockEntity be = level.getBlockEntity(gp.pos());
         if (be instanceof HookahBlockEntity hbe && player.getUUID().equals(hbe.getActivePlayerUuid())) {

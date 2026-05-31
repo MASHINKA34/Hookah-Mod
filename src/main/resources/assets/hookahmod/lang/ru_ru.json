@@ -45,5 +45,7 @@
   "message.hookahmod.no_worn_hookah": "На спине нет кальяна",
 
   "key.categories.hookahmod": "Hookah Mod",
-  "key.hookahmod.open_worn_hookah": "Открыть кальян на спине"
+  "key.hookahmod.open_worn_hookah": "Открыть кальян на спине",
+
+  "subtitles.hookahmod.smoking": "Бульканье кальяна"
 }

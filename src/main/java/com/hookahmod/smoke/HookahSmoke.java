@@ -39,6 +39,7 @@ public final class HookahSmoke {
 
     private static final List<LingeringSmoke> LINGERING_SMOKE = new ArrayList<>();
     private static final Map<RoomKey, RoomSmoke> ROOM_SMOKE = new HashMap<>();
+    private static int roomPhaseCounter = 0;
 
     private HookahSmoke() {}
 
@@ -105,6 +106,16 @@ public final class HookahSmoke {
     }
 
     private static void accumulateRoomSmoke(ServerLevel level, BlockPos origin, float strength) {
+        // Fast path: the puff happened inside a room we are already tracking, so
+        // reuse it instead of running another flood fill. The periodic recheck in
+        // tickRoomSmoke still re-validates the room, so staleness stays bounded.
+        RoomSmoke active = findActiveRoomContaining(level.dimension(), origin);
+        if (active != null) {
+            applyPuffToRoom(level, active, strength);
+            return;
+        }
+
+        // Slow path: discover the enclosing room with a one-off flood fill.
         RoomProbe probe = findEnclosedRoom(level, origin);
         if (probe == null) return;
         if (!ROOM_SMOKE.containsKey(probe.key) && ROOM_SMOKE.size() >= MAX_ROOM_CLOUDS) return;
@@ -112,9 +123,27 @@ public final class HookahSmoke {
         RoomSmoke smoke = ROOM_SMOKE.computeIfAbsent(probe.key, key -> new RoomSmoke(key, probe.airBlocks));
         smoke.airBlocks = probe.airBlocks;
         smoke.origin = probe.start;
+        applyPuffToRoom(level, smoke, strength);
+    }
+
+    private static RoomSmoke findActiveRoomContaining(ResourceKey<Level> dimension, BlockPos pos) {
+        for (RoomSmoke smoke : ROOM_SMOKE.values()) {
+            RoomKey k = smoke.key;
+            if (!k.dimension.equals(dimension)) continue;
+            // Cheap bounding-box reject before the (rarely reached) list scan.
+            if (pos.getX() < k.min.getX() || pos.getX() > k.max.getX()
+                    || pos.getY() < k.min.getY() || pos.getY() > k.max.getY()
+                    || pos.getZ() < k.min.getZ() || pos.getZ() > k.max.getZ()) {
+                continue;
+            }
+            if (smoke.airBlocks.contains(pos)) return smoke;
+        }
+        return null;
+    }
+
+    private static void applyPuffToRoom(ServerLevel level, RoomSmoke smoke, float strength) {
         smoke.puffs = Math.min(ROOM_MIN_PUFFS, smoke.puffs + 1);
         smoke.remainingTicks = ROOM_LINGER_TICKS;
-
         if (smoke.puffs < ROOM_MIN_PUFFS) return;
 
         smoke.density = Math.min(ROOM_MAX_DENSITY, smoke.density + 0.55f + strength * 1.45f);
@@ -133,13 +162,17 @@ public final class HookahSmoke {
             }
 
             smoke.ticks++;
+            smoke.age++;
             smoke.remainingTicks--;
             if (smoke.remainingTicks <= 0 || smoke.airBlocks.isEmpty()) {
                 iterator.remove();
                 continue;
             }
 
-            if (smoke.ticks % ROOM_RECHECK_TICKS == 0 && !isStillSameClosedRoom(level, smoke)) {
+            // Re-validate on a fixed cadence regardless of how often the room is
+            // puffed into, staggered per-room (via phase) so the flood fills
+            // spread across ticks instead of all landing on the same one.
+            if ((smoke.age + smoke.phase) % ROOM_RECHECK_TICKS == 0 && !isStillSameClosedRoom(level, smoke)) {
                 iterator.remove();
                 continue;
             }
@@ -292,17 +325,21 @@ public final class HookahSmoke {
 
     private static final class RoomSmoke {
         private final RoomKey key;
+        private final int phase;
         private BlockPos origin;
         private List<BlockPos> airBlocks;
         private float density;
         private int puffs;
         private int remainingTicks = ROOM_LINGER_TICKS;
         private int ticks;
+        private int age;
 
         private RoomSmoke(RoomKey key, List<BlockPos> airBlocks) {
             this.key = key;
             this.airBlocks = airBlocks;
             this.origin = key.min;
+            this.phase = roomPhaseCounter;
+            roomPhaseCounter = (roomPhaseCounter + 1) % ROOM_RECHECK_TICKS;
         }
     }
 }

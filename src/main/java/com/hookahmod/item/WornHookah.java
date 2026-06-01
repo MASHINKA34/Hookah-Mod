@@ -5,6 +5,7 @@ import com.hookahmod.event.ActiveSessions;
 import com.hookahmod.network.WornHookahSyncPayload;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.smoke.HookahSmoke;
+import com.hookahmod.smoking.IntoxicationState;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -23,6 +24,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.UUID;
@@ -39,7 +41,7 @@ public final class WornHookah {
     private WornHookah() {}
 
     public static boolean isHookahStack(ItemStack stack) {
-        return stack.is(ModItems.HOOKAH.get());
+        return stack.getItem() instanceof TieredHookahItem;
     }
 
     public static NonNullList<ItemStack> getItems(ItemStack stack) {
@@ -160,11 +162,24 @@ public final class WornHookah {
     public static void applyExhale(ServerPlayer player, ServerPlayer wearer, ItemStack stack, float charge) {
         if (!(player.level() instanceof ServerLevel server)) return;
 
+        NonNullList<ItemStack> items = getItems(stack);
+        ItemStack tobaccoStack = items.get(HookahBlockEntity.SLOT_TOBACCO);
+        HookahTier tier = HookahTier.fromStack(stack);
+        Vector3f smokeColor = tobaccoStack.getItem() instanceof AbstractTobaccoItem tobaccoForSmoke
+                ? tobaccoForSmoke.smokeColor()
+                : null;
         Vec3 hookahPoint = wearer.position().add(0, wearer.getBbHeight() * 0.72, 0);
-        HookahSmoke.spawnExhaleSmoke(server, hookahPoint, player, charge);
+        HookahSmoke.spawnExhaleSmoke(server, hookahPoint, player, charge, smokeColor);
 
         player.level().playSound(null, wearer.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_DRINK,
                 net.minecraft.sounds.SoundSource.PLAYERS, 0.15f + charge * 0.4f, 1.6f);
+
+        if (tobaccoStack.getItem() instanceof AbstractTobaccoItem tobacco) {
+            IntoxicationState.add(player, IntoxicationState.gain(tobacco.intoxication(), charge));
+            tobacco.onExhale(server, player, charge, tier.effectMult(), tier.combatMult());
+        } else {
+            IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.REGULAR_TOBACCO_INTOXICATION, charge));
+        }
 
         depleteConsumables(stack);
         wearer.setItemSlot(EquipmentSlot.CHEST, stack);
@@ -175,7 +190,7 @@ public final class WornHookah {
         boolean changed = false;
 
         int smokeTimer = getInt(stack, SMOKE_TIMER_TAG) + 1;
-        if (smokeTimer >= PUFFS_PER_SOLID) {
+        if (smokeTimer >= puffsPerSolid(items.get(HookahBlockEntity.SLOT_TOBACCO))) {
             smokeTimer = 0;
             items.get(HookahBlockEntity.SLOT_TOBACCO).shrink(1);
             items.get(HookahBlockEntity.SLOT_COAL).shrink(1);
@@ -192,6 +207,12 @@ public final class WornHookah {
         setInt(stack, SMOKE_TIMER_TAG, smokeTimer);
         setInt(stack, WATER_TIMER_TAG, waterTimer);
         if (changed) setItems(stack, items);
+    }
+
+    private static int puffsPerSolid(ItemStack tobaccoStack) {
+        return tobaccoStack.getItem() instanceof AbstractTobaccoItem tobacco && tobacco.category() == TobaccoCategory.COMBAT
+                ? 10
+                : PUFFS_PER_SOLID;
     }
 
     private static int getInt(ItemStack stack, String key) {

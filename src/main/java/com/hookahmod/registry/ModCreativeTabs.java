@@ -19,6 +19,10 @@ public final class ModCreativeTabs {
                     .icon(() -> ModItems.HOOKAH.get().getDefaultInstance())
                     .displayItems((params, output) -> {
                         output.accept(ModItems.HOOKAH.get());
+                        output.accept(ModItems.HOOKAH_GOLD.get());
+                        output.accept(ModItems.HOOKAH_IRON.get());
+                        output.accept(ModItems.HOOKAH_DIAMOND.get());
+                        output.accept(ModItems.HOOKAH_NETHERITE.get());
                         output.accept(ModItems.HOOKAH_FLASK.get());
                         output.accept(ModItems.HOOKAH_SHAFT.get());
                         output.accept(ModItems.HOOKAH_BOWL.get());
@@ -26,8 +30,14 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.SHORT_HOOKAH_HOSE.get());
                         output.accept(ModItems.LONG_HOOKAH_HOSE.get());
                         output.accept(ModItems.HOOKAH_TOBACCO.get());
+                        output.accept(ModItems.TOBACCO_POISON.get());
+                        output.accept(ModItems.TOBACCO_FIRE.get());
+                        output.accept(ModItems.TOBACCO_ICE.get());
+                        output.accept(ModItems.TOBACCO_HEAL.get());
+                        output.accept(ModItems.TOBACCO_ABYSS.get());
                         output.accept(ModItems.HOOKAH_CHARCOAL.get());
                         output.accept(ModItems.HOOKAH_WATER_BOTTLE.get());
+                        output.accept(ModItems.TONOMETER.get());
                     })
                     .build()
     );

@@ -4,6 +4,8 @@ import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.event.ActiveSessions;
 import com.hookahmod.smoke.HookahSmoke;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -26,6 +28,8 @@ import software.bernie.geckolib.animation.AnimationController;
 import software.bernie.geckolib.animation.PlayState;
 import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.UUID;
 
@@ -177,6 +181,10 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
         if (level.isClientSide) {
             int count = HookahSmoke.clientMouthPuffs(charge);
             float speed = HookahSmoke.clientMouthSpeed(charge);
+            Vector3f smokeColor = clientSmokeColor(player, level);
+            ParticleOptions particle = smokeColor == null
+                    ? ParticleTypes.CAMPFIRE_COSY_SMOKE
+                    : new DustParticleOptions(new Vector3f(smokeColor), 1.45f);
             Vec3 look = player.getLookAngle();
             double eyeY = player.getY() + player.getEyeHeight() - 0.1;
             for (int i = 0; i < count; i++) {
@@ -184,7 +192,7 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
                 double jx = (level.random.nextDouble() - 0.5) * 0.18;
                 double jy = (level.random.nextDouble() - 0.5) * 0.18;
                 double jz = (level.random.nextDouble() - 0.5) * 0.18;
-                level.addParticle(ParticleTypes.CAMPFIRE_COSY_SMOKE,
+                level.addParticle(particle,
                         player.getX() + look.x * dist + jx,
                         eyeY          + look.y * dist + jy,
                         player.getZ() + look.z * dist + jz,
@@ -209,6 +217,22 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
                 && WornHookah.hasAllConsumables(wornHookah)) {
             WornHookah.applyExhale(sp, serverWearer, wornHookah, charge);
         }
+    }
+
+    @Nullable
+    private static Vector3f clientSmokeColor(Player player, Level level) {
+        HookahBlockEntity be = findClaimedHookah(player, level);
+        if (be != null) {
+            ItemStack tobacco = be.getInventory().getItem(HookahBlockEntity.SLOT_TOBACCO);
+            return tobacco.getItem() instanceof AbstractTobaccoItem item ? item.smokeColor() : null;
+        }
+
+        ItemStack wornHookah = WornHookah.findClaimedStack(player, level);
+        if (!wornHookah.isEmpty()) {
+            ItemStack tobacco = WornHookah.getItems(wornHookah).get(HookahBlockEntity.SLOT_TOBACCO);
+            return tobacco.getItem() instanceof AbstractTobaccoItem item ? item.smokeColor() : null;
+        }
+        return null;
     }
 
     public static HookahBlockEntity findClaimedHookah(Player player, Level level) {

@@ -6,11 +6,74 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "hookahmod:hookah"
+          "name": "hookahmod:hookah",
+          "conditions": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "hookahmod:hookah",
+              "properties": {
+                "tier": "leather"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hookahmod:hookah_gold",
+          "conditions": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "hookahmod:hookah",
+              "properties": {
+                "tier": "gold"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hookahmod:hookah_iron",
+          "conditions": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "hookahmod:hookah",
+              "properties": {
+                "tier": "iron"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hookahmod:hookah_diamond",
+          "conditions": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "hookahmod:hookah",
+              "properties": {
+                "tier": "diamond"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hookahmod:hookah_netherite",
+          "conditions": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "hookahmod:hookah",
+              "properties": {
+                "tier": "netherite"
+              }
+            }
+          ]
         }
       ],
       "conditions": [
-        { "condition": "minecraft:survives_explosion" }
+        {
+          "condition": "minecraft:survives_explosion"
+        }
       ]
     }
   ]

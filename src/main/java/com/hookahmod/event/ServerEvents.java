@@ -4,6 +4,7 @@ import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.item.HookahBlockItem;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.smoke.HookahSmoke;
+import com.hookahmod.smoking.IntoxicationState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.server.MinecraftServer;
@@ -38,7 +39,22 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
         HookahSmoke.serverTick(event.getServer());
+        tickIntoxication(event.getServer());
         tickWornHookahLights(event.getServer());
+    }
+
+    @SubscribeEvent
+    public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof ServerPlayer sp) {
+            IntoxicationState.sync(sp);
+        }
+    }
+
+    @SubscribeEvent
+    public static void onPlayerRespawn(PlayerEvent.PlayerRespawnEvent event) {
+        if (event.getEntity() instanceof ServerPlayer sp) {
+            IntoxicationState.sync(sp);
+        }
     }
 
     @SubscribeEvent
@@ -63,6 +79,15 @@ public final class ServerEvents {
         if (event.getEntity() instanceof ServerPlayer sp) {
             removeWornHookahLight(sp.server, sp.getUUID());
             releaseSession(sp.server, sp.getUUID());
+            IntoxicationState.sync(sp);
+        }
+    }
+
+    private static void tickIntoxication(MinecraftServer server) {
+        if (server.getTickCount() % 20 != 0) return;
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            IntoxicationState.decayTick(player);
+            IntoxicationState.applyBandEffects(player);
         }
     }
 

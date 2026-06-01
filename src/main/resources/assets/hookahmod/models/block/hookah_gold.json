@@ -1,0 +1,7 @@
+{
+  "parent": "hookahmod:block/hookah",
+  "textures": {
+    "0": "hookahmod:block/hookah_gold",
+    "particle": "hookahmod:block/hookah_gold"
+  }
+}

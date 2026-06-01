@@ -2,6 +2,8 @@ package com.hookahmod.smoke;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
@@ -15,6 +17,8 @@ import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -57,11 +61,15 @@ public final class HookahSmoke {
     }
 
     public static void spawnExhaleSmoke(ServerLevel level, Vec3 hookahPoint, ServerPlayer player, float charge) {
+        spawnExhaleSmoke(level, hookahPoint, player, charge, null);
+    }
+
+    public static void spawnExhaleSmoke(ServerLevel level, Vec3 hookahPoint, ServerPlayer player, float charge, @Nullable Vector3f color) {
         float strength = chargeStrength(charge);
 
         int hookahPuffs = 3 + (int) (strength * 10.0f);
         sendSmoke(level, hookahPoint.x, hookahPoint.y, hookahPoint.z,
-                0.12f, 0.05f, 0.12f, 0.018f, hookahPuffs);
+                0.12f, 0.05f, 0.12f, 0.018f, hookahPuffs, color);
 
         Vec3 look = player.getLookAngle();
         Vec3 mouthPoint = new Vec3(
@@ -74,10 +82,10 @@ public final class HookahSmoke {
         float spread = 0.10f + strength * 0.30f;
         float speed = 0.018f + strength * 0.055f;
         sendSmoke(level, mouthPoint.x, mouthPoint.y, mouthPoint.z,
-                spread, 0.07f, spread, speed, mouthPuffs);
+                spread, 0.07f, spread, speed, mouthPuffs, color);
 
-        LINGERING_SMOKE.add(new LingeringSmoke(level.dimension(), mouthPoint, look, strength, OPEN_LINGER_TICKS));
-        accumulateRoomSmoke(level, BlockPos.containing(mouthPoint.x, mouthPoint.y, mouthPoint.z), strength);
+        LINGERING_SMOKE.add(new LingeringSmoke(level.dimension(), mouthPoint, look, strength, OPEN_LINGER_TICKS, color));
+        accumulateRoomSmoke(level, BlockPos.containing(mouthPoint.x, mouthPoint.y, mouthPoint.z), strength, color);
     }
 
     public static void serverTick(MinecraftServer server) {
@@ -100,18 +108,18 @@ public final class HookahSmoke {
                 int count = 1 + (int) (smoke.strength * 4.0f);
                 float spread = 0.10f + smoke.strength * 0.14f;
                 sendSmoke(level, smoke.position.x, smoke.position.y, smoke.position.z,
-                        spread, 0.05f, spread, 0.006f + smoke.strength * 0.012f, count);
+                        spread, 0.05f, spread, 0.006f + smoke.strength * 0.012f, count, smoke.color);
             }
         }
     }
 
-    private static void accumulateRoomSmoke(ServerLevel level, BlockPos origin, float strength) {
+    private static void accumulateRoomSmoke(ServerLevel level, BlockPos origin, float strength, @Nullable Vector3f color) {
         // Fast path: the puff happened inside a room we are already tracking, so
         // reuse it instead of running another flood fill. The periodic recheck in
         // tickRoomSmoke still re-validates the room, so staleness stays bounded.
         RoomSmoke active = findActiveRoomContaining(level.dimension(), origin);
         if (active != null) {
-            applyPuffToRoom(level, active, strength);
+            applyPuffToRoom(level, active, strength, color);
             return;
         }
 
@@ -123,7 +131,7 @@ public final class HookahSmoke {
         RoomSmoke smoke = ROOM_SMOKE.computeIfAbsent(probe.key, key -> new RoomSmoke(key, probe.airBlocks));
         smoke.airBlocks = probe.airBlocks;
         smoke.origin = probe.start;
-        applyPuffToRoom(level, smoke, strength);
+        applyPuffToRoom(level, smoke, strength, color);
     }
 
     private static RoomSmoke findActiveRoomContaining(ResourceKey<Level> dimension, BlockPos pos) {
@@ -141,9 +149,10 @@ public final class HookahSmoke {
         return null;
     }
 
-    private static void applyPuffToRoom(ServerLevel level, RoomSmoke smoke, float strength) {
+    private static void applyPuffToRoom(ServerLevel level, RoomSmoke smoke, float strength, @Nullable Vector3f color) {
         smoke.puffs = Math.min(ROOM_MIN_PUFFS, smoke.puffs + 1);
         smoke.remainingTicks = ROOM_LINGER_TICKS;
+        smoke.color = copyColor(color);
         if (smoke.puffs < ROOM_MIN_PUFFS) return;
 
         smoke.density = Math.min(ROOM_MAX_DENSITY, smoke.density + 0.55f + strength * 1.45f);
@@ -204,7 +213,7 @@ public final class HookahSmoke {
             double x = pos.getX() + 0.18 + random.nextDouble() * 0.64;
             double y = pos.getY() + 0.15 + random.nextDouble() * 0.70;
             double z = pos.getZ() + 0.18 + random.nextDouble() * 0.64;
-            sendSmoke(level, x, y, z, spread, 0.08f, spread, 0.004f, 1);
+            sendSmoke(level, x, y, z, spread, 0.08f, spread, 0.004f, 1, smoke.color);
         }
     }
 
@@ -292,8 +301,17 @@ public final class HookahSmoke {
 
     private static void sendSmoke(ServerLevel level, double x, double y, double z,
                                   float xSpread, float ySpread, float zSpread, float speed, int count) {
+        sendSmoke(level, x, y, z, xSpread, ySpread, zSpread, speed, count, null);
+    }
+
+    private static void sendSmoke(ServerLevel level, double x, double y, double z,
+                                  float xSpread, float ySpread, float zSpread, float speed, int count,
+                                  @Nullable Vector3f color) {
+        ParticleOptions particle = color == null
+                ? ParticleTypes.CAMPFIRE_COSY_SMOKE
+                : new DustParticleOptions(new Vector3f(color), 1.45f);
         var packet = new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(
-                ParticleTypes.CAMPFIRE_COSY_SMOKE, true,
+                particle, true,
                 x, y, z, xSpread, ySpread, zSpread, speed, count);
         for (ServerPlayer player : level.players()) {
             if (player.distanceToSqr(x, y, z) <= PARTICLE_RANGE * PARTICLE_RANGE) {
@@ -302,20 +320,28 @@ public final class HookahSmoke {
         }
     }
 
+    @Nullable
+    private static Vector3f copyColor(@Nullable Vector3f color) {
+        return color == null ? null : new Vector3f(color);
+    }
+
     private static final class LingeringSmoke {
         private final ResourceKey<Level> dimension;
         private final Vec3 direction;
         private final float strength;
+        @Nullable
+        private final Vector3f color;
         private Vec3 position;
         private int remainingTicks;
 
         private LingeringSmoke(ResourceKey<Level> dimension, Vec3 position, Vec3 direction,
-                               float strength, int remainingTicks) {
+                               float strength, int remainingTicks, @Nullable Vector3f color) {
             this.dimension = dimension;
             this.position = position;
             this.direction = direction.normalize();
             this.strength = strength;
             this.remainingTicks = remainingTicks;
+            this.color = copyColor(color);
         }
     }
 
@@ -329,6 +355,8 @@ public final class HookahSmoke {
         private BlockPos origin;
         private List<BlockPos> airBlocks;
         private float density;
+        @Nullable
+        private Vector3f color;
         private int puffs;
         private int remainingTicks = ROOM_LINGER_TICKS;
         private int ticks;

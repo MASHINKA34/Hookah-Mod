@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " G ",
+    "GHG",
+    " G "
+  ],
+  "key": {
+    "G": {
+      "item": "minecraft:gold_ingot"
+    },
+    "H": {
+      "item": "hookahmod:hookah"
+    }
+  },
+  "result": {
+    "id": "hookahmod:hookah_gold",
+    "count": 1
+  }
+}

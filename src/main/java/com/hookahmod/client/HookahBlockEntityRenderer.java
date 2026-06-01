@@ -12,6 +12,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -68,7 +69,7 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
         // Tobacco (flat sprite on bowl)
         ItemStack tobacco = be.getInventory().getItem(HookahBlockEntity.SLOT_TOBACCO);
         if (!tobacco.isEmpty()) {
-            renderTobaccoFlat(pose, buffer, packedLight, packedOverlay);
+            renderTobaccoFlat(pose, buffer, packedLight, packedOverlay, tobacco);
         }
 
         // 3D charcoal cube on top with pulsing emissive
@@ -128,8 +129,9 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
         pose.popPose();
     }
 
-    private void renderTobaccoFlat(PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        VertexConsumer vc = buffer.getBuffer(RenderType.entitySolid(HookahMod.id("textures/item/hookah_tobacco.png")));
+    private void renderTobaccoFlat(PoseStack pose, MultiBufferSource buffer, int packedLight, int packedOverlay, ItemStack tobacco) {
+        String path = BuiltInRegistries.ITEM.getKey(tobacco.getItem()).getPath();
+        VertexConsumer vc = buffer.getBuffer(RenderType.entitySolid(HookahMod.id("textures/item/" + path + ".png")));
         pose.pushPose();
         Matrix4f mat = pose.last().pose();
         // Flat disc at top of bowl (y ≈ 1.47)

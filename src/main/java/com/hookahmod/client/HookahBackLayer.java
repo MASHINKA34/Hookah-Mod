@@ -3,6 +3,7 @@ package com.hookahmod.client;
 import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlock;
 import com.hookahmod.item.HookahHoseType;
+import com.hookahmod.item.HookahTier;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.registry.ModBlocks;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -54,7 +55,7 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         boolean lit = WornHookah.hasCoal(stack);
         int light = lit ? litBlockLight(packedLight, 8) : packedLight;
 
-        renderHookahBlockModel(pose, buffer, light, lit);
+        renderHookahBlockModel(pose, buffer, light, lit, HookahTier.fromStack(stack));
 
         if (lit) {
             renderCoal(pose, buffer, light, player);
@@ -75,11 +76,11 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         pose.scale(BACK_SCALE, BACK_SCALE, BACK_SCALE);
     }
 
-    private void renderHookahBlockModel(PoseStack pose, MultiBufferSource buffer, int packedLight, boolean lit) {
+    private void renderHookahBlockModel(PoseStack pose, MultiBufferSource buffer, int packedLight, boolean lit, HookahTier tier) {
         pose.pushPose();
         applyBackHookahTransform(pose);
         Minecraft.getInstance().getBlockRenderer().renderSingleBlock(
-                ModBlocks.HOOKAH.get().defaultBlockState().setValue(HookahBlock.HAS_COAL, lit),
+                ModBlocks.HOOKAH.get().defaultBlockState().setValue(HookahBlock.HAS_COAL, lit).setValue(HookahBlock.TIER, tier),
                 pose,
                 buffer,
                 packedLight,

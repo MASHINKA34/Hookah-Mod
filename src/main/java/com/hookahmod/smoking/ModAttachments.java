@@ -17,5 +17,10 @@ public final class ModAttachments {
             () -> AttachmentType.builder(() -> 0.0f).serialize(Codec.FLOAT, value -> value > 0.0f).build()
     );
 
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Boolean>> TRIP_LOCK = ATTACHMENTS.register(
+            "trip_lock",
+            () -> AttachmentType.builder(() -> Boolean.FALSE).serialize(Codec.BOOL, value -> value).build()
+    );
+
     private ModAttachments() {}
 }

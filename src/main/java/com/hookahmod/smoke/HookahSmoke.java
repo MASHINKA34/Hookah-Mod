@@ -1,8 +1,9 @@
 package com.hookahmod.smoke;
 
+import com.hookahmod.registry.ModParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceKey;
@@ -309,7 +310,7 @@ public final class HookahSmoke {
                                   @Nullable Vector3f color) {
         ParticleOptions particle = color == null
                 ? ParticleTypes.CAMPFIRE_COSY_SMOKE
-                : new DustParticleOptions(new Vector3f(color), 1.45f);
+                : ColorParticleOption.create(ModParticles.COLORED_HOOKAH_SMOKE.get(), color.x(), color.y(), color.z());
         var packet = new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(
                 particle, true,
                 x, y, z, xSpread, ySpread, zSpread, speed, count);

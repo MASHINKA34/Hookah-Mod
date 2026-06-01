@@ -5,12 +5,14 @@ import com.hookahmod.client.ClientIntoxication;
 import com.hookahmod.smoking.IntoxicationBand;
 import com.hookahmod.smoking.IntoxicationState;
 import com.hookahmod.trip.TripVisionType;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.ByteBufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -20,6 +22,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
@@ -32,9 +35,15 @@ import java.util.List;
 public final class TripManager {
 
     private static final ResourceLocation RUNNER_TEXTURE = HookahMod.id("textures/entity/vision_runner.png");
+    private static final ResourceLocation OBSERVER_TEXTURE = HookahMod.id("textures/entity/vision_observer.png");
+    private static final ResourceLocation FALSE_MOB_TEXTURE = HookahMod.id("textures/entity/vision_false_mob.png");
+    private static final ResourceLocation PLAYER_COPY_TEXTURE = HookahMod.id("textures/entity/vision_player_copy.png");
     private static final float RUNNER_HEIGHT = 3.05f;
     private static final float RUNNER_WIDTH = 2.18f;
+    private static final int SCREAMER_DURATION = 50;
     private static final List<Vision> VISIONS = new ArrayList<>();
+    private static final ByteBufferBuilder VISION_BUFFER = new ByteBufferBuilder(4096);
+    private static int runnerScreamerTicks;
     private static int skyShiftTicks;
     private static int tickCount;
 
@@ -75,12 +84,17 @@ public final class TripManager {
         if (mc.player == null || mc.level == null) {
             VISIONS.clear();
             skyShiftTicks = 0;
+            runnerScreamerTicks = 0;
             return;
         }
         float intoxication = ClientIntoxication.get();
         if (IntoxicationState.band(intoxication).atLeast(IntoxicationBand.TRIP)) {
             spawnAmbientParticles(mc, intoxication);
+        } else {
+            VISIONS.clear();
+            skyShiftTicks = 0;
         }
+        if (runnerScreamerTicks > 0) runnerScreamerTicks--;
         if (skyShiftTicks > 0) skyShiftTicks--;
         Iterator<Vision> iterator = VISIONS.iterator();
         while (iterator.hasNext()) {
@@ -106,7 +120,7 @@ public final class TripManager {
         PoseStack pose = event.getPoseStack();
         Camera camera = event.getCamera();
         Vec3 cameraPos = camera.getPosition();
-        MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(new ByteBufferBuilder(4096));
+        MultiBufferSource.BufferSource buffer = MultiBufferSource.immediate(VISION_BUFFER);
 
         for (Vision vision : VISIONS) {
             float alpha = vision.type == TripVisionType.RUNNER ? vision.runnerAlpha() : vision.alpha();
@@ -114,19 +128,34 @@ public final class TripManager {
             pose.pushPose();
             pose.translate(vision.position.x - cameraPos.x, vision.position.y - cameraPos.y, vision.position.z - cameraPos.z);
             switch (vision.type) {
-                case OBSERVER -> drawBox(pose, buffer.getBuffer(RenderType.debugQuads()), -0.35f, 0.0f, -0.18f, 0.35f, 3.2f, 0.18f, 12, 10, 18, (int) (185 * alpha));
-                case FALSE_MOB -> drawFalseMob(pose, buffer.getBuffer(RenderType.debugQuads()), alpha);
-                case PLAYER_COPY -> drawPlayerCopy(pose, buffer.getBuffer(RenderType.debugQuads()), alpha);
-                case RUNNER -> {
-                    mc.getTextureManager().getTexture(RUNNER_TEXTURE).setFilter(false, false);
-                    drawRunner(pose, buffer.getBuffer(RenderType.entityCutoutNoCull(RUNNER_TEXTURE)), camera, alpha);
-                }
+                case OBSERVER -> drawTexturedVision(mc, pose, buffer, camera, OBSERVER_TEXTURE, 1.6f, 3.4f, alpha, true);
+                case FALSE_MOB -> drawTexturedVision(mc, pose, buffer, camera, FALSE_MOB_TEXTURE, 1.15f, 2.0f, alpha, true);
+                case PLAYER_COPY -> drawTexturedVision(mc, pose, buffer, camera, PLAYER_COPY_TEXTURE, 1.0f, 1.95f, alpha, true);
+                case RUNNER -> drawTexturedVision(mc, pose, buffer, camera, RUNNER_TEXTURE, RUNNER_WIDTH, RUNNER_HEIGHT, alpha, false);
                 default -> {}
             }
             pose.popPose();
         }
 
         buffer.endBatch();
+    }
+
+    public static void renderScreamer(RenderGuiEvent.Post event) {
+        if (runnerScreamerTicks <= 0) return;
+        if (Minecraft.getInstance().player == null) {
+            runnerScreamerTicks = 0;
+            return;
+        }
+        GuiGraphics graphics = event.getGuiGraphics();
+        int width = graphics.guiWidth();
+        int height = graphics.guiHeight();
+        float alpha = Mth.clamp(runnerScreamerTicks / 6.0f, 0.0f, 1.0f);
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        graphics.setColor(1.0f, 1.0f, 1.0f, alpha);
+        graphics.blit(RUNNER_TEXTURE, 0, 0, width, height, 0.0f, 0.0f, 16, 16, 16, 16);
+        graphics.setColor(1.0f, 1.0f, 1.0f, 1.0f);
+        RenderSystem.disableBlend();
     }
 
     public static void computeFov(ViewportEvent.ComputeFov event) {
@@ -158,8 +187,9 @@ public final class TripManager {
         double distance = delta.length();
         if (distance > 1.15) {
             vision.position = vision.position.add(delta.normalize().scale(Math.min(0.46, distance - 1.05)));
-        } else if (vision.age < vision.duration - 22) {
-            vision.duration = vision.age + 22;
+        } else {
+            runnerScreamerTicks = SCREAMER_DURATION;
+            vision.duration = vision.age;
         }
     }
 
@@ -197,63 +227,23 @@ public final class TripManager {
         return horizontal.normalize();
     }
 
-    private static void drawFalseMob(PoseStack pose, VertexConsumer vc, float alpha) {
-        int a = (int) (145 * alpha);
-        drawBox(pose, vc, -0.28f, 0.0f, -0.18f, 0.28f, 1.45f, 0.18f, 40, 48, 64, a);
-        drawBox(pose, vc, -0.2f, 1.45f, -0.16f, 0.2f, 1.85f, 0.16f, 90, 95, 110, a);
-        drawBox(pose, vc, -0.72f, 0.75f, -0.08f, -0.28f, 1.05f, 0.08f, 70, 80, 95, a);
-        drawBox(pose, vc, 0.28f, 0.75f, -0.08f, 0.72f, 1.05f, 0.08f, 70, 80, 95, a);
+    private static void drawTexturedVision(Minecraft mc, PoseStack pose, MultiBufferSource buffer, Camera camera,
+                                           ResourceLocation texture, float width, float height, float alpha, boolean translucent) {
+        mc.getTextureManager().getTexture(texture).setFilter(false, false);
+        RenderType type = translucent ? RenderType.entityTranslucent(texture) : RenderType.entityCutoutNoCull(texture);
+        drawBillboard(pose, buffer.getBuffer(type), camera, width, height, alpha);
     }
 
-    private static void drawPlayerCopy(PoseStack pose, VertexConsumer vc, float alpha) {
-        int a = (int) (120 * alpha);
-        drawBox(pose, vc, -0.28f, 0.0f, -0.16f, 0.28f, 1.35f, 0.16f, 90, 55, 135, a);
-        drawBox(pose, vc, -0.23f, 1.35f, -0.18f, 0.23f, 1.82f, 0.18f, 130, 88, 170, a);
-    }
-
-    private static void drawRunner(PoseStack pose, VertexConsumer vc, Camera camera, float alpha) {
+    private static void drawBillboard(PoseStack pose, VertexConsumer vc, Camera camera, float width, float height, float alpha) {
         pose.mulPose(Axis.YP.rotationDegrees(-camera.getYRot()));
         pose.mulPose(Axis.XP.rotationDegrees(camera.getXRot()));
         Matrix4f matrix = pose.last().pose();
         int a = (int) (255 * alpha);
-        float halfWidth = RUNNER_WIDTH * 0.5f;
+        float halfWidth = width * 0.5f;
         addTexturedVertex(matrix, vc, -halfWidth, 0.0f, 0.0f, 0.0f, 1.0f, a);
         addTexturedVertex(matrix, vc, halfWidth, 0.0f, 0.0f, 1.0f, 1.0f, a);
-        addTexturedVertex(matrix, vc, halfWidth, RUNNER_HEIGHT, 0.0f, 1.0f, 0.0f, a);
-        addTexturedVertex(matrix, vc, -halfWidth, RUNNER_HEIGHT, 0.0f, 0.0f, 0.0f, a);
-    }
-
-    private static void drawBox(PoseStack pose, VertexConsumer vc, float minX, float minY, float minZ,
-                                float maxX, float maxY, float maxZ, int r, int g, int b, int a) {
-        Matrix4f m = pose.last().pose();
-        vertex(m, vc, minX, maxY, minZ, r, g, b, a);
-        vertex(m, vc, minX, maxY, maxZ, r, g, b, a);
-        vertex(m, vc, maxX, maxY, maxZ, r, g, b, a);
-        vertex(m, vc, maxX, maxY, minZ, r, g, b, a);
-        vertex(m, vc, minX, minY, minZ, r, g, b, a);
-        vertex(m, vc, maxX, minY, minZ, r, g, b, a);
-        vertex(m, vc, maxX, minY, maxZ, r, g, b, a);
-        vertex(m, vc, minX, minY, maxZ, r, g, b, a);
-        vertex(m, vc, minX, minY, minZ, r, g, b, a);
-        vertex(m, vc, minX, maxY, minZ, r, g, b, a);
-        vertex(m, vc, maxX, maxY, minZ, r, g, b, a);
-        vertex(m, vc, maxX, minY, minZ, r, g, b, a);
-        vertex(m, vc, minX, minY, maxZ, r, g, b, a);
-        vertex(m, vc, maxX, minY, maxZ, r, g, b, a);
-        vertex(m, vc, maxX, maxY, maxZ, r, g, b, a);
-        vertex(m, vc, minX, maxY, maxZ, r, g, b, a);
-        vertex(m, vc, maxX, minY, minZ, r, g, b, a);
-        vertex(m, vc, maxX, maxY, minZ, r, g, b, a);
-        vertex(m, vc, maxX, maxY, maxZ, r, g, b, a);
-        vertex(m, vc, maxX, minY, maxZ, r, g, b, a);
-        vertex(m, vc, minX, minY, minZ, r, g, b, a);
-        vertex(m, vc, minX, minY, maxZ, r, g, b, a);
-        vertex(m, vc, minX, maxY, maxZ, r, g, b, a);
-        vertex(m, vc, minX, maxY, minZ, r, g, b, a);
-    }
-
-    private static void vertex(Matrix4f matrix, VertexConsumer vc, float x, float y, float z, int r, int g, int b, int a) {
-        vc.addVertex(matrix, x, y, z).setColor(r, g, b, a);
+        addTexturedVertex(matrix, vc, halfWidth, height, 0.0f, 1.0f, 0.0f, a);
+        addTexturedVertex(matrix, vc, -halfWidth, height, 0.0f, 0.0f, 0.0f, a);
     }
 
     private static void addTexturedVertex(Matrix4f matrix, VertexConsumer vc, float x, float y, float z, float u, float v, int a) {

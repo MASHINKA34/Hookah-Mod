@@ -4,8 +4,10 @@ import com.hookahmod.HookahMod;
 import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModMenuTypes;
+import com.hookahmod.registry.ModParticles;
 import com.hookahmod.network.OpenWornHookahPayload;
 import com.hookahmod.item.WornHookah;
+import com.hookahmod.client.particle.ColoredHookahSmokeParticle;
 import com.hookahmod.client.trip.TripManager;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -21,6 +23,7 @@ import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -43,6 +46,7 @@ public final class ClientSetup {
         NeoForge.EVENT_BUS.addListener(ClientSetup::onKeyInput);
         NeoForge.EVENT_BUS.addListener(ClientSetup::onClientTick);
         NeoForge.EVENT_BUS.addListener(TripManager::render);
+        NeoForge.EVENT_BUS.addListener(TripManager::renderScreamer);
         NeoForge.EVENT_BUS.addListener(TripManager::computeFov);
         NeoForge.EVENT_BUS.addListener(TripManager::cameraAngles);
         NeoForge.EVENT_BUS.addListener(TripManager::fogColor);
@@ -69,6 +73,11 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onRegisterScreens(RegisterMenuScreensEvent event) {
         event.register(ModMenuTypes.HOOKAH.get(), HookahScreen::new);
+    }
+
+    @SubscribeEvent
+    public static void onRegisterParticles(RegisterParticleProvidersEvent event) {
+        event.registerSpriteSet(ModParticles.COLORED_HOOKAH_SMOKE.get(), ColoredHookahSmokeParticle.Provider::new);
     }
 
     @SubscribeEvent

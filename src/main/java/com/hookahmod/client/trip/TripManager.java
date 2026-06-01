@@ -40,7 +40,7 @@ public final class TripManager {
     private static final ResourceLocation PLAYER_COPY_TEXTURE = HookahMod.id("textures/entity/vision_player_copy.png");
     private static final float RUNNER_HEIGHT = 3.05f;
     private static final float RUNNER_WIDTH = 2.18f;
-    private static final int SCREAMER_DURATION = 50;
+    private static final int SCREAMER_DURATION = 30;
     private static final List<Vision> VISIONS = new ArrayList<>();
     private static final ByteBufferBuilder VISION_BUFFER = new ByteBufferBuilder(4096);
     private static int runnerScreamerTicks;
@@ -75,7 +75,7 @@ public final class TripManager {
             case RUNNER -> 180;
             default -> 80;
         };
-        VISIONS.add(new Vision(type, pos, duration, seed));
+        VISIONS.add(new Vision(type, pos, duration));
     }
 
     public static void tick(ClientTickEvent.Post event) {
@@ -257,23 +257,20 @@ public final class TripManager {
 
     private static final class Vision {
         private final TripVisionType type;
-        private final long seed;
         private Vec3 position;
         private int age;
         private int duration;
 
-        private Vision(TripVisionType type, Vec3 position, int duration, long seed) {
+        private Vision(TripVisionType type, Vec3 position, int duration) {
             this.type = type;
             this.position = position;
             this.duration = duration;
-            this.seed = seed;
         }
 
         private float alpha() {
             float fadeIn = Mth.clamp(age / 18.0f, 0.0f, 1.0f);
             float fadeOut = Mth.clamp((duration - age) / 28.0f, 0.0f, 1.0f);
-            float flicker = 0.72f + 0.28f * Mth.sin((age + (int) (seed & 31L)) * 0.43f);
-            return fadeIn * fadeOut * flicker;
+            return fadeIn * fadeOut;
         }
 
         private float runnerAlpha() {

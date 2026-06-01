@@ -6,6 +6,7 @@ import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModMenuTypes;
 import com.hookahmod.network.OpenWornHookahPayload;
 import com.hookahmod.item.WornHookah;
+import com.hookahmod.client.trip.TripManager;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
@@ -41,6 +42,10 @@ public final class ClientSetup {
     public static void onClientSetup(FMLClientSetupEvent event) {
         NeoForge.EVENT_BUS.addListener(ClientSetup::onKeyInput);
         NeoForge.EVENT_BUS.addListener(ClientSetup::onClientTick);
+        NeoForge.EVENT_BUS.addListener(TripManager::render);
+        NeoForge.EVENT_BUS.addListener(TripManager::computeFov);
+        NeoForge.EVENT_BUS.addListener(TripManager::cameraAngles);
+        NeoForge.EVENT_BUS.addListener(TripManager::fogColor);
     }
 
     @SubscribeEvent
@@ -91,5 +96,6 @@ public final class ClientSetup {
 
     private static void onClientTick(ClientTickEvent.Post event) {
         HookahSmokingSound.tickLocal();
+        TripManager.tick(event);
     }
 }

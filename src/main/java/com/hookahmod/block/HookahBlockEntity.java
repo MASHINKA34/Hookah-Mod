@@ -1,11 +1,14 @@
 package com.hookahmod.block;
 
+import com.hookahmod.item.AbstractTobaccoItem;
 import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.item.HookahHoseType;
+import com.hookahmod.item.HookahTier;
 import com.hookahmod.network.HookahSyncPayload;
 import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.smoke.HookahSmoke;
+import com.hookahmod.smoking.IntoxicationState;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.core.BlockPos;
@@ -31,6 +34,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3f;
 
 import java.util.UUID;
 
@@ -42,8 +46,8 @@ public class HookahBlockEntity extends BlockEntity {
     public static final int SLOT_WATER = 3;
     public static final int SLOT_COUNT = 4;
 
-    private static final int PUFFS_PER_SOLID = 20;  // tobacco + coal
-    private static final int PUFFS_PER_WATER = 200;  // water bottle
+    private static final int PUFFS_PER_SOLID = 20;
+    private static final int PUFFS_PER_WATER = 200;
 
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final Container inventory = new HookahContainer(items, this::setChangedAndSync, this);
@@ -182,25 +186,30 @@ public class HookahBlockEntity extends BlockEntity {
         }
     }
 
-    // charge: 0.0 (short puff) .. 1.0 (full 5-second inhale)
     public void applyExhale(ServerPlayer player, float charge) {
         if (level == null || !(level instanceof ServerLevel server)) return;
 
+        ItemStack tobaccoStack = items.get(SLOT_TOBACCO);
+        Vector3f smokeColor = tobaccoStack.getItem() instanceof AbstractTobaccoItem tobaccoForSmoke
+                ? tobaccoForSmoke.smokeColor()
+                : null;
         Vec3 hookahPoint = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.75, worldPosition.getZ() + 0.5);
-        HookahSmoke.spawnExhaleSmoke(server, hookahPoint, player, charge);
+        HookahSmoke.spawnExhaleSmoke(server, hookahPoint, player, charge, smokeColor);
 
-        // Sound: louder with more charge
         float volume = 0.15f + charge * 0.4f;
         level.playSound(null, worldPosition, net.minecraft.sounds.SoundEvents.GENERIC_DRINK,
                 net.minecraft.sounds.SoundSource.PLAYERS, volume, 1.6f);
 
-        // Smoking buffs intentionally disabled for now — tobacco-specific
-        // effects will be added later.
+        if (tobaccoStack.getItem() instanceof AbstractTobaccoItem tobacco) {
+            IntoxicationState.add(player, IntoxicationState.gain(tobacco.intoxication(), charge));
+            tobacco.onExhale(server, player, charge, HookahTier.LEATHER.effectMult(), HookahTier.LEATHER.combatMult());
+        } else {
+            IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.REGULAR_TOBACCO_INTOXICATION, charge));
+        }
 
-        // Resource depletion: tobacco + coal every 20 exhales, water every 200.
         boolean changed = false;
         smokeTimer++;
-        if (smokeTimer >= PUFFS_PER_SOLID) {
+        if (smokeTimer >= puffsPerSolid(tobaccoStack)) {
             smokeTimer = 0;
             items.get(SLOT_TOBACCO).shrink(1);
             items.get(SLOT_COAL).shrink(1);
@@ -213,6 +222,12 @@ public class HookahBlockEntity extends BlockEntity {
             changed = true;
         }
         if (changed) setChangedAndSync();
+    }
+
+    private static int puffsPerSolid(ItemStack tobaccoStack) {
+        return tobaccoStack.getItem() instanceof AbstractTobaccoItem tobacco && tobacco.category() == com.hookahmod.item.TobaccoCategory.COMBAT
+                ? 10
+                : PUFFS_PER_SOLID;
     }
 
     public void clientTick(Level level, BlockPos pos, BlockState state) {

@@ -10,10 +10,22 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 
-public class HookahBlockItem extends BlockItem implements Equipable {
+public class HookahBlockItem extends BlockItem implements Equipable, TieredHookahItem {
+
+    private final HookahTier tier;
 
     public HookahBlockItem(Block block, Properties properties) {
+        this(block, properties, HookahTier.LEATHER);
+    }
+
+    public HookahBlockItem(Block block, Properties properties, HookahTier tier) {
         super(block, properties);
+        this.tier = tier;
+    }
+
+    @Override
+    public HookahTier tier() {
+        return tier;
     }
 
     @Override

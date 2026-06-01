@@ -2,6 +2,8 @@ package com.hookahmod.block;
 
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.HookahHoseItem;
+import com.hookahmod.item.HookahTier;
+import com.hookahmod.item.TieredHookahItem;
 import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModItems;
 import net.minecraft.core.BlockPos;
@@ -33,6 +35,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
@@ -44,6 +47,7 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
 
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty HAS_COAL = BooleanProperty.create("has_coal");
+    public static final EnumProperty<HookahTier> TIER = EnumProperty.create("tier", HookahTier.class);
 
     private static final VoxelShape SHAPE = Shapes.or(
             Block.box(4, 0, 4, 12, 1, 12),
@@ -61,7 +65,8 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
         super(props);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
-                .setValue(HAS_COAL, false));
+                .setValue(HAS_COAL, false)
+                .setValue(TIER, HookahTier.LEATHER));
     }
 
     @Override
@@ -71,12 +76,15 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-        builder.add(FACING, HAS_COAL);
+        builder.add(FACING, HAS_COAL, TIER);
     }
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        return this.defaultBlockState().setValue(FACING, ctx.getHorizontalDirection().getOpposite());
+        HookahTier tier = ctx.getItemInHand().getItem() instanceof TieredHookahItem item ? item.tier() : HookahTier.LEATHER;
+        return this.defaultBlockState()
+                .setValue(FACING, ctx.getHorizontalDirection().getOpposite())
+                .setValue(TIER, tier);
     }
 
     @Override
@@ -179,7 +187,7 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
                 return net.minecraft.world.InteractionResult.CONSUME;
             }
 
-            ItemStack stack = new ItemStack(ModItems.HOOKAH.get());
+            ItemStack stack = stackForTier(state.getValue(TIER));
             be.releaseMouthpiece();
             be.saveItemsToStack(stack);
             be.clearItemsForPickup();
@@ -196,6 +204,16 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
             });
         }
         return net.minecraft.world.InteractionResult.CONSUME;
+    }
+
+    private static ItemStack stackForTier(HookahTier tier) {
+        return switch (tier) {
+            case GOLD -> new ItemStack(ModItems.HOOKAH_GOLD.get());
+            case IRON -> new ItemStack(ModItems.HOOKAH_IRON.get());
+            case DIAMOND -> new ItemStack(ModItems.HOOKAH_DIAMOND.get());
+            case NETHERITE -> new ItemStack(ModItems.HOOKAH_NETHERITE.get());
+            default -> new ItemStack(ModItems.HOOKAH.get());
+        };
     }
 
     @Override

@@ -1,12 +1,48 @@
 {
   "variants": {
-    "facing=north,has_coal=false": { "model": "hookahmod:block/hookah" },
-    "facing=east,has_coal=false":  { "model": "hookahmod:block/hookah", "y": 90 },
-    "facing=south,has_coal=false": { "model": "hookahmod:block/hookah", "y": 180 },
-    "facing=west,has_coal=false":  { "model": "hookahmod:block/hookah", "y": 270 },
-    "facing=north,has_coal=true":  { "model": "hookahmod:block/hookah" },
-    "facing=east,has_coal=true":   { "model": "hookahmod:block/hookah", "y": 90 },
-    "facing=south,has_coal=true":  { "model": "hookahmod:block/hookah", "y": 180 },
-    "facing=west,has_coal=true":   { "model": "hookahmod:block/hookah", "y": 270 }
+    "facing=north,has_coal=false,tier=leather": { "model": "hookahmod:block/hookah" },
+    "facing=east,has_coal=false,tier=leather": { "model": "hookahmod:block/hookah", "y": 90 },
+    "facing=south,has_coal=false,tier=leather": { "model": "hookahmod:block/hookah", "y": 180 },
+    "facing=west,has_coal=false,tier=leather": { "model": "hookahmod:block/hookah", "y": 270 },
+    "facing=north,has_coal=true,tier=leather": { "model": "hookahmod:block/hookah" },
+    "facing=east,has_coal=true,tier=leather": { "model": "hookahmod:block/hookah", "y": 90 },
+    "facing=south,has_coal=true,tier=leather": { "model": "hookahmod:block/hookah", "y": 180 },
+    "facing=west,has_coal=true,tier=leather": { "model": "hookahmod:block/hookah", "y": 270 },
+
+    "facing=north,has_coal=false,tier=gold": { "model": "hookahmod:block/hookah_gold" },
+    "facing=east,has_coal=false,tier=gold": { "model": "hookahmod:block/hookah_gold", "y": 90 },
+    "facing=south,has_coal=false,tier=gold": { "model": "hookahmod:block/hookah_gold", "y": 180 },
+    "facing=west,has_coal=false,tier=gold": { "model": "hookahmod:block/hookah_gold", "y": 270 },
+    "facing=north,has_coal=true,tier=gold": { "model": "hookahmod:block/hookah_gold" },
+    "facing=east,has_coal=true,tier=gold": { "model": "hookahmod:block/hookah_gold", "y": 90 },
+    "facing=south,has_coal=true,tier=gold": { "model": "hookahmod:block/hookah_gold", "y": 180 },
+    "facing=west,has_coal=true,tier=gold": { "model": "hookahmod:block/hookah_gold", "y": 270 },
+
+    "facing=north,has_coal=false,tier=iron": { "model": "hookahmod:block/hookah_iron" },
+    "facing=east,has_coal=false,tier=iron": { "model": "hookahmod:block/hookah_iron", "y": 90 },
+    "facing=south,has_coal=false,tier=iron": { "model": "hookahmod:block/hookah_iron", "y": 180 },
+    "facing=west,has_coal=false,tier=iron": { "model": "hookahmod:block/hookah_iron", "y": 270 },
+    "facing=north,has_coal=true,tier=iron": { "model": "hookahmod:block/hookah_iron" },
+    "facing=east,has_coal=true,tier=iron": { "model": "hookahmod:block/hookah_iron", "y": 90 },
+    "facing=south,has_coal=true,tier=iron": { "model": "hookahmod:block/hookah_iron", "y": 180 },
+    "facing=west,has_coal=true,tier=iron": { "model": "hookahmod:block/hookah_iron", "y": 270 },
+
+    "facing=north,has_coal=false,tier=diamond": { "model": "hookahmod:block/hookah_diamond" },
+    "facing=east,has_coal=false,tier=diamond": { "model": "hookahmod:block/hookah_diamond", "y": 90 },
+    "facing=south,has_coal=false,tier=diamond": { "model": "hookahmod:block/hookah_diamond", "y": 180 },
+    "facing=west,has_coal=false,tier=diamond": { "model": "hookahmod:block/hookah_diamond", "y": 270 },
+    "facing=north,has_coal=true,tier=diamond": { "model": "hookahmod:block/hookah_diamond" },
+    "facing=east,has_coal=true,tier=diamond": { "model": "hookahmod:block/hookah_diamond", "y": 90 },
+    "facing=south,has_coal=true,tier=diamond": { "model": "hookahmod:block/hookah_diamond", "y": 180 },
+    "facing=west,has_coal=true,tier=diamond": { "model": "hookahmod:block/hookah_diamond", "y": 270 },
+
+    "facing=north,has_coal=false,tier=netherite": { "model": "hookahmod:block/hookah_netherite" },
+    "facing=east,has_coal=false,tier=netherite": { "model": "hookahmod:block/hookah_netherite", "y": 90 },
+    "facing=south,has_coal=false,tier=netherite": { "model": "hookahmod:block/hookah_netherite", "y": 180 },
+    "facing=west,has_coal=false,tier=netherite": { "model": "hookahmod:block/hookah_netherite", "y": 270 },
+    "facing=north,has_coal=true,tier=netherite": { "model": "hookahmod:block/hookah_netherite" },
+    "facing=east,has_coal=true,tier=netherite": { "model": "hookahmod:block/hookah_netherite", "y": 90 },
+    "facing=south,has_coal=true,tier=netherite": { "model": "hookahmod:block/hookah_netherite", "y": 180 },
+    "facing=west,has_coal=true,tier=netherite": { "model": "hookahmod:block/hookah_netherite", "y": 270 }
   }
 }

@@ -1,6 +1,7 @@
 package com.hookahmod.menu;
 
 import com.hookahmod.block.HookahBlockEntity;
+import com.hookahmod.item.AbstractTobaccoItem;
 import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.WornHookah;
@@ -82,7 +83,7 @@ public class HookahMenu extends AbstractContainerMenu {
         } else {
             this.addSlot(new Slot(container, HookahBlockEntity.SLOT_HOSE, HOSE_SLOT_X, HOSE_SLOT_Y));
         }
-        this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_TOBACCO, TOBACCO_X, CONSUME_ROW_Y, ModItems.HOOKAH_TOBACCO.get()));
+        this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_TOBACCO, TOBACCO_X, CONSUME_ROW_Y, ModItems.HOOKAH_TOBACCO.get(), stack -> stack.getItem() instanceof AbstractTobaccoItem));
         this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_COAL, COAL_X, CONSUME_ROW_Y, ModItems.HOOKAH_CHARCOAL.get()));
         this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_WATER, WATER_X, CONSUME_ROW_Y, ModItems.HOOKAH_WATER_BOTTLE.get()));
     }
@@ -150,7 +151,6 @@ public class HookahMenu extends AbstractContainerMenu {
         if (slotIndex < containerSize) {
             if (!this.moveItemStackTo(stack, containerSize, this.slots.size(), true)) return ItemStack.EMPTY;
         } else {
-            // Try to route the item into its matching filtered slot
             if (stack.getItem() instanceof com.hookahmod.item.HookahHoseItem) {
                 if (this.moveItemStackTo(stack, HookahBlockEntity.SLOT_HOSE, HookahBlockEntity.SLOT_HOSE + 1, false)) {
                     if (stack.isEmpty()) slot.set(ItemStack.EMPTY); else slot.setChanged();
@@ -158,7 +158,7 @@ public class HookahMenu extends AbstractContainerMenu {
                 }
             }
             int target = -1;
-            if (stack.is(ModItems.HOOKAH_TOBACCO.get())) target = HookahBlockEntity.SLOT_TOBACCO;
+            if (stack.getItem() instanceof AbstractTobaccoItem) target = HookahBlockEntity.SLOT_TOBACCO;
             else if (stack.is(ModItems.HOOKAH_CHARCOAL.get())) target = HookahBlockEntity.SLOT_COAL;
             else if (stack.is(ModItems.HOOKAH_WATER_BOTTLE.get())) target = HookahBlockEntity.SLOT_WATER;
             if (target == -1 || !this.moveItemStackTo(stack, target, target + 1, false)) return ItemStack.EMPTY;

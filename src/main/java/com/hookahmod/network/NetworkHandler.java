@@ -34,5 +34,17 @@ public final class NetworkHandler {
                 WornHookahSyncPayload.STREAM_CODEC,
                 WornHookahSyncPayload::handle
         );
+
+        registrar.playToClient(
+                IntoxicationSyncPayload.TYPE,
+                IntoxicationSyncPayload.STREAM_CODEC,
+                IntoxicationSyncPayload::handle
+        );
+
+        registrar.playToClient(
+                TripEventPayload.TYPE,
+                TripEventPayload.STREAM_CODEC,
+                TripEventPayload::handle
+        );
     }
 }

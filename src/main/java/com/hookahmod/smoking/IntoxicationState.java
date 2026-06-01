@@ -40,11 +40,13 @@ public final class IntoxicationState {
     }
 
     public static void applyBandEffects(ServerPlayer player) {
-        IntoxicationBand band = band(get(player));
+        float value = get(player);
+        IntoxicationBand band = band(value);
+        boolean locked = updateTripLock(player, band, value);
         if (band == IntoxicationBand.RELAXED) {
-            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 60, 0, true, false, true));
+            if (!locked) player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 60, 0, true, false, true));
         } else if (band == IntoxicationBand.HIGH) {
-            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 80, 0, true, false, true));
+            if (!locked) player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 80, 0, true, false, true));
             player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 0, true, false, true));
         } else if (band == IntoxicationBand.TRIP) {
             player.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0, true, false, true));
@@ -56,6 +58,19 @@ public final class IntoxicationState {
                 player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 35, 0, true, false, true));
             }
         }
+    }
+
+    private static boolean updateTripLock(ServerPlayer player, IntoxicationBand band, float value) {
+        boolean locked = player.getData(ModAttachments.TRIP_LOCK.get());
+        if (band.atLeast(IntoxicationBand.TRIP)) {
+            if (!locked) player.setData(ModAttachments.TRIP_LOCK.get(), true);
+            return true;
+        }
+        if (locked && value <= 0.0f) {
+            player.setData(ModAttachments.TRIP_LOCK.get(), false);
+            return false;
+        }
+        return locked;
     }
 
     public static IntoxicationBand band(float value) {

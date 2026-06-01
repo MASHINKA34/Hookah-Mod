@@ -2,9 +2,10 @@ package com.hookahmod.item;
 
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.event.ActiveSessions;
+import com.hookahmod.registry.ModParticles;
 import com.hookahmod.smoke.HookahSmoke;
 import net.minecraft.core.GlobalPos;
-import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
@@ -184,7 +185,7 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
             Vector3f smokeColor = clientSmokeColor(player, level);
             ParticleOptions particle = smokeColor == null
                     ? ParticleTypes.CAMPFIRE_COSY_SMOKE
-                    : new DustParticleOptions(new Vector3f(smokeColor), 1.45f);
+                    : ColorParticleOption.create(ModParticles.COLORED_HOOKAH_SMOKE.get(), smokeColor.x(), smokeColor.y(), smokeColor.z());
             Vec3 look = player.getLookAngle();
             double eyeY = player.getY() + player.getEyeHeight() - 0.1;
             for (int i = 0; i < count; i++) {

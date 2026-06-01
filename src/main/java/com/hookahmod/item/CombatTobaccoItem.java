@@ -1,9 +1,10 @@
 package com.hookahmod.item;
 
 import com.hookahmod.combat.SmokeCone;
+import com.hookahmod.registry.ModParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
@@ -127,12 +128,12 @@ public class CombatTobaccoItem extends AbstractTobaccoItem {
     }
 
     private static void spawnConeParticles(ServerLevel level, ServerPlayer smoker, double range, Vector3f color) {
-        DustParticleOptions dust = new DustParticleOptions(color, 1.2f);
+        ColorParticleOption smoke = ColorParticleOption.create(ModParticles.COLORED_HOOKAH_SMOKE.get(), color.x(), color.y(), color.z());
         for (int i = 1; i <= 7; i++) {
             double step = range * i / 7.0;
             double spread = 0.12 + step * 0.07;
             var pos = smoker.getEyePosition().add(smoker.getLookAngle().scale(step));
-            level.sendParticles(dust, pos.x, pos.y - 0.08, pos.z, 8, spread, spread * 0.5, spread, 0.015);
+            level.sendParticles(smoke, pos.x, pos.y - 0.08, pos.z, 8, spread, spread * 0.5, spread, 0.015);
         }
     }
 

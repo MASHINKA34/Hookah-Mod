@@ -22,5 +22,10 @@ public final class ModAttachments {
             () -> AttachmentType.builder(() -> Boolean.FALSE).serialize(Codec.BOOL, value -> value).build()
     );
 
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> ABYSS_TRIP_TICKS = ATTACHMENTS.register(
+            "abyss_trip_ticks",
+            () -> AttachmentType.builder(() -> 0).build()
+    );
+
     private ModAttachments() {}
 }

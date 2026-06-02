@@ -1,6 +1,8 @@
 package com.hookahmod.smoking;
 
 import com.hookahmod.network.IntoxicationSyncPayload;
+import com.hookahmod.network.TripEventPayload;
+import com.hookahmod.trip.TripVisionType;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -12,6 +14,8 @@ public final class IntoxicationState {
 
     public static final float MAX_VALUE = 220.0f;
     public static final float REGULAR_TOBACCO_INTOXICATION = 16.0f;
+    private static final int ABYSS_TRIP_WINDOW = 36;
+    private static final float TRIP_VISION_CHANCE = 0.2f;
 
     private IntoxicationState() {}
 
@@ -57,6 +61,29 @@ public final class IntoxicationState {
             if (player.getRandom().nextFloat() < 0.12f) {
                 player.addEffect(new MobEffectInstance(MobEffects.BLINDNESS, 35, 0, true, false, true));
             }
+        }
+        tickTripVisions(player, band);
+    }
+
+    public static void beginAbyssTrip(ServerPlayer player) {
+        player.setData(ModAttachments.ABYSS_TRIP_TICKS.get(), ABYSS_TRIP_WINDOW);
+    }
+
+    public static void spawnTripVision(ServerPlayer player) {
+        TripVisionType type = TripVisionType.random(player.getRandom());
+        PacketDistributor.sendToPlayer(player, new TripEventPayload(type, player.getRandom().nextLong()));
+    }
+
+    private static void tickTripVisions(ServerPlayer player, IntoxicationBand band) {
+        int remaining = player.getData(ModAttachments.ABYSS_TRIP_TICKS.get());
+        if (remaining <= 0) return;
+        if (!band.atLeast(IntoxicationBand.TRIP)) {
+            player.setData(ModAttachments.ABYSS_TRIP_TICKS.get(), 0);
+            return;
+        }
+        player.setData(ModAttachments.ABYSS_TRIP_TICKS.get(), remaining - 1);
+        if (player.getRandom().nextFloat() < TRIP_VISION_CHANCE) {
+            spawnTripVision(player);
         }
     }
 

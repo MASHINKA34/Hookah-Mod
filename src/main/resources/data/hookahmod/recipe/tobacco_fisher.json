@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hookahmod:hookah_tobacco"
+    },
+    {
+      "item": "minecraft:cod"
+    },
+    {
+      "item": "minecraft:seagrass"
+    }
+  ],
+  "result": {
+    "id": "hookahmod:tobacco_fisher",
+    "count": 2
+  }
+}

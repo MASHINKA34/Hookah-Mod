@@ -1,0 +1,62 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "rolls": 1.0,
+      "entries": [
+        {
+          "type": "minecraft:alternatives",
+          "children": [
+            {
+              "type": "minecraft:item",
+              "name": "hookahmod:hookah_tobacco",
+              "functions": [
+                {
+                  "function": "minecraft:set_count",
+                  "count": {
+                    "type": "minecraft:uniform",
+                    "min": 1.0,
+                    "max": 6.0
+                  },
+                  "add": false
+                }
+              ],
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hookahmod:tobacco_crop",
+                  "properties": { "age": "7" }
+                }
+              ]
+            },
+            { "type": "minecraft:item", "name": "hookahmod:tobacco_seed" }
+          ]
+        }
+      ]
+    },
+    {
+      "rolls": 1.0,
+      "conditions": [
+        {
+          "condition": "minecraft:block_state_property",
+          "block": "hookahmod:tobacco_crop",
+          "properties": { "age": "7" }
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "hookahmod:tobacco_seed",
+          "functions": [
+            {
+              "function": "minecraft:apply_bonus",
+              "enchantment": "minecraft:fortune",
+              "formula": "minecraft:binomial_with_bonus_count",
+              "parameters": { "extra": 3, "probability": 0.5714286 }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

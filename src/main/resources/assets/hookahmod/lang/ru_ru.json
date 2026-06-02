@@ -16,6 +16,7 @@
   "item.hookahmod.tobacco_ice": "Ледяной табак",
   "item.hookahmod.tobacco_heal": "Лечебный табак",
   "item.hookahmod.tobacco_abyss": "Табак Бездны",
+  "item.hookahmod.tobacco_hashish": "Табак с гашишем",
   "item.hookahmod.tobacco_apple": "Яблочный табак",
   "item.hookahmod.tobacco_honey": "Медовый табак",
   "item.hookahmod.tobacco_citrus": "Цитрусовый табак",
@@ -81,6 +82,7 @@
   "intoxication.hookahmod.overdose": "Передоз",
 
   "effect.hookahmod.sea_luck": "Удача моря",
+  "effect.hookahmod.hashish_trip": "Hashish Trip",
 
   "hookah_tier.hookahmod.normal": "Обычный",
   "hookah_tier.hookahmod.leather": "Кожаный",
@@ -92,5 +94,6 @@
   "key.categories.hookahmod": "Hookah Mod",
   "key.hookahmod.open_worn_hookah": "Открыть кальян на спине",
 
-  "subtitles.hookahmod.smoking": "Бульканье кальяна"
+  "subtitles.hookahmod.smoking": "Бульканье кальяна",
+  "subtitles.hookahmod.hashish_trip_music": "Музыка Hashish Trip"
 }

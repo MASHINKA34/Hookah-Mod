@@ -7,6 +7,7 @@ import com.hookahmod.item.HookahCharcoalItem;
 import com.hookahmod.item.HookahMouthpieceItem;
 import com.hookahmod.item.HookahTobaccoItem;
 import com.hookahmod.item.HookahWaterBottleItem;
+import com.hookahmod.item.HashishTobaccoItem;
 import com.hookahmod.item.LongHookahHoseItem;
 import com.hookahmod.item.ShortHookahHoseItem;
 import com.hookahmod.item.TonometerItem;
@@ -105,6 +106,11 @@ public final class ModItems {
     public static final DeferredItem<AbyssTobaccoItem> TOBACCO_ABYSS = ITEMS.register(
             "tobacco_abyss",
             () -> new AbyssTobaccoItem(new Item.Properties().stacksTo(64))
+    );
+
+    public static final DeferredItem<HashishTobaccoItem> TOBACCO_HASHISH = ITEMS.register(
+            "tobacco_hashish",
+            () -> new HashishTobaccoItem(new Item.Properties().stacksTo(64))
     );
 
     public static final DeferredItem<BuffTobaccoItem> TOBACCO_APPLE = ITEMS.register(

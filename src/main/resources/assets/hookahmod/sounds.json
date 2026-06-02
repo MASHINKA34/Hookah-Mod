@@ -7,5 +7,14 @@
         "attenuation_distance": 12
       }
     ]
+  },
+  "hashish_trip_music": {
+    "subtitle": "subtitles.hookahmod.hashish_trip_music",
+    "sounds": [
+      {
+        "name": "hookahmod:hashish_trip",
+        "stream": true
+      }
+    ]
   }
 }

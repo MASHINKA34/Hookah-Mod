@@ -3,6 +3,7 @@ package com.hookahmod.event;
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.item.HookahBlockItem;
 import com.hookahmod.item.WornHookah;
+import com.hookahmod.registry.ModItems;
 import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
 import net.minecraft.core.BlockPos;
@@ -10,10 +11,13 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Blocks;
@@ -23,6 +27,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
+import net.neoforged.neoforge.event.level.BlockEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.Map;
@@ -33,6 +38,12 @@ public final class ServerEvents {
 
     private static final int WORN_LIGHT_LEVEL = 8;
     private static final Map<UUID, GlobalPos> WORN_LIGHTS = new ConcurrentHashMap<>();
+    private static final float GRASS_TOBACCO_SEED_CHANCE = 0.055F;
+    private static final float GRASS_MINT_SEED_CHANCE = 0.045F;
+    private static final float GRASS_LAVENDER_SEED_CHANCE = 0.045F;
+    private static final float LEAVES_TOBACCO_SEED_CHANCE = 0.018F;
+    private static final float LEAVES_MINT_SEED_CHANCE = 0.014F;
+    private static final float LEAVES_LAVENDER_SEED_CHANCE = 0.014F;
 
     private ServerEvents() {}
 
@@ -83,12 +94,44 @@ public final class ServerEvents {
         }
     }
 
+    @SubscribeEvent
+    public static void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (!(event.getLevel() instanceof ServerLevel level)) return;
+        if (!(event.getPlayer() instanceof ServerPlayer player) || player.isCreative()) return;
+
+        BlockState state = event.getState();
+        if (isSeedGrass(state)) {
+            rollSeedDrop(level, event.getPos(), ModItems.TOBACCO_SEED.get(), GRASS_TOBACCO_SEED_CHANCE);
+            rollSeedDrop(level, event.getPos(), ModItems.MINT_SEED.get(), GRASS_MINT_SEED_CHANCE);
+            rollSeedDrop(level, event.getPos(), ModItems.LAVENDER_SEED.get(), GRASS_LAVENDER_SEED_CHANCE);
+            return;
+        }
+
+        if (state.is(BlockTags.LEAVES)) {
+            rollSeedDrop(level, event.getPos(), ModItems.TOBACCO_SEED.get(), LEAVES_TOBACCO_SEED_CHANCE);
+            rollSeedDrop(level, event.getPos(), ModItems.MINT_SEED.get(), LEAVES_MINT_SEED_CHANCE);
+            rollSeedDrop(level, event.getPos(), ModItems.LAVENDER_SEED.get(), LEAVES_LAVENDER_SEED_CHANCE);
+        }
+    }
+
     private static void tickIntoxication(MinecraftServer server) {
         if (server.getTickCount() % 20 != 0) return;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             IntoxicationState.decayTick(player);
             IntoxicationState.applyBandEffects(player);
         }
+    }
+
+    private static boolean isSeedGrass(BlockState state) {
+        return state.is(Blocks.SHORT_GRASS)
+                || state.is(Blocks.TALL_GRASS)
+                || state.is(Blocks.FERN)
+                || state.is(Blocks.LARGE_FERN);
+    }
+
+    private static void rollSeedDrop(ServerLevel level, BlockPos pos, Item item, float chance) {
+        if (level.random.nextFloat() >= chance) return;
+        Containers.dropItemStack(level, pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D, new ItemStack(item));
     }
 
     @SubscribeEvent

@@ -1,0 +1,25 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "one",
+    "dstrgb": "zero"
+  },
+  "vertex": "hookahmod:hashish_spiral",
+  "fragment": "hookahmod:hashish_spiral",
+  "attributes": [ "Position" ],
+  "samplers": [
+    { "name": "DiffuseSampler" },
+    { "name": "SpiralSampler" },
+    { "name": "TripSampler" }
+  ],
+  "uniforms": [
+    { "name": "ProjMat",        "type": "matrix4x4", "count": 16, "values": [ 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0 ] },
+    { "name": "InSize",         "type": "float",     "count": 2,  "values": [ 1.0, 1.0 ] },
+    { "name": "OutSize",        "type": "float",     "count": 2,  "values": [ 1.0, 1.0 ] },
+    { "name": "ScreenSize",     "type": "float",     "count": 2,  "values": [ 1.0, 1.0 ] },
+    { "name": "Time",           "type": "float",     "count": 1,  "values": [ 0.0 ] },
+    { "name": "Intensity",      "type": "float",     "count": 1,  "values": [ 0.0 ] },
+    { "name": "TripTime",       "type": "float",     "count": 1,  "values": [ 0.0 ] },
+    { "name": "RemainingRatio", "type": "float",     "count": 1,  "values": [ 0.0 ] }
+  ]
+}

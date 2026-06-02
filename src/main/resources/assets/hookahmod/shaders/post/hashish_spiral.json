@@ -1,0 +1,48 @@
+{
+  "targets": [
+    "hashish_swap"
+  ],
+  "passes": [
+    {
+      "name": "hookahmod:hashish_spiral",
+      "intarget": "minecraft:main",
+      "outtarget": "hashish_swap",
+      "use_linear_filter": true,
+      "auxtargets": [
+        {
+          "name": "SpiralSampler",
+          "id": "hookahmod:hashish_spiral_overlay",
+          "width": 1024,
+          "height": 1024,
+          "bilinear": true
+        },
+        {
+          "name": "TripSampler",
+          "id": "hookahmod:hashish_trip",
+          "width": 1024,
+          "height": 1024,
+          "bilinear": true
+        }
+      ],
+      "uniforms": [
+        {
+          "name": "Intensity",
+          "values": [ 0.0 ]
+        },
+        {
+          "name": "TripTime",
+          "values": [ 0.0 ]
+        },
+        {
+          "name": "RemainingRatio",
+          "values": [ 0.0 ]
+        }
+      ]
+    },
+    {
+      "name": "blit",
+      "intarget": "hashish_swap",
+      "outtarget": "minecraft:main"
+    }
+  ]
+}

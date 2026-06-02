@@ -15,7 +15,7 @@ public class HookahBlockItem extends BlockItem implements Equipable, TieredHooka
     private final HookahTier tier;
 
     public HookahBlockItem(Block block, Properties properties) {
-        this(block, properties, HookahTier.LEATHER);
+        this(block, properties, HookahTier.NORMAL);
     }
 
     public HookahBlockItem(Block block, Properties properties, HookahTier tier) {
@@ -26,6 +26,11 @@ public class HookahBlockItem extends BlockItem implements Equipable, TieredHooka
     @Override
     public HookahTier tier() {
         return tier;
+    }
+
+    @Override
+    public String getDescriptionId() {
+        return "item.hookahmod." + tier.itemId();
     }
 
     @Override

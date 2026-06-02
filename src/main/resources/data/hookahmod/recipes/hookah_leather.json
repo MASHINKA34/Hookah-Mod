@@ -2,20 +2,20 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    " G ",
-    "GHG",
-    " G "
+    " L ",
+    "LHL",
+    " L "
   ],
   "key": {
-    "G": {
-      "item": "minecraft:gold_ingot"
+    "L": {
+      "item": "minecraft:leather"
     },
     "H": {
-      "item": "hookahmod:hookah_leather"
+      "item": "hookahmod:hookah"
     }
   },
   "result": {
-    "id": "hookahmod:hookah_gold",
+    "id": "hookahmod:hookah_leather",
     "count": 1
   }
 }

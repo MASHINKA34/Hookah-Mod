@@ -4,7 +4,8 @@ import net.minecraft.util.StringRepresentable;
 import net.minecraft.world.item.ItemStack;
 
 public enum HookahTier implements StringRepresentable {
-    LEATHER("leather", "", 1.0, 1.0f, 1.0f, false, "hookah"),
+    NORMAL("normal", "", 0.0, 1.0f, 1.0f, false, "hookah"),
+    LEATHER("leather", "_leather", 1.0, 1.0f, 1.0f, false, "hookah_leather"),
     GOLD("gold", "_gold", 2.0, 1.35f, 1.1f, false, "hookah_gold"),
     IRON("iron", "_iron", 3.0, 1.25f, 1.25f, false, "hookah_iron"),
     DIAMOND("diamond", "_diamond", 5.0, 1.5f, 1.5f, false, "hookah_diamond"),
@@ -62,6 +63,6 @@ public enum HookahTier implements StringRepresentable {
     }
 
     public static HookahTier fromStack(ItemStack stack) {
-        return stack.getItem() instanceof TieredHookahItem item ? item.tier() : LEATHER;
+        return stack.getItem() instanceof TieredHookahItem item ? item.tier() : NORMAL;
     }
 }

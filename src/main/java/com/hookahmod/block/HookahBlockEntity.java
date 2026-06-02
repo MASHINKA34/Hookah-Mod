@@ -201,8 +201,11 @@ public class HookahBlockEntity extends BlockEntity {
                 net.minecraft.sounds.SoundSource.PLAYERS, volume, 1.6f);
 
         if (tobaccoStack.getItem() instanceof AbstractTobaccoItem tobacco) {
+            HookahTier tier = getBlockState().hasProperty(HookahBlock.TIER)
+                    ? getBlockState().getValue(HookahBlock.TIER)
+                    : HookahTier.NORMAL;
             IntoxicationState.add(player, IntoxicationState.gain(tobacco.intoxication(), charge));
-            tobacco.onExhale(server, player, charge, HookahTier.LEATHER.effectMult(), HookahTier.LEATHER.combatMult());
+            tobacco.onExhale(server, player, charge, tier.effectMult(), tier.combatMult());
         } else {
             IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.REGULAR_TOBACCO_INTOXICATION, charge));
         }

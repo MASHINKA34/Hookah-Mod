@@ -29,6 +29,11 @@ public final class ModItems {
 
     public static final DeferredItem<HookahBlockItem> HOOKAH = ITEMS.register(
             "hookah",
+            () -> new HookahBlockItem(ModBlocks.HOOKAH.get(), normalHookahProperties(), HookahTier.NORMAL)
+    );
+
+    public static final DeferredItem<HookahBlockItem> HOOKAH_LEATHER = ITEMS.register(
+            "hookah_leather",
             () -> new HookahBlockItem(ModBlocks.HOOKAH.get(), hookahProperties(HookahTier.LEATHER), HookahTier.LEATHER)
     );
 
@@ -144,6 +149,10 @@ public final class ModItems {
                         .build());
         if (tier.fireResistant()) properties.component(DataComponents.FIRE_RESISTANT, Unit.INSTANCE);
         return properties;
+    }
+
+    private static Item.Properties normalHookahProperties() {
+        return new Item.Properties().stacksTo(1);
     }
 
     private ModItems() {}

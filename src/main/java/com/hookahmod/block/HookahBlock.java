@@ -66,7 +66,7 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(HAS_COAL, false)
-                .setValue(TIER, HookahTier.LEATHER));
+                .setValue(TIER, HookahTier.NORMAL));
     }
 
     @Override
@@ -81,7 +81,7 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext ctx) {
-        HookahTier tier = ctx.getItemInHand().getItem() instanceof TieredHookahItem item ? item.tier() : HookahTier.LEATHER;
+        HookahTier tier = ctx.getItemInHand().getItem() instanceof TieredHookahItem item ? item.tier() : HookahTier.NORMAL;
         return this.defaultBlockState()
                 .setValue(FACING, ctx.getHorizontalDirection().getOpposite())
                 .setValue(TIER, tier);
@@ -208,6 +208,7 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
 
     private static ItemStack stackForTier(HookahTier tier) {
         return switch (tier) {
+            case LEATHER -> new ItemStack(ModItems.HOOKAH_LEATHER.get());
             case GOLD -> new ItemStack(ModItems.HOOKAH_GOLD.get());
             case IRON -> new ItemStack(ModItems.HOOKAH_IRON.get());
             case DIAMOND -> new ItemStack(ModItems.HOOKAH_DIAMOND.get());

@@ -36,9 +36,23 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.TOBACCO_ICE.get());
                         output.accept(ModItems.TOBACCO_HEAL.get());
                         output.accept(ModItems.TOBACCO_ABYSS.get());
+                        output.accept(ModItems.TOBACCO_APPLE.get());
+                        output.accept(ModItems.TOBACCO_HONEY.get());
+                        output.accept(ModItems.TOBACCO_CITRUS.get());
+                        output.accept(ModItems.TOBACCO_COFFEE.get());
+                        output.accept(ModItems.TOBACCO_MINER.get());
+                        output.accept(ModItems.TOBACCO_TRAVELER.get());
+                        output.accept(ModItems.TOBACCO_FISHER.get());
+                        output.accept(ModItems.TOBACCO_MINT.get());
+                        output.accept(ModItems.TOBACCO_LAVENDER.get());
                         output.accept(ModItems.HOOKAH_CHARCOAL.get());
                         output.accept(ModItems.HOOKAH_WATER_BOTTLE.get());
                         output.accept(ModItems.TONOMETER.get());
+                        output.accept(ModItems.TOBACCO_SEED.get());
+                        output.accept(ModItems.MINT.get());
+                        output.accept(ModItems.MINT_SEED.get());
+                        output.accept(ModItems.LAVENDER.get());
+                        output.accept(ModItems.LAVENDER_SEED.get());
                     })
                     .build()
     );

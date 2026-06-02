@@ -1,11 +1,13 @@
 package com.hookahmod;
 
+import com.hookahmod.effect.ModMobEffects;
 import com.hookahmod.event.ServerEvents;
 import com.hookahmod.network.NetworkHandler;
 import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.registry.ModCreativeTabs;
 import com.hookahmod.registry.ModItems;
+import com.hookahmod.registry.ModLootModifiers;
 import com.hookahmod.registry.ModMenuTypes;
 import com.hookahmod.registry.ModParticles;
 import com.hookahmod.registry.ModSounds;
@@ -32,6 +34,8 @@ public final class HookahMod {
         ModSounds.SOUNDS.register(modBus);
         ModParticles.PARTICLES.register(modBus);
         ModAttachments.ATTACHMENTS.register(modBus);
+        ModMobEffects.MOB_EFFECTS.register(modBus);
+        ModLootModifiers.LOOT_MODIFIERS.register(modBus);
 
         modBus.addListener(NetworkHandler::register);
 

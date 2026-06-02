@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hookahmod:hookah_tobacco"
+    },
+    {
+      "item": "hookahmod:mint"
+    }
+  ],
+  "result": {
+    "id": "hookahmod:tobacco_mint",
+    "count": 2
+  }
+}

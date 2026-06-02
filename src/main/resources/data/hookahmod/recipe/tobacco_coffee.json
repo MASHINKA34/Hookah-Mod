@@ -1,0 +1,16 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "hookahmod:hookah_tobacco"
+    },
+    {
+      "item": "croptopia:coffee_beans"
+    }
+  ],
+  "result": {
+    "id": "hookahmod:tobacco_coffee",
+    "count": 2
+  }
+}

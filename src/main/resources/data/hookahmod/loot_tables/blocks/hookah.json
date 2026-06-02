@@ -12,6 +12,19 @@
               "condition": "minecraft:block_state_property",
               "block": "hookahmod:hookah",
               "properties": {
+                "tier": "normal"
+              }
+            }
+          ]
+        },
+        {
+          "type": "minecraft:item",
+          "name": "hookahmod:hookah_leather",
+          "conditions": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "hookahmod:hookah",
+              "properties": {
                 "tier": "leather"
               }
             }

@@ -6,6 +6,12 @@ $sourcePath = Join-Path $root "src/main/resources/assets/hookahmod/textures/bloc
 $outputDir = Join-Path $root "src/main/resources/assets/hookahmod/textures/block"
 
 $tiers = @{
+    leather = @{
+        Shadow = [System.Drawing.Color]::FromArgb(0x3a, 0x20, 0x12)
+        Mid = [System.Drawing.Color]::FromArgb(0x7a, 0x45, 0x24)
+        High = [System.Drawing.Color]::FromArgb(0xb8, 0x75, 0x3a)
+        Top = [System.Drawing.Color]::FromArgb(0xe1, 0xad, 0x72)
+    }
     gold = @{
         Shadow = [System.Drawing.Color]::FromArgb(0x5c, 0x3d, 0x00)
         Mid = [System.Drawing.Color]::FromArgb(0xb8, 0x86, 0x0b)

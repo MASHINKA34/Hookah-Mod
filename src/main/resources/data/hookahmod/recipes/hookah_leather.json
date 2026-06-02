@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "pattern": [
+    " L ",
+    "LHL",
+    " L "
+  ],
+  "key": {
+    "L": {
+      "item": "minecraft:leather"
+    },
+    "H": {
+      "item": "hookahmod:hookah"
+    }
+  },
+  "result": {
+    "id": "hookahmod:hookah_leather",
+    "count": 1
+  }
+}

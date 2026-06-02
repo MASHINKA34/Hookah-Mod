@@ -14,5 +14,8 @@ public final class ModMobEffects {
     public static final DeferredHolder<MobEffect, MobEffect> SEA_LUCK =
             MOB_EFFECTS.register("sea_luck", SeaLuckEffect::new);
 
+    public static final DeferredHolder<MobEffect, MobEffect> HASHISH_TRIP =
+            MOB_EFFECTS.register("hashish_trip", HashishTripEffect::new);
+
     private ModMobEffects() {}
 }

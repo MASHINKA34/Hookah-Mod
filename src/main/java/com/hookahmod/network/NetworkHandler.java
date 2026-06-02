@@ -46,5 +46,11 @@ public final class NetworkHandler {
                 TripEventPayload.STREAM_CODEC,
                 TripEventPayload::handle
         );
+
+        registrar.playToClient(
+                HashishTripPayload.TYPE,
+                HashishTripPayload.STREAM_CODEC,
+                HashishTripPayload::handle
+        );
     }
 }

@@ -8,6 +8,7 @@ import com.hookahmod.registry.ModParticles;
 import com.hookahmod.network.OpenWornHookahPayload;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.client.particle.ColoredHookahSmokeParticle;
+import com.hookahmod.client.trip.HashishTripManager;
 import com.hookahmod.client.trip.TripManager;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
@@ -50,6 +51,8 @@ public final class ClientSetup {
         NeoForge.EVENT_BUS.addListener(TripManager::computeFov);
         NeoForge.EVENT_BUS.addListener(TripManager::cameraAngles);
         NeoForge.EVENT_BUS.addListener(TripManager::fogColor);
+        NeoForge.EVENT_BUS.addListener(HashishTripManager::computeFov);
+        NeoForge.EVENT_BUS.addListener(HashishTripManager::cameraAngles);
     }
 
     @SubscribeEvent
@@ -106,5 +109,6 @@ public final class ClientSetup {
     private static void onClientTick(ClientTickEvent.Post event) {
         HookahSmokingSound.tickLocal();
         TripManager.tick(event);
+        HashishTripManager.tick(event);
     }
 }

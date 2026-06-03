@@ -37,6 +37,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.TOBACCO_HEAL.get());
                         output.accept(ModItems.TOBACCO_ABYSS.get());
                         output.accept(ModItems.TOBACCO_HASHISH.get());
+                        output.accept(ModItems.TOBACCO_PALPALYCH.get());
                         output.accept(ModItems.TOBACCO_APPLE.get());
                         output.accept(ModItems.TOBACCO_HONEY.get());
                         output.accept(ModItems.TOBACCO_CITRUS.get());

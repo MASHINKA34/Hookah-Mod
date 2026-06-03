@@ -52,5 +52,11 @@ public final class NetworkHandler {
                 HashishTripPayload.STREAM_CODEC,
                 HashishTripPayload::handle
         );
+
+        registrar.playToClient(
+                VideoTripPayload.TYPE,
+                VideoTripPayload.STREAM_CODEC,
+                VideoTripPayload::handle
+        );
     }
 }

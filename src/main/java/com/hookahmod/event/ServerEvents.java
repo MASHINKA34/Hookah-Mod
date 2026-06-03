@@ -1,6 +1,8 @@
 package com.hookahmod.event;
 
+import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlockEntity;
+import com.hookahmod.effect.ModMobEffects;
 import com.hookahmod.item.HookahBlockItem;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.registry.ModItems;
@@ -8,6 +10,7 @@ import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -16,6 +19,10 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.Pose;
+import net.minecraft.world.entity.ai.attributes.AttributeInstance;
+import net.minecraft.world.entity.ai.attributes.AttributeModifier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -44,6 +51,7 @@ public final class ServerEvents {
     private static final float LEAVES_TOBACCO_SEED_CHANCE = 0.018F;
     private static final float LEAVES_MINT_SEED_CHANCE = 0.014F;
     private static final float LEAVES_LAVENDER_SEED_CHANCE = 0.014F;
+    private static final ResourceLocation PALPALYCH_LOCK_ID = HookahMod.id("palpalych_trip_lock");
 
     private ServerEvents() {}
 
@@ -51,6 +59,7 @@ public final class ServerEvents {
     public static void onServerTick(ServerTickEvent.Post event) {
         HookahSmoke.serverTick(event.getServer());
         tickIntoxication(event.getServer());
+        tickPalPalychTrip(event.getServer());
         tickWornHookahLights(event.getServer());
     }
 
@@ -73,6 +82,7 @@ public final class ServerEvents {
         if (event.getEntity() instanceof ServerPlayer sp) {
             removeWornHookahLight(sp.server, sp.getUUID());
             releaseSession(sp.server, sp.getUUID());
+            endPalPalychTrip(sp);
         }
     }
 
@@ -82,6 +92,7 @@ public final class ServerEvents {
         if (p instanceof ServerPlayer sp) {
             removeWornHookahLight(sp.server, sp.getUUID());
             releaseSession(sp.server, sp.getUUID());
+            endPalPalychTrip(sp);
         }
     }
 
@@ -91,6 +102,7 @@ public final class ServerEvents {
             removeWornHookahLight(sp.server, sp.getUUID());
             releaseSession(sp.server, sp.getUUID());
             IntoxicationState.sync(sp);
+            endPalPalychTrip(sp);
         }
     }
 
@@ -120,6 +132,47 @@ public final class ServerEvents {
             IntoxicationState.decayTick(player);
             IntoxicationState.applyBandEffects(player);
         }
+    }
+
+    private static void tickPalPalychTrip(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            boolean tripping = player.hasEffect(ModMobEffects.PALPALYCH_TRIP);
+            AttributeInstance speed = player.getAttribute(Attributes.MOVEMENT_SPEED);
+            boolean locked = speed != null && speed.getModifier(PALPALYCH_LOCK_ID) != null;
+            if (tripping && !locked) {
+                applyTripLock(player);
+            } else if (!tripping && locked) {
+                clearTripLock(player);
+            }
+        }
+    }
+
+    private static void applyTripLock(ServerPlayer player) {
+        player.setForcedPose(Pose.SWIMMING);
+        addLockModifier(player.getAttribute(Attributes.MOVEMENT_SPEED));
+        addLockModifier(player.getAttribute(Attributes.JUMP_STRENGTH));
+    }
+
+    private static void clearTripLock(ServerPlayer player) {
+        player.setForcedPose(null);
+        removeLockModifier(player.getAttribute(Attributes.MOVEMENT_SPEED));
+        removeLockModifier(player.getAttribute(Attributes.JUMP_STRENGTH));
+    }
+
+    private static void addLockModifier(AttributeInstance attribute) {
+        if (attribute == null || attribute.getModifier(PALPALYCH_LOCK_ID) != null) return;
+        attribute.addTransientModifier(new AttributeModifier(PALPALYCH_LOCK_ID, -1.0D, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL));
+    }
+
+    private static void removeLockModifier(AttributeInstance attribute) {
+        if (attribute != null) attribute.removeModifier(PALPALYCH_LOCK_ID);
+    }
+
+    private static void endPalPalychTrip(ServerPlayer player) {
+        if (player.hasEffect(ModMobEffects.PALPALYCH_TRIP)) {
+            player.removeEffect(ModMobEffects.PALPALYCH_TRIP);
+        }
+        clearTripLock(player);
     }
 
     private static boolean isSeedGrass(BlockState state) {

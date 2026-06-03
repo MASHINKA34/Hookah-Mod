@@ -17,6 +17,7 @@
   "item.hookahmod.tobacco_heal": "Healing Tobacco",
   "item.hookahmod.tobacco_abyss": "Abyss Tobacco",
   "item.hookahmod.tobacco_hashish": "Hashish Tobacco",
+  "item.hookahmod.tobacco_palpalych": "Pal Palych",
   "item.hookahmod.tobacco_apple": "Apple Tobacco",
   "item.hookahmod.tobacco_honey": "Honey Tobacco",
   "item.hookahmod.tobacco_citrus": "Citrus Tobacco",
@@ -83,6 +84,7 @@
 
   "effect.hookahmod.sea_luck": "Sea Luck",
   "effect.hookahmod.hashish_trip": "Hashish Trip",
+  "effect.hookahmod.palpalych_trip": "Pal Palych Trip",
 
   "hookah_tier.hookahmod.normal": "Normal",
   "hookah_tier.hookahmod.leather": "Leather",
@@ -94,5 +96,6 @@
   "key.hookahmod.open_worn_hookah": "Open worn hookah",
 
   "subtitles.hookahmod.smoking": "Hookah bubbling",
-  "subtitles.hookahmod.hashish_trip_music": "Hashish trip music"
+  "subtitles.hookahmod.hashish_trip_music": "Hashish trip music",
+  "subtitles.hookahmod.palpalych_trip": "Pal Palych"
 }

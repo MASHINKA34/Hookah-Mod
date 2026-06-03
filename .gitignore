@@ -2,6 +2,8 @@
 build/
 out/
 run/
+run2/
+runServer/
 run-data/
 .idea/
 *.iml

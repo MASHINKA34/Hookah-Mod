@@ -16,5 +16,14 @@
         "stream": true
       }
     ]
+  },
+  "palpalych_trip": {
+    "subtitle": "subtitles.hookahmod.palpalych_trip",
+    "sounds": [
+      {
+        "name": "hookahmod:palpalych_trip",
+        "stream": true
+      }
+    ]
   }
 }

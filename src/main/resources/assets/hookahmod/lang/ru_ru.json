@@ -17,6 +17,7 @@
   "item.hookahmod.tobacco_heal": "Лечебный табак",
   "item.hookahmod.tobacco_abyss": "Табак Бездны",
   "item.hookahmod.tobacco_hashish": "Табак с гашишем",
+  "item.hookahmod.tobacco_palpalych": "Пал Палыч",
   "item.hookahmod.tobacco_apple": "Яблочный табак",
   "item.hookahmod.tobacco_honey": "Медовый табак",
   "item.hookahmod.tobacco_citrus": "Цитрусовый табак",
@@ -83,6 +84,7 @@
 
   "effect.hookahmod.sea_luck": "Удача моря",
   "effect.hookahmod.hashish_trip": "Hashish Trip",
+  "effect.hookahmod.palpalych_trip": "Трип Пал Палыча",
 
   "hookah_tier.hookahmod.normal": "Обычный",
   "hookah_tier.hookahmod.leather": "Кожаный",
@@ -95,5 +97,6 @@
   "key.hookahmod.open_worn_hookah": "Открыть кальян на спине",
 
   "subtitles.hookahmod.smoking": "Бульканье кальяна",
-  "subtitles.hookahmod.hashish_trip_music": "Музыка Hashish Trip"
+  "subtitles.hookahmod.hashish_trip_music": "Музыка Hashish Trip",
+  "subtitles.hookahmod.palpalych_trip": "Пал Палыч"
 }

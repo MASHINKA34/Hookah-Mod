@@ -17,5 +17,8 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> HASHISH_TRIP_MUSIC =
             SOUNDS.register("hashish_trip_music", () -> SoundEvent.createVariableRangeEvent(HookahMod.id("hashish_trip_music")));
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> PALPALYCH_TRIP =
+            SOUNDS.register("palpalych_trip", () -> SoundEvent.createVariableRangeEvent(HookahMod.id("palpalych_trip")));
+
     private ModSounds() {}
 }

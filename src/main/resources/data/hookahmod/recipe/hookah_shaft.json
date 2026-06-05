@@ -1,12 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    " I ",
-    " I ",
-    " I "
+    "IDI",
+    "I I",
+    "IDI"
   ],
   "key": {
-    "I": { "item": "minecraft:iron_ingot" }
+    "I": { "item": "minecraft:iron_ingot" },
+    "D": { "item": "minecraft:iron_nugget" }
   },
   "result": {
     "id": "hookahmod:hookah_shaft",

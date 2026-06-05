@@ -194,6 +194,11 @@ public final class ModItems {
             () -> new HookahWaterBottleItem(new Item.Properties().stacksTo(16))
     );
 
+    public static final DeferredItem<Item> CHICKEN_POOP = ITEMS.register(
+            "chicken_poop",
+            () -> new Item(new Item.Properties().stacksTo(64))
+    );
+
     public static final DeferredItem<TonometerItem> TONOMETER = ITEMS.register(
             "tonometer",
             () -> new TonometerItem(new Item.Properties().stacksTo(1))

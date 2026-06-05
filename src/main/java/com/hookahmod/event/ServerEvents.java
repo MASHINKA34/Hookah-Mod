@@ -23,6 +23,7 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -35,6 +36,7 @@ import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
+import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import java.util.Map;
@@ -51,6 +53,7 @@ public final class ServerEvents {
     private static final float LEAVES_TOBACCO_SEED_CHANCE = 0.018F;
     private static final float LEAVES_MINT_SEED_CHANCE = 0.014F;
     private static final float LEAVES_LAVENDER_SEED_CHANCE = 0.014F;
+    private static final float CHICKEN_POOP_CHANCE = 0.35F;
     private static final ResourceLocation PALPALYCH_LOCK_ID = HookahMod.id("palpalych_trip_lock");
 
     private ServerEvents() {}
@@ -75,6 +78,17 @@ public final class ServerEvents {
         if (event.getEntity() instanceof ServerPlayer sp) {
             IntoxicationState.sync(sp);
         }
+    }
+
+    @SubscribeEvent
+    public static void onEntityTick(EntityTickEvent.Pre event) {
+        if (!(event.getEntity() instanceof Chicken chicken)) return;
+        if (!(chicken.level() instanceof ServerLevel)) return;
+        if (!chicken.isAlive() || chicken.isBaby() || chicken.isChickenJockey()) return;
+        if (chicken.eggTime != 1) return;
+        if (chicken.getRandom().nextFloat() >= CHICKEN_POOP_CHANCE) return;
+
+        chicken.spawnAtLocation(ModItems.CHICKEN_POOP.get());
     }
 
     @SubscribeEvent

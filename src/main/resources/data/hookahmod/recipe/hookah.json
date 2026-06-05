@@ -1,15 +1,10 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "pattern": [
-    " B ",
-    " S ",
-    " F "
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "hookahmod:hookah_bowl" },
+    { "item": "hookahmod:hookah_shaft" },
+    { "item": "hookahmod:hookah_flask" }
   ],
-  "key": {
-    "B": { "item": "hookahmod:hookah_bowl" },
-    "S": { "item": "hookahmod:hookah_shaft" },
-    "F": { "item": "hookahmod:hookah_flask" }
-  },
   "result": {
     "id": "hookahmod:hookah",
     "count": 1

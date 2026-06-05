@@ -1,13 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    " G ",
-    "GSG",
-    " S "
+    "KK ",
+    "NNK",
+    "KK "
   ],
   "key": {
-    "G": { "item": "minecraft:gold_nugget" },
-    "S": { "item": "minecraft:stick" }
+    "K": { "item": "minecraft:dried_kelp" },
+    "N": { "item": "minecraft:iron_nugget" }
   },
   "result": {
     "id": "hookahmod:hookah_mouthpiece",

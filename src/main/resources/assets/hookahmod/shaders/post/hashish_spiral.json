@@ -12,15 +12,15 @@
         {
           "name": "SpiralSampler",
           "id": "hookahmod:hashish_spiral_overlay",
-          "width": 1024,
-          "height": 1024,
+          "width": 512,
+          "height": 512,
           "bilinear": true
         },
         {
           "name": "TripSampler",
           "id": "hookahmod:hashish_trip",
-          "width": 1024,
-          "height": 1024,
+          "width": 512,
+          "height": 512,
           "bilinear": true
         }
       ],

@@ -11,8 +11,8 @@ public final class VideoTripManager {
 
     private static final int FRAME_COUNT = 299;
     private static final float FPS = 15.0f;
-    private static final int FRAME_W = 360;
-    private static final int FRAME_H = 360;
+    private static final int FRAME_W = 160;
+    private static final int FRAME_H = 160;
 
     private static boolean active;
     private static int ageTicks;

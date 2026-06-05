@@ -12,7 +12,7 @@ import org.joml.Vector3f;
 public class HashishTobaccoItem extends AbstractTobaccoItem {
 
     private static final float TRIP_CHANCE = 0.30f;
-    private static final int TRIP_DURATION_TICKS = 30 * 20;
+    private static final int TRIP_DURATION_TICKS = 15 * 20;
     private static final Vector3f SMOKE_COLOR = new Vector3f(0.65f, 0.95f, 0.55f);
 
     public HashishTobaccoItem(Properties properties) {

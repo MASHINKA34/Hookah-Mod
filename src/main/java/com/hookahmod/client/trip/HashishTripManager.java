@@ -11,7 +11,7 @@ import net.neoforged.neoforge.client.event.ViewportEvent;
 public final class HashishTripManager {
 
     private static final ResourceLocation EFFECT = HookahMod.id("shaders/post/hashish_spiral.json");
-    private static final int ADD_DURATION_TICKS = 30 * 20;
+    private static final int ADD_DURATION_TICKS = 15 * 20;
     private static final int RAMP_TICKS = 5 * 20;
     private static final int FADE_TICKS = 5 * 20;
 

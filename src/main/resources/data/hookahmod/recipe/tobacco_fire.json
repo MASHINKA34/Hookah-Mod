@@ -1,19 +1,19 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "ingredients": [
-    {
-      "item": "hookahmod:hookah_tobacco"
-    },
-    {
+  "pattern": [
+    "BTB"
+  ],
+  "key": {
+    "B": {
       "item": "minecraft:blaze_powder"
     },
-    {
-      "item": "minecraft:gunpowder"
+    "T": {
+      "item": "hookahmod:hookah_tobacco"
     }
-  ],
+  },
   "result": {
     "id": "hookahmod:tobacco_fire",
-    "count": 2
+    "count": 4
   }
 }

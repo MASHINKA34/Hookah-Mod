@@ -2,16 +2,16 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "pattern": [
-    " D ",
+    "DDD",
     "DHD",
-    " D "
+    "DDD"
   ],
   "key": {
     "D": {
       "item": "minecraft:diamond"
     },
     "H": {
-      "item": "hookahmod:hookah_iron"
+      "item": "hookahmod:hookah"
     }
   },
   "result": {

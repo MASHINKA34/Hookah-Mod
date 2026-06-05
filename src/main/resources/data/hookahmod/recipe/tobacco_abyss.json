@@ -1,19 +1,32 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "ingredients": [
-    {
-      "item": "hookahmod:hookah_tobacco"
-    },
-    {
+  "pattern": [
+    "ETG",
+    "CRN"
+  ],
+  "key": {
+    "E": {
       "item": "minecraft:ender_pearl"
     },
-    {
-      "item": "minecraft:echo_shard"
+    "T": {
+      "item": "hookahmod:hookah_tobacco"
+    },
+    "G": {
+      "item": "minecraft:glow_ink_sac"
+    },
+    "C": {
+      "item": "minecraft:chorus_fruit"
+    },
+    "R": {
+      "item": "minecraft:rotten_flesh"
+    },
+    "N": {
+      "item": "minecraft:nether_wart"
     }
-  ],
+  },
   "result": {
     "id": "hookahmod:tobacco_abyss",
-    "count": 1
+    "count": 4
   }
 }

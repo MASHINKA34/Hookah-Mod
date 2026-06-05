@@ -47,6 +47,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.TOBACCO_FISHER.get());
                         output.accept(ModItems.TOBACCO_MINT.get());
                         output.accept(ModItems.TOBACCO_LAVENDER.get());
+                        output.accept(ModItems.CHICKEN_POOP.get());
                         output.accept(ModItems.HOOKAH_CHARCOAL.get());
                         output.accept(ModItems.HOOKAH_WATER_BOTTLE.get());
                         output.accept(ModItems.TONOMETER.get());

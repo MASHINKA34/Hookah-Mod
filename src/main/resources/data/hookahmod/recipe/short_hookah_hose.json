@@ -1,13 +1,13 @@
 {
   "type": "minecraft:crafting_shaped",
   "pattern": [
-    "LLM",
-    "LL ",
-    "LL "
+    "G  ",
+    "K  ",
+    "KKG"
   ],
   "key": {
-    "L": { "item": "minecraft:leather" },
-    "M": { "item": "hookahmod:hookah_mouthpiece" }
+    "G": { "item": "minecraft:gold_nugget" },
+    "K": { "item": "minecraft:dried_kelp" }
   },
   "result": {
     "id": "hookahmod:short_hookah_hose",

@@ -1,19 +1,19 @@
 {
-  "type": "minecraft:crafting_shapeless",
+  "type": "minecraft:crafting_shaped",
   "category": "misc",
-  "ingredients": [
-    {
-      "item": "hookahmod:hookah_tobacco"
-    },
-    {
+  "pattern": [
+    "STS"
+  ],
+  "key": {
+    "S": {
       "item": "minecraft:snowball"
     },
-    {
-      "item": "minecraft:blue_ice"
+    "T": {
+      "item": "hookahmod:hookah_tobacco"
     }
-  ],
+  },
   "result": {
     "id": "hookahmod:tobacco_ice",
-    "count": 2
+    "count": 4
   }
 }

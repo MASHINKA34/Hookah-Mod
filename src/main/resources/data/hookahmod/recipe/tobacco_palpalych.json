@@ -9,11 +9,17 @@
       "item": "minecraft:amethyst_shard"
     },
     {
-      "item": "minecraft:glow_ink_sac"
+      "item": "minecraft:brown_mushroom"
+    },
+    {
+      "item": "minecraft:redstone"
+    },
+    {
+      "item": "minecraft:red_mushroom"
     }
   ],
   "result": {
     "id": "hookahmod:tobacco_palpalych",
-    "count": 2
+    "count": 4
   }
 }

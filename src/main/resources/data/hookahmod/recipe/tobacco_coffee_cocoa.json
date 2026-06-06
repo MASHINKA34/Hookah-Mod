@@ -3,8 +3,11 @@
   "category": "misc",
   "neoforge:conditions": [
     {
-      "type": "neoforge:mod_loaded",
-      "modid": "croptopia"
+      "type": "neoforge:not",
+      "value": {
+        "type": "neoforge:mod_loaded",
+        "modid": "croptopia"
+      }
     }
   ],
   "ingredients": [
@@ -12,7 +15,13 @@
       "item": "hookahmod:hookah_tobacco"
     },
     {
-      "item": "croptopia:coffee_beans"
+      "item": "minecraft:cocoa_beans"
+    },
+    {
+      "item": "minecraft:cocoa_beans"
+    },
+    {
+      "item": "minecraft:cocoa_beans"
     }
   ],
   "result": {

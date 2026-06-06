@@ -1,6 +1,7 @@
 package com.hookahmod.registry;
 
 import com.hookahmod.HookahMod;
+import com.hookahmod.item.GuidebookItem;
 import com.hookahmod.item.HookahTier;
 import com.hookahmod.item.HookahBlockItem;
 import com.hookahmod.item.HookahCharcoalItem;
@@ -242,6 +243,11 @@ public final class ModItems {
     public static final DeferredItem<Item> LAVENDER = ITEMS.register(
             "lavender",
             () -> new Item(new Item.Properties().stacksTo(64))
+    );
+
+    public static final DeferredItem<GuidebookItem> GUIDEBOOK = ITEMS.register(
+            "guidebook",
+            () -> new GuidebookItem(new Item.Properties().stacksTo(1))
     );
 
     private static Item.Properties hookahProperties(HookahTier tier) {

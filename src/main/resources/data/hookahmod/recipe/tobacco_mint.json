@@ -7,10 +7,16 @@
     },
     {
       "item": "hookahmod:mint"
+    },
+    {
+      "item": "hookahmod:mint"
+    },
+    {
+      "item": "hookahmod:mint"
     }
   ],
   "result": {
     "id": "hookahmod:tobacco_mint",
-    "count": 2
+    "count": 4
   }
 }

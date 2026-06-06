@@ -1,22 +1,23 @@
 {
-  "type": "minecraft:crafting_shaped",
+  "type": "minecraft:crafting_shapeless",
   "category": "equipment",
-  "pattern": [
-    " I ",
-    "RGR",
-    " I "
-  ],
-  "key": {
-    "I": {
-      "item": "minecraft:iron_ingot"
+  "ingredients": [
+    {
+      "item": "minecraft:compass"
     },
-    "R": {
-      "item": "minecraft:redstone"
+    {
+      "item": "minecraft:clock"
     },
-    "G": {
-      "item": "minecraft:glass_pane"
+    {
+      "item": "minecraft:copper_ingot"
+    },
+    {
+      "tag": "minecraft:wool"
+    },
+    {
+      "item": "minecraft:leather"
     }
-  },
+  ],
   "result": {
     "id": "hookahmod:tonometer",
     "count": 1

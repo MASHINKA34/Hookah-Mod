@@ -42,6 +42,7 @@
   "block.hookahmod.mint_crop": "Mint",
   "block.hookahmod.lavender_crop": "Lavender",
   "item.hookahmod.tonometer": "Tonometer",
+  "item.hookahmod.guidebook": "Hookah Guide",
   "container.hookahmod.hookah": "Hookah",
 
   "gui.hookahmod.btn_take": "Take",

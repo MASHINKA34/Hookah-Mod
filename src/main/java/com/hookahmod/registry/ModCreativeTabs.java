@@ -51,6 +51,7 @@ public final class ModCreativeTabs {
                         output.accept(ModItems.HOOKAH_CHARCOAL.get());
                         output.accept(ModItems.HOOKAH_WATER_BOTTLE.get());
                         output.accept(ModItems.TONOMETER.get());
+                        output.accept(ModItems.GUIDEBOOK.get());
                         output.accept(ModItems.TOBACCO_SEED.get());
                         output.accept(ModItems.MINT.get());
                         output.accept(ModItems.MINT_SEED.get());

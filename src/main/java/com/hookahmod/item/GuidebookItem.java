@@ -15,6 +15,9 @@ public class GuidebookItem extends Item {
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        if (level.isClientSide()) {
+            net.minecraft.client.Minecraft.getInstance().setScreen(new com.hookahmod.client.GuideScreen());
+        }
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }
 }

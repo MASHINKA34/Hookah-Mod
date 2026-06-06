@@ -2,7 +2,7 @@
   "type": "minecraft:smelting",
   "category": "misc",
   "ingredient": {
-    "item": "minecraft:coal"
+    "item": "minecraft:charcoal"
   },
   "result": {
     "id": "hookahmod:hookah_charcoal",

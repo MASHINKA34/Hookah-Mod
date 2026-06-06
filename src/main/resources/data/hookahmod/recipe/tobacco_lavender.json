@@ -7,10 +7,16 @@
     },
     {
       "item": "hookahmod:lavender"
+    },
+    {
+      "item": "hookahmod:lavender"
+    },
+    {
+      "item": "hookahmod:lavender"
     }
   ],
   "result": {
     "id": "hookahmod:tobacco_lavender",
-    "count": 2
+    "count": 4
   }
 }

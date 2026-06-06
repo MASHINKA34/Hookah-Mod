@@ -6,14 +6,20 @@
       "item": "hookahmod:hookah_tobacco"
     },
     {
-      "item": "minecraft:coal"
+      "item": "minecraft:iron_ingot"
     },
     {
-      "item": "minecraft:glow_berries"
+      "item": "minecraft:gold_ingot"
+    },
+    {
+      "item": "minecraft:copper_ingot"
+    },
+    {
+      "item": "minecraft:coal"
     }
   ],
   "result": {
     "id": "hookahmod:tobacco_miner",
-    "count": 2
+    "count": 4
   }
 }

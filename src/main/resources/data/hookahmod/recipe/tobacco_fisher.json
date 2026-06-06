@@ -6,14 +6,17 @@
       "item": "hookahmod:hookah_tobacco"
     },
     {
+      "item": "minecraft:salmon"
+    },
+    {
       "item": "minecraft:cod"
     },
     {
-      "item": "minecraft:seagrass"
+      "item": "minecraft:bread"
     }
   ],
   "result": {
     "id": "hookahmod:tobacco_fisher",
-    "count": 2
+    "count": 4
   }
 }

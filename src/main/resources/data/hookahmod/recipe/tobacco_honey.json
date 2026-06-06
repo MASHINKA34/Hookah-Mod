@@ -7,10 +7,16 @@
     },
     {
       "item": "minecraft:honey_bottle"
+    },
+    {
+      "item": "minecraft:honey_bottle"
+    },
+    {
+      "item": "minecraft:honeycomb"
     }
   ],
   "result": {
     "id": "hookahmod:tobacco_honey",
-    "count": 2
+    "count": 4
   }
 }

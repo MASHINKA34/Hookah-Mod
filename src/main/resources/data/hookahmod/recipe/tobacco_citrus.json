@@ -1,16 +1,30 @@
 {
   "type": "minecraft:crafting_shapeless",
   "category": "misc",
+  "neoforge:conditions": [
+    {
+      "type": "neoforge:mod_loaded",
+      "modid": "croptopia"
+    }
+  ],
   "ingredients": [
     {
       "item": "hookahmod:hookah_tobacco"
     },
-    {
-      "item": "croptopia:orange"
-    }
+    [
+      {
+        "item": "croptopia:orange"
+      },
+      {
+        "item": "croptopia:lemon"
+      },
+      {
+        "item": "croptopia:lime"
+      }
+    ]
   ],
   "result": {
     "id": "hookahmod:tobacco_citrus",
-    "count": 2
+    "count": 4
   }
 }

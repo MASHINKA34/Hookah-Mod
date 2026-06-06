@@ -6,14 +6,17 @@
       "item": "hookahmod:hookah_tobacco"
     },
     {
-      "item": "minecraft:sugar"
+      "item": "minecraft:paper"
     },
     {
-      "item": "minecraft:rabbit_foot"
+      "item": "minecraft:feather"
+    },
+    {
+      "item": "minecraft:glow_berries"
     }
   ],
   "result": {
     "id": "hookahmod:tobacco_traveler",
-    "count": 2
+    "count": 4
   }
 }

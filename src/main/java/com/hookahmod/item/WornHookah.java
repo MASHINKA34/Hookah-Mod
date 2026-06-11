@@ -227,20 +227,41 @@ public final class WornHookah {
         private final ItemStack stack;
         @Nullable
         private final Player wearer;
-        private final NonNullList<ItemStack> items;
+        private NonNullList<ItemStack> items;
+        private ItemContainerContents lastSeen;
 
         private StackContainer(ItemStack stack, @Nullable Player wearer) {
             this.stack = stack;
             this.wearer = wearer;
             this.items = getItems(stack);
+            this.lastSeen = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+        }
+
+        private void refreshIfChangedExternally() {
+            ItemContainerContents current = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+            if (current != lastSeen) {
+                items = getItems(stack);
+                lastSeen = current;
+            }
         }
 
         @Override public int getContainerSize() { return HookahBlockEntity.SLOT_COUNT; }
-        @Override public boolean isEmpty() { return items.stream().allMatch(ItemStack::isEmpty); }
-        @Override public ItemStack getItem(int slot) { return items.get(slot); }
+
+        @Override
+        public boolean isEmpty() {
+            refreshIfChangedExternally();
+            return items.stream().allMatch(ItemStack::isEmpty);
+        }
+
+        @Override
+        public ItemStack getItem(int slot) {
+            refreshIfChangedExternally();
+            return items.get(slot);
+        }
 
         @Override
         public ItemStack removeItem(int slot, int amount) {
+            refreshIfChangedExternally();
             ItemStack removed = ContainerHelper.removeItem(items, slot, amount);
             if (!removed.isEmpty()) setChanged();
             return removed;
@@ -248,6 +269,7 @@ public final class WornHookah {
 
         @Override
         public ItemStack removeItemNoUpdate(int slot) {
+            refreshIfChangedExternally();
             ItemStack removed = ContainerHelper.takeItem(items, slot);
             setChanged();
             return removed;
@@ -255,6 +277,7 @@ public final class WornHookah {
 
         @Override
         public void setItem(int slot, ItemStack itemStack) {
+            refreshIfChangedExternally();
             items.set(slot, itemStack);
             setChanged();
         }
@@ -262,6 +285,7 @@ public final class WornHookah {
         @Override
         public void setChanged() {
             setItems(stack, items);
+            lastSeen = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
             if (wearer != null && !wearer.level().isClientSide) {
                 wearer.setItemSlot(EquipmentSlot.CHEST, stack);
             }

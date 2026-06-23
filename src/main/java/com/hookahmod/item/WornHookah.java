@@ -2,6 +2,7 @@ package com.hookahmod.item;
 
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.event.ActiveSessions;
+import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.network.WornHookahSyncPayload;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.smoke.HookahSmoke;
@@ -176,7 +177,13 @@ public final class WornHookah {
 
         if (tobaccoStack.getItem() instanceof AbstractTobaccoItem tobacco) {
             IntoxicationState.add(player, IntoxicationState.gain(tobacco.intoxication(), charge));
-            tobacco.onExhale(server, player, charge, tier.effectMult(), tier.combatMult());
+            tobacco.onExhale(
+                    server,
+                    player,
+                    charge,
+                    tier.effectMult(),
+                    tier.combatMult() * KingdomsIntegration.hookahCombatMultiplier(player, wearer)
+            );
         } else {
             IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.REGULAR_TOBACCO_INTOXICATION, charge));
         }

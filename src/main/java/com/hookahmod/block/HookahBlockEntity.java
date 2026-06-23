@@ -4,6 +4,7 @@ import com.hookahmod.item.AbstractTobaccoItem;
 import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.HookahTier;
+import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.network.HookahSyncPayload;
 import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModItems;
@@ -205,7 +206,13 @@ public class HookahBlockEntity extends BlockEntity {
                     ? getBlockState().getValue(HookahBlock.TIER)
                     : HookahTier.NORMAL;
             IntoxicationState.add(player, IntoxicationState.gain(tobacco.intoxication(), charge));
-            tobacco.onExhale(server, player, charge, tier.effectMult(), tier.combatMult());
+            tobacco.onExhale(
+                    server,
+                    player,
+                    charge,
+                    tier.effectMult(),
+                    tier.combatMult() * KingdomsIntegration.hookahCombatMultiplier(player)
+            );
         } else {
             IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.REGULAR_TOBACCO_INTOXICATION, charge));
         }

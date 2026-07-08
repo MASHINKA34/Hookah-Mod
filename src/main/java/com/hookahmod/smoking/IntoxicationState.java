@@ -1,5 +1,6 @@
 package com.hookahmod.smoking;
 
+import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.network.IntoxicationSyncPayload;
 import com.hookahmod.network.TripEventPayload;
 import com.hookahmod.trip.TripVisionType;
@@ -24,6 +25,10 @@ public final class IntoxicationState {
     }
 
     public static void add(ServerPlayer player, float amount) {
+        if (KingdomsIntegration.hasHookahBonus(player)) {
+            setAndSync(player, 0.0f);
+            return;
+        }
         setAndSync(player, get(player) + amount);
     }
 
@@ -44,6 +49,18 @@ public final class IntoxicationState {
     }
 
     public static void applyBandEffects(ServerPlayer player) {
+        if (KingdomsIntegration.hasHookahBonus(player)) {
+            if (get(player) > 0.0f) {
+                setAndSync(player, 0.0f);
+            }
+            if (player.getData(ModAttachments.TRIP_LOCK.get())) {
+                player.setData(ModAttachments.TRIP_LOCK.get(), false);
+            }
+            if (player.getData(ModAttachments.ABYSS_TRIP_TICKS.get()) > 0) {
+                player.setData(ModAttachments.ABYSS_TRIP_TICKS.get(), 0);
+            }
+            return;
+        }
         float value = get(player);
         IntoxicationBand band = band(value);
         boolean locked = updateTripLock(player, band, value);

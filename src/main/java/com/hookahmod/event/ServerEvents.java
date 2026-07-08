@@ -3,6 +3,7 @@ package com.hookahmod.event;
 import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.effect.ModMobEffects;
+import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.item.HookahBlockItem;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.registry.ModItems;
@@ -10,6 +11,7 @@ import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -32,7 +34,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
@@ -118,6 +122,21 @@ public final class ServerEvents {
             IntoxicationState.sync(sp);
             endPalPalychTrip(sp);
         }
+    }
+
+    @SubscribeEvent
+    public static void onEquipmentChange(LivingEquipmentChangeEvent event) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
+        if (event.getSlot() != EquipmentSlot.CHEST) return;
+        if (!WornHookah.isHookahStack(event.getTo())) return;
+        if (KingdomsIntegration.canEquipHookah(player)) return;
+
+        ItemStack hookah = event.getTo().copy();
+        player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+        if (!player.getInventory().add(hookah)) {
+            player.drop(hookah, false);
+        }
+        player.displayClientMessage(Component.translatable("message.hookahmod.protected_area"), true);
     }
 
     @SubscribeEvent
@@ -212,12 +231,20 @@ public final class ServerEvents {
         if (!(stack.getItem() instanceof HookahBlockItem hookahItem)) return;
 
         ItemStack placeStack = stack.copy();
-        InteractionResult result = hookahItem.place(new BlockPlaceContext(
+        BlockPlaceContext context = new BlockPlaceContext(
                 player,
                 InteractionHand.MAIN_HAND,
                 placeStack,
                 event.getHitVec()
-        ));
+        );
+        if (!KingdomsIntegration.canMoveHookahBlock(player, context.getClickedPos())) {
+            player.displayClientMessage(Component.translatable("message.hookahmod.protected_area"), true);
+            event.setCancellationResult(InteractionResult.CONSUME);
+            event.setCanceled(true);
+            return;
+        }
+
+        InteractionResult result = CommonHooks.onPlaceItemIntoWorld(context);
         if (result.consumesAction()) {
             WornHookah.releaseMouthpiece(player, stack);
             player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);

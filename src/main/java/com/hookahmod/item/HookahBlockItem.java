@@ -1,5 +1,8 @@
 package com.hookahmod.item;
 
+import com.hookahmod.integration.KingdomsIntegration;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -40,6 +43,11 @@ public class HookahBlockItem extends BlockItem implements Equipable, TieredHooka
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
+        if (!level.isClientSide && player instanceof ServerPlayer serverPlayer
+                && !KingdomsIntegration.canEquipHookah(serverPlayer)) {
+            player.displayClientMessage(Component.translatable("message.hookahmod.protected_area"), true);
+            return InteractionResultHolder.fail(player.getItemInHand(hand));
+        }
         return swapWithEquipmentSlot(this, level, player, hand);
     }
 }

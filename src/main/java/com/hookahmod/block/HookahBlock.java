@@ -4,6 +4,7 @@ import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.item.HookahTier;
 import com.hookahmod.item.TieredHookahItem;
+import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModItems;
 import net.minecraft.core.BlockPos;
@@ -182,6 +183,10 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
         }
         if (player.isShiftKeyDown()) {
             if (level.isClientSide) return net.minecraft.world.InteractionResult.SUCCESS;
+            if (player instanceof ServerPlayer sp && !KingdomsIntegration.canMoveHookahBlock(sp, pos)) {
+                player.displayClientMessage(Component.translatable("message.hookahmod.protected_area"), true);
+                return net.minecraft.world.InteractionResult.CONSUME;
+            }
             if (!player.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) {
                 player.displayClientMessage(Component.translatable("message.hookahmod.chest_slot_occupied"), true);
                 return net.minecraft.world.InteractionResult.CONSUME;
@@ -243,7 +248,8 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
     @Override
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean moved) {
         if (!state.is(newState.getBlock())) {
-            if (level.getBlockEntity(pos) instanceof HookahBlockEntity be) {
+            if (!level.isClientSide && !level.restoringBlockSnapshots
+                    && level.getBlockEntity(pos) instanceof HookahBlockEntity be) {
                 be.releaseMouthpiece();
                 Containers.dropContents(level, pos, be.getInventory());
             }

@@ -76,6 +76,7 @@
   "message.hookahmod.chest_slot_occupied": "Chest armor slot is occupied",
   "message.hookahmod.worn": "Hookah equipped on your back",
   "message.hookahmod.no_worn_hookah": "No hookah on your back",
+  "message.hookahmod.protected_area": "You cannot move or equip a hookah here",
   "message.hookahmod.tonometer": "Intoxication: %s (%s)",
 
   "intoxication.hookahmod.sober": "Sober",

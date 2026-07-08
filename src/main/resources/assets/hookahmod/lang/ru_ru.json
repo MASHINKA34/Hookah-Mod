@@ -76,6 +76,7 @@
   "message.hookahmod.chest_slot_occupied": "Слот нагрудника занят",
   "message.hookahmod.worn": "Кальян надет на спину",
   "message.hookahmod.no_worn_hookah": "На спине нет кальяна",
+  "message.hookahmod.protected_area": "Здесь нельзя перемещать или надевать кальян",
   "message.hookahmod.tonometer": "Накуренность: %s (%s)",
 
   "intoxication.hookahmod.sober": "Трезв",

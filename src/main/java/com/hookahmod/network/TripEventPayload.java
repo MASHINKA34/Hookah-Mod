@@ -1,7 +1,7 @@
 package com.hookahmod.network;
 
+import com.hookahmod.ClientBridge;
 import com.hookahmod.HookahMod;
-import com.hookahmod.client.trip.TripManager;
 import com.hookahmod.trip.TripVisionType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -27,6 +27,6 @@ public record TripEventPayload(TripVisionType visionType, long seed) implements 
     }
 
     public static void handle(TripEventPayload payload, IPayloadContext ctx) {
-        ctx.enqueueWork(() -> TripManager.trigger(payload.visionType, payload.seed));
+        ctx.enqueueWork(() -> ClientBridge.triggerTrip(payload.visionType, payload.seed));
     }
 }

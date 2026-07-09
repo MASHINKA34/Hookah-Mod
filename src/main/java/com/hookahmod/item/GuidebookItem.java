@@ -1,5 +1,6 @@
 package com.hookahmod.item;
 
+import com.hookahmod.ClientBridge;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.player.Player;
@@ -16,7 +17,7 @@ public class GuidebookItem extends Item {
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         if (level.isClientSide()) {
-            net.minecraft.client.Minecraft.getInstance().setScreen(new com.hookahmod.client.GuideScreen());
+            ClientBridge.openGuide();
         }
         return InteractionResultHolder.success(player.getItemInHand(hand));
     }

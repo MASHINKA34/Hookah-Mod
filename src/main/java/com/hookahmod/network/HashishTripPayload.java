@@ -1,7 +1,7 @@
 package com.hookahmod.network;
 
+import com.hookahmod.ClientBridge;
 import com.hookahmod.HookahMod;
-import com.hookahmod.client.trip.HashishTripManager;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -26,6 +26,6 @@ public record HashishTripPayload(int durationTicks, float intensity) implements 
     }
 
     public static void handle(HashishTripPayload payload, IPayloadContext ctx) {
-        ctx.enqueueWork(() -> HashishTripManager.start(payload.durationTicks, payload.intensity));
+        ctx.enqueueWork(() -> ClientBridge.startHashishTrip(payload.durationTicks, payload.intensity));
     }
 }

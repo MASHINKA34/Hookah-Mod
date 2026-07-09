@@ -1,7 +1,7 @@
 package com.hookahmod.network;
 
+import com.hookahmod.ClientBridge;
 import com.hookahmod.HookahMod;
-import com.hookahmod.client.trip.VideoTripManager;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -21,6 +21,6 @@ public record VideoTripPayload(int durationTicks) implements CustomPacketPayload
     }
 
     public static void handle(VideoTripPayload payload, IPayloadContext ctx) {
-        ctx.enqueueWork(VideoTripManager::start);
+        ctx.enqueueWork(ClientBridge::startVideoTrip);
     }
 }

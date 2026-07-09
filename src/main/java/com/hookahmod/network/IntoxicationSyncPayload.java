@@ -1,7 +1,7 @@
 package com.hookahmod.network;
 
+import com.hookahmod.ClientBridge;
 import com.hookahmod.HookahMod;
-import com.hookahmod.client.ClientIntoxication;
 import com.hookahmod.smoking.ModAttachments;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -27,7 +27,7 @@ public record IntoxicationSyncPayload(float value) implements CustomPacketPayloa
     public static void handle(IntoxicationSyncPayload payload, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             ctx.player().setData(ModAttachments.INTOXICATION.get(), payload.value);
-            ClientIntoxication.set(payload.value);
+            ClientBridge.setIntoxication(payload.value);
         });
     }
 }

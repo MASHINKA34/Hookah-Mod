@@ -1,7 +1,6 @@
 package com.hookahmod.item;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -41,13 +40,9 @@ public abstract class AbstractTobaccoItem extends Item {
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
-        if (Screen.hasShiftDown()) {
-            String key = category == TobaccoCategory.COMBAT
-                    ? "tooltip.hookahmod.consumption.combat"
-                    : "tooltip.hookahmod.consumption.solid";
-            tooltip.add(Component.translatable(key).withStyle(ChatFormatting.GRAY));
-        } else {
-            tooltip.add(Component.translatable("tooltip.hookahmod.hold_shift").withStyle(ChatFormatting.DARK_GRAY));
-        }
+        String key = category == TobaccoCategory.COMBAT
+                ? "tooltip.hookahmod.consumption.combat"
+                : "tooltip.hookahmod.consumption.solid";
+        tooltip.add(Component.translatable(key).withStyle(ChatFormatting.GRAY));
     }
 }

@@ -20,6 +20,7 @@ import com.hookahmod.item.WhiteMonsterItem;
 import com.hookahmod.effect.ModMobEffects;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemNameBlockItem;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.util.Unit;
@@ -204,6 +205,16 @@ public final class ModItems {
     public static final DeferredItem<WhiteMonsterItem> WHITE_MONSTER = ITEMS.register(
             "white_monster",
             () -> new WhiteMonsterItem(ModBlocks.WHITE_MONSTER.get(), new Item.Properties().stacksTo(16))
+    );
+
+    public static final DeferredItem<BlockItem> EMPTY_WHITE_MONSTER = ITEMS.register(
+            "empty_white_monster",
+            () -> new BlockItem(ModBlocks.EMPTY_WHITE_MONSTER.get(), new Item.Properties().stacksTo(16))
+    );
+
+    public static final DeferredItem<Item> SWEET_WATER = ITEMS.register(
+            "sweet_water",
+            () -> new Item(new Item.Properties().stacksTo(16))
     );
 
     public static final DeferredItem<TonometerItem> TONOMETER = ITEMS.register(

@@ -85,7 +85,14 @@ public class HookahMenu extends AbstractContainerMenu {
         }
         this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_TOBACCO, TOBACCO_X, CONSUME_ROW_Y, ModItems.HOOKAH_TOBACCO.get(), stack -> stack.getItem() instanceof AbstractTobaccoItem));
         this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_COAL, COAL_X, CONSUME_ROW_Y, ModItems.HOOKAH_CHARCOAL.get()));
-        this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_WATER, WATER_X, CONSUME_ROW_Y, ModItems.HOOKAH_WATER_BOTTLE.get()));
+        this.addSlot(new FilteredSlot(
+                container,
+                HookahBlockEntity.SLOT_WATER,
+                WATER_X,
+                CONSUME_ROW_Y,
+                ModItems.HOOKAH_WATER_BOTTLE.get(),
+                stack -> stack.is(ModItems.HOOKAH_WATER_BOTTLE.get()) || stack.is(ModItems.WHITE_MONSTER.get())
+        ));
     }
 
     private void addPlayerSlots(Inventory playerInv) {
@@ -160,7 +167,7 @@ public class HookahMenu extends AbstractContainerMenu {
             int target = -1;
             if (stack.getItem() instanceof AbstractTobaccoItem) target = HookahBlockEntity.SLOT_TOBACCO;
             else if (stack.is(ModItems.HOOKAH_CHARCOAL.get())) target = HookahBlockEntity.SLOT_COAL;
-            else if (stack.is(ModItems.HOOKAH_WATER_BOTTLE.get())) target = HookahBlockEntity.SLOT_WATER;
+            else if (stack.is(ModItems.HOOKAH_WATER_BOTTLE.get()) || stack.is(ModItems.WHITE_MONSTER.get())) target = HookahBlockEntity.SLOT_WATER;
             if (target == -1 || !this.moveItemStackTo(stack, target, target + 1, false)) return ItemStack.EMPTY;
         }
         if (stack.isEmpty()) slot.set(ItemStack.EMPTY); else slot.setChanged();

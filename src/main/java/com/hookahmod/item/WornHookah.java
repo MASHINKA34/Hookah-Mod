@@ -188,11 +188,11 @@ public final class WornHookah {
             IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.REGULAR_TOBACCO_INTOXICATION, charge));
         }
 
-        depleteConsumables(stack);
+        depleteConsumables(stack, player);
         wearer.setItemSlot(EquipmentSlot.CHEST, stack);
     }
 
-    private static void depleteConsumables(ItemStack stack) {
+    private static void depleteConsumables(ItemStack stack, ServerPlayer player) {
         NonNullList<ItemStack> items = getItems(stack);
         boolean changed = false;
 
@@ -207,7 +207,10 @@ public final class WornHookah {
         int waterTimer = getInt(stack, WATER_TIMER_TAG) + 1;
         if (waterTimer >= PUFFS_PER_WATER) {
             waterTimer = 0;
-            items.get(HookahBlockEntity.SLOT_WATER).shrink(1);
+            ItemStack water = items.get(HookahBlockEntity.SLOT_WATER);
+            boolean whiteMonster = water.is(ModItems.WHITE_MONSTER.get());
+            water.shrink(1);
+            if (whiteMonster) WhiteMonsterItem.giveEmptyCan(player);
             changed = true;
         }
 

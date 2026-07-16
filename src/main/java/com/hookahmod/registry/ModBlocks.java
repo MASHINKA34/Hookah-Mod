@@ -49,6 +49,15 @@ public final class ModBlocks {
                     .noOcclusion())
     );
 
+    public static final DeferredBlock<WhiteMonsterBlock> EMPTY_WHITE_MONSTER = BLOCKS.register(
+            "empty_white_monster",
+            () -> new WhiteMonsterBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.QUARTZ)
+                    .strength(0.3F)
+                    .sound(SoundType.METAL)
+                    .noOcclusion())
+    );
+
     private static BlockBehaviour.Properties cropProperties() {
         return BlockBehaviour.Properties.of()
                 .mapColor(MapColor.PLANT)

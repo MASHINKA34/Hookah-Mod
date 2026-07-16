@@ -1,6 +1,7 @@
 package com.hookahmod.block;
 
 import com.hookahmod.item.AbstractTobaccoItem;
+import com.hookahmod.item.WhiteMonsterItem;
 import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.HookahTier;
@@ -228,7 +229,10 @@ public class HookahBlockEntity extends BlockEntity {
         waterTimer++;
         if (waterTimer >= PUFFS_PER_WATER) {
             waterTimer = 0;
-            items.get(SLOT_WATER).shrink(1);
+            ItemStack water = items.get(SLOT_WATER);
+            boolean whiteMonster = water.is(ModItems.WHITE_MONSTER.get());
+            water.shrink(1);
+            if (whiteMonster) WhiteMonsterItem.giveEmptyCan(player);
             changed = true;
         }
         if (changed) setChangedAndSync();

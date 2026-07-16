@@ -105,5 +105,10 @@
   "subtitles.hookahmod.white_monster_burp": "Отрыжка после Белого Монстра",
   "item.hookahmod.white_monster": "Белый Монстр",
   "block.hookahmod.white_monster": "Белый Монстр",
+  "item.hookahmod.empty_white_monster": "Пустая банка Белого Монстра",
+  "block.hookahmod.empty_white_monster": "Пустая банка Белого Монстра",
+  "item.hookahmod.sweet_water": "Сладкая вода",
+  "fluid_type.hookahmod.sweet_water": "Сладкая вода",
+  "fluid_type.hookahmod.white_monster": "Белый Монстр",
   "effect.hookahmod.abyss_trip": "Трип Бездны"
 }

@@ -2,19 +2,16 @@ package com.hookahmod.recipe;
 
 import com.hookahmod.registry.ModItems;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.PotionContents;
-import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.neoforged.neoforge.common.brewing.BrewingRecipe;
-import net.neoforged.neoforge.common.crafting.DataComponentIngredient;
 
 public class WhiteMonsterBrewingRecipe extends BrewingRecipe {
 
-    public WhiteMonsterBrewingRecipe() {
+    public WhiteMonsterBrewingRecipe(ItemLike ingredient) {
         super(
-                DataComponentIngredient.of(false, PotionContents.createItemStack(Items.POTION, Potions.AWKWARD)),
-                Ingredient.of(Items.SUGAR),
+                Ingredient.of(ModItems.SWEET_WATER.get()),
+                Ingredient.of(ingredient),
                 new ItemStack(ModItems.WHITE_MONSTER.get())
         );
     }

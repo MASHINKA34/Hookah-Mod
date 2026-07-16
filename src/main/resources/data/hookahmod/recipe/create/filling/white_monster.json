@@ -1,0 +1,13 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "create" }
+  ],
+  "type": "create:filling",
+  "ingredients": [
+    { "item": "hookahmod:empty_white_monster" },
+    { "type": "neoforge:single", "amount": 250, "fluid": "hookahmod:white_monster" }
+  ],
+  "results": [
+    { "id": "hookahmod:white_monster" }
+  ]
+}

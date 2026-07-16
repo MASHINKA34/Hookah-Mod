@@ -6,7 +6,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "hookahmod:white_monster",
+          "name": "hookahmod:empty_white_monster",
           "functions": [
             {
               "function": "minecraft:set_count",
@@ -15,7 +15,7 @@
               "conditions": [
                 {
                   "condition": "minecraft:block_state_property",
-                  "block": "hookahmod:white_monster",
+                  "block": "hookahmod:empty_white_monster",
                   "properties": { "count": "2" }
                 }
               ]
@@ -27,7 +27,7 @@
               "conditions": [
                 {
                   "condition": "minecraft:block_state_property",
-                  "block": "hookahmod:white_monster",
+                  "block": "hookahmod:empty_white_monster",
                   "properties": { "count": "3" }
                 }
               ]

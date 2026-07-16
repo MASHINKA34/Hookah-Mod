@@ -20,5 +20,8 @@ public final class ModSounds {
     public static final DeferredHolder<SoundEvent, SoundEvent> PALPALYCH_TRIP =
             SOUNDS.register("palpalych_trip", () -> SoundEvent.createVariableRangeEvent(HookahMod.id("palpalych_trip")));
 
+    public static final DeferredHolder<SoundEvent, SoundEvent> WHITE_MONSTER_BURP =
+            SOUNDS.register("white_monster_burp", () -> SoundEvent.createVariableRangeEvent(HookahMod.id("white_monster_burp")));
+
     private ModSounds() {}
 }

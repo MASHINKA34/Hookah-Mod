@@ -20,5 +20,8 @@ public final class ModMobEffects {
     public static final DeferredHolder<MobEffect, MobEffect> PALPALYCH_TRIP =
             MOB_EFFECTS.register("palpalych_trip", PalPalychTripEffect::new);
 
+    public static final DeferredHolder<MobEffect, MobEffect> ABYSS_TRIP =
+            MOB_EFFECTS.register("abyss_trip", AbyssTripEffect::new);
+
     private ModMobEffects() {}
 }

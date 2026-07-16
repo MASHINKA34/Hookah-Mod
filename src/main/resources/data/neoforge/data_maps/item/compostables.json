@@ -1,0 +1,13 @@
+{
+  "values": {
+    "hookahmod:tobacco_seed": {
+      "chance": 0.3
+    },
+    "hookahmod:mint_seed": {
+      "chance": 0.3
+    },
+    "hookahmod:lavender_seed": {
+      "chance": 0.3
+    }
+  }
+}

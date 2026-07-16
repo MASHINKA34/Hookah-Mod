@@ -3,6 +3,7 @@ package com.hookahmod.registry;
 import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlock;
 import com.hookahmod.block.ModCropBlock;
+import com.hookahmod.block.WhiteMonsterBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -37,6 +38,15 @@ public final class ModBlocks {
     public static final DeferredBlock<ModCropBlock> LAVENDER_CROP = BLOCKS.register(
             "lavender_crop",
             () -> new ModCropBlock(cropProperties(), ModItems.LAVENDER_SEED)
+    );
+
+    public static final DeferredBlock<WhiteMonsterBlock> WHITE_MONSTER = BLOCKS.register(
+            "white_monster",
+            () -> new WhiteMonsterBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.QUARTZ)
+                    .strength(0.3F)
+                    .sound(SoundType.METAL)
+                    .noOcclusion())
     );
 
     private static BlockBehaviour.Properties cropProperties() {

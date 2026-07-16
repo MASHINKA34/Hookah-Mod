@@ -4,6 +4,7 @@ import com.hookahmod.HookahMod;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleType;
+import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -27,6 +28,9 @@ public final class ModParticles {
                     return ColorParticleOption.streamCodec(this);
                 }
             });
+
+    public static final DeferredHolder<ParticleType<?>, SimpleParticleType> SOAP_BUBBLE =
+            PARTICLES.register("soap_bubble", () -> new SimpleParticleType(false));
 
     private ModParticles() {}
 }

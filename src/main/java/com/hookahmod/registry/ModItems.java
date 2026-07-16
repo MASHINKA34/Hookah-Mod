@@ -203,7 +203,7 @@ public final class ModItems {
 
     public static final DeferredItem<WhiteMonsterItem> WHITE_MONSTER = ITEMS.register(
             "white_monster",
-            () -> new WhiteMonsterItem(new Item.Properties().stacksTo(16))
+            () -> new WhiteMonsterItem(ModBlocks.WHITE_MONSTER.get(), new Item.Properties().stacksTo(16))
     );
 
     public static final DeferredItem<TonometerItem> TONOMETER = ITEMS.register(

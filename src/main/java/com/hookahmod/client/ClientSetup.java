@@ -8,6 +8,7 @@ import com.hookahmod.registry.ModParticles;
 import com.hookahmod.network.OpenWornHookahPayload;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.client.particle.ColoredHookahSmokeParticle;
+import com.hookahmod.client.particle.SoapBubbleParticle;
 import com.hookahmod.client.trip.HashishTripManager;
 import com.hookahmod.client.trip.TripManager;
 import com.hookahmod.client.trip.VideoTripManager;
@@ -83,6 +84,7 @@ public final class ClientSetup {
     @SubscribeEvent
     public static void onRegisterParticles(RegisterParticleProvidersEvent event) {
         event.registerSpriteSet(ModParticles.COLORED_HOOKAH_SMOKE.get(), ColoredHookahSmokeParticle.Provider::new);
+        event.registerSpriteSet(ModParticles.SOAP_BUBBLE.get(), SoapBubbleParticle.Provider::new);
     }
 
     @SubscribeEvent

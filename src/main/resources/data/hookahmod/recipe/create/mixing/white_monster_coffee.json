@@ -1,0 +1,14 @@
+{
+  "neoforge:conditions": [
+    { "type": "neoforge:mod_loaded", "modid": "create" },
+    { "type": "neoforge:mod_loaded", "modid": "croptopia" }
+  ],
+  "type": "create:mixing",
+  "ingredients": [
+    { "item": "croptopia:coffee_beans" },
+    { "type": "neoforge:single", "amount": 250, "fluid": "hookahmod:sweet_water" }
+  ],
+  "results": [
+    { "amount": 250, "id": "hookahmod:white_monster" }
+  ]
+}

@@ -75,11 +75,21 @@ repositories {
     maven { url = 'https://maven.neoforged.net/releases' }
     maven { url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/' }
     maven { url = 'https://maven.blamejared.com' }
+    maven { url = 'https://maven.createmod.net' }
+    maven { url = 'https://maven.ithundxr.dev/snapshots' }
 }
 
 dependencies {
     implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.7.4"
     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    localRuntime("com.simibubi.create:create-${minecraft_version}:${create_version}") {
+        exclude group: 'maven.modrinth'
+        exclude group: 'dev.ftb.mods'
+        exclude group: 'info.journeymap'
+        exclude group: 'top.theillusivec4.curios'
+        exclude group: 'cc.tweaked'
+        exclude group: 'dev.architectury'
+    }
 }
 
 tasks.withType(JavaCompile).configureEach {

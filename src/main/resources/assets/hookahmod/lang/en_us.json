@@ -104,5 +104,10 @@
   "subtitles.hookahmod.white_monster_burp": "Burp after White Monster",
   "item.hookahmod.white_monster": "White Monster",
   "block.hookahmod.white_monster": "White Monster",
+  "item.hookahmod.empty_white_monster": "Empty White Monster Can",
+  "block.hookahmod.empty_white_monster": "Empty White Monster Can",
+  "item.hookahmod.sweet_water": "Sweet Water",
+  "fluid_type.hookahmod.sweet_water": "Sweet Water",
+  "fluid_type.hookahmod.white_monster": "White Monster",
   "effect.hookahmod.abyss_trip": "Abyss Trip"
 }

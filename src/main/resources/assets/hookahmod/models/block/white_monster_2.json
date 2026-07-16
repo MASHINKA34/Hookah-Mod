@@ -1,0 +1,27 @@
+{
+  "parent": "minecraft:block/block",
+  "ambientocclusion": false,
+  "textures": {
+    "side": "hookahmod:block/white_monster_side",
+    "top": "minecraft:block/iron_block",
+    "particle": "hookahmod:block/white_monster_side"
+  },
+  "elements": [
+    {
+      "from": [2.5, 0, 5.75], "to": [7, 16, 10.25],
+      "faces": {
+        "north": { "uv": [0, 0, 16, 16], "texture": "#side" }, "east": { "uv": [0, 0, 16, 16], "texture": "#side" },
+        "south": { "uv": [0, 0, 16, 16], "texture": "#side" }, "west": { "uv": [0, 0, 16, 16], "texture": "#side" },
+        "up": { "texture": "#top" }, "down": { "texture": "#top" }
+      }
+    },
+    {
+      "from": [9, 0, 5.75], "to": [13.5, 16, 10.25],
+      "faces": {
+        "north": { "uv": [0, 0, 16, 16], "texture": "#side" }, "east": { "uv": [0, 0, 16, 16], "texture": "#side" },
+        "south": { "uv": [0, 0, 16, 16], "texture": "#side" }, "west": { "uv": [0, 0, 16, 16], "texture": "#side" },
+        "up": { "texture": "#top" }, "down": { "texture": "#top" }
+      }
+    }
+  ]
+}

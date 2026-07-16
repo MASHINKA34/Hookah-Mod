@@ -2,16 +2,38 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "rolls": 1,
+      "rolls": 1.0,
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "hookahmod:white_monster"
-        }
-      ],
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
+          "name": "hookahmod:white_monster",
+          "functions": [
+            {
+              "function": "minecraft:set_count",
+              "count": 2.0,
+              "add": false,
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hookahmod:white_monster",
+                  "properties": { "count": "2" }
+                }
+              ]
+            },
+            {
+              "function": "minecraft:set_count",
+              "count": 3.0,
+              "add": false,
+              "conditions": [
+                {
+                  "condition": "minecraft:block_state_property",
+                  "block": "hookahmod:white_monster",
+                  "properties": { "count": "3" }
+                }
+              ]
+            },
+            { "function": "minecraft:explosion_decay" }
+          ]
         }
       ]
     }

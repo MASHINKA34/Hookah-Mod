@@ -1,3 +1,6 @@
 {
-  "parent": "hookahmod:block/white_monster"
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "hookahmod:item/white_monster"
+  }
 }

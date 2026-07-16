@@ -7,11 +7,13 @@ import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.item.HookahBlockItem;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.recipe.WhiteMonsterBrewingRecipe;
+import com.hookahmod.recipe.SweetWaterBrewingRecipe;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -27,11 +29,14 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.CommonHooks;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
@@ -182,7 +187,11 @@ public final class ServerEvents {
 
     @SubscribeEvent
     public static void registerBrewingRecipes(RegisterBrewingRecipesEvent event) {
-        event.getBuilder().addRecipe(new WhiteMonsterBrewingRecipe());
+        Item ingredient = ModList.get().isLoaded("croptopia")
+                ? BuiltInRegistries.ITEM.getOptional(ResourceLocation.fromNamespaceAndPath("croptopia", "coffee_beans")).orElse(Items.COCOA_BEANS)
+                : Items.COCOA_BEANS;
+        event.getBuilder().addRecipe(new SweetWaterBrewingRecipe());
+        event.getBuilder().addRecipe(new WhiteMonsterBrewingRecipe(ingredient));
     }
 
     @SubscribeEvent

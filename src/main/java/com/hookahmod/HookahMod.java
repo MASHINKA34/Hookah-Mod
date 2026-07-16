@@ -6,6 +6,8 @@ import com.hookahmod.network.NetworkHandler;
 import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.registry.ModCreativeTabs;
+import com.hookahmod.registry.ModCapabilities;
+import com.hookahmod.registry.ModFluids;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModLootModifiers;
 import com.hookahmod.registry.ModMenuTypes;
@@ -28,6 +30,8 @@ public final class HookahMod {
     public HookahMod(IEventBus modBus) {
         ModBlocks.BLOCKS.register(modBus);
         ModItems.ITEMS.register(modBus);
+        ModFluids.FLUID_TYPES.register(modBus);
+        ModFluids.FLUIDS.register(modBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modBus);
         ModMenuTypes.MENUS.register(modBus);
         ModCreativeTabs.TABS.register(modBus);
@@ -38,6 +42,7 @@ public final class HookahMod {
         ModLootModifiers.LOOT_MODIFIERS.register(modBus);
 
         modBus.addListener(NetworkHandler::register);
+        modBus.addListener(ModCapabilities::register);
 
         NeoForge.EVENT_BUS.register(ServerEvents.class);
 

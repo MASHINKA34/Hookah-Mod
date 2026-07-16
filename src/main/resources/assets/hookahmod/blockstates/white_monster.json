@@ -1,7 +1,7 @@
 {
   "variants": {
-    "": {
-      "model": "hookahmod:block/white_monster"
-    }
+    "count=1": { "model": "hookahmod:block/white_monster" },
+    "count=2": { "model": "hookahmod:block/white_monster_2" },
+    "count=3": { "model": "hookahmod:block/white_monster_3" }
   }
 }

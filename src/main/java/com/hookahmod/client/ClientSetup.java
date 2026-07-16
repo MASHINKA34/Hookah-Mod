@@ -3,6 +3,7 @@ package com.hookahmod.client;
 import com.hookahmod.HookahMod;
 import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModItems;
+import com.hookahmod.registry.ModFluids;
 import com.hookahmod.registry.ModMenuTypes;
 import com.hookahmod.registry.ModParticles;
 import com.hookahmod.network.OpenWornHookahPayload;
@@ -16,6 +17,7 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -28,6 +30,7 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RegisterParticleProvidersEvent;
 import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
 import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -98,6 +101,27 @@ public final class ClientSetup {
                 return renderer;
             }
         }, ModItems.HOOKAH_MOUTHPIECE.get());
+        event.registerFluidType(fluidExtensions(0xFFF4FBFF), ModFluids.SWEET_WATER_TYPE.get());
+        event.registerFluidType(fluidExtensions(0xFFE9F8FF), ModFluids.WHITE_MONSTER_TYPE.get());
+    }
+
+    private static IClientFluidTypeExtensions fluidExtensions(int tintColor) {
+        return new IClientFluidTypeExtensions() {
+            @Override
+            public ResourceLocation getStillTexture() {
+                return ResourceLocation.withDefaultNamespace("block/water_still");
+            }
+
+            @Override
+            public ResourceLocation getFlowingTexture() {
+                return ResourceLocation.withDefaultNamespace("block/water_flow");
+            }
+
+            @Override
+            public int getTintColor() {
+                return tintColor;
+            }
+        };
     }
 
     private static void onKeyInput(InputEvent.Key event) {

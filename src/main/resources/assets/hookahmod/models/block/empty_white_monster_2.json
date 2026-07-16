@@ -3,7 +3,8 @@
   "ambientocclusion": false,
   "textures": {
     "side": "hookahmod:block/empty_white_monster_side",
-    "top": "minecraft:block/black_concrete",
+    "top": "minecraft:block/iron_block",
+    "opening": "minecraft:block/black_concrete",
     "bottom": "minecraft:block/iron_block",
     "particle": "hookahmod:block/empty_white_monster_side"
   },
@@ -22,6 +23,18 @@
         "north": { "uv": [0, 0, 16, 16], "texture": "#side" }, "east": { "uv": [0, 0, 16, 16], "texture": "#side" },
         "south": { "uv": [0, 0, 16, 16], "texture": "#side" }, "west": { "uv": [0, 0, 16, 16], "texture": "#side" },
         "up": { "texture": "#top" }, "down": { "texture": "#bottom" }
+      }
+    },
+    {
+      "from": [3.75, 16, 6.5], "to": [5.75, 16.02, 7.5],
+      "faces": {
+        "up": { "texture": "#opening" }
+      }
+    },
+    {
+      "from": [10.25, 16, 6.5], "to": [12.25, 16.02, 7.5],
+      "faces": {
+        "up": { "texture": "#opening" }
       }
     }
   ]

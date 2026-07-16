@@ -25,5 +25,14 @@
         "stream": true
       }
     ]
+  },
+  "white_monster_burp": {
+    "subtitle": "subtitles.hookahmod.white_monster_burp",
+    "sounds": [
+      {
+        "name": "hookahmod:white_monster_burp",
+        "attenuation_distance": 16
+      }
+    ]
   }
 }

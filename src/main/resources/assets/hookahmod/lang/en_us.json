@@ -100,5 +100,8 @@
 
   "subtitles.hookahmod.smoking": "Hookah bubbling",
   "subtitles.hookahmod.hashish_trip_music": "Hashish trip music",
-  "subtitles.hookahmod.palpalych_trip": "Pal Palych"
+  "subtitles.hookahmod.palpalych_trip": "Pal Palych",
+  "subtitles.hookahmod.white_monster_burp": "Burp after White Monster",
+  "item.hookahmod.white_monster": "White Monster",
+  "effect.hookahmod.abyss_trip": "Abyss Trip"
 }

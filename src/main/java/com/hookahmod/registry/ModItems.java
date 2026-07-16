@@ -16,6 +16,7 @@ import com.hookahmod.item.TonometerItem;
 import com.hookahmod.item.CombatTobaccoItem;
 import com.hookahmod.item.AbyssTobaccoItem;
 import com.hookahmod.item.BuffTobaccoItem;
+import com.hookahmod.item.WhiteMonsterItem;
 import com.hookahmod.effect.ModMobEffects;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.Item;
@@ -198,6 +199,11 @@ public final class ModItems {
     public static final DeferredItem<Item> CHICKEN_POOP = ITEMS.register(
             "chicken_poop",
             () -> new Item(new Item.Properties().stacksTo(64))
+    );
+
+    public static final DeferredItem<WhiteMonsterItem> WHITE_MONSTER = ITEMS.register(
+            "white_monster",
+            () -> new WhiteMonsterItem(new Item.Properties().stacksTo(16))
     );
 
     public static final DeferredItem<TonometerItem> TONOMETER = ITEMS.register(

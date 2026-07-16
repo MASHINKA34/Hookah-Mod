@@ -1,5 +1,6 @@
 package com.hookahmod.smoking;
 
+import com.hookahmod.effect.ModMobEffects;
 import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.network.IntoxicationSyncPayload;
 import com.hookahmod.network.TripEventPayload;
@@ -59,6 +60,7 @@ public final class IntoxicationState {
             if (player.getData(ModAttachments.ABYSS_TRIP_TICKS.get()) > 0) {
                 player.setData(ModAttachments.ABYSS_TRIP_TICKS.get(), 0);
             }
+            player.removeEffect(ModMobEffects.ABYSS_TRIP);
             return;
         }
         float value = get(player);
@@ -94,8 +96,9 @@ public final class IntoxicationState {
     private static void tickTripVisions(ServerPlayer player, IntoxicationBand band) {
         int remaining = player.getData(ModAttachments.ABYSS_TRIP_TICKS.get());
         if (remaining <= 0) return;
-        if (!band.atLeast(IntoxicationBand.TRIP)) {
+        if (!band.atLeast(IntoxicationBand.TRIP) || !player.hasEffect(ModMobEffects.ABYSS_TRIP)) {
             player.setData(ModAttachments.ABYSS_TRIP_TICKS.get(), 0);
+            player.removeEffect(ModMobEffects.ABYSS_TRIP);
             return;
         }
         player.setData(ModAttachments.ABYSS_TRIP_TICKS.get(), remaining - 1);

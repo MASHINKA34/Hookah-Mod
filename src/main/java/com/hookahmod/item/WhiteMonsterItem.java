@@ -10,6 +10,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ItemUtils;
@@ -57,6 +59,7 @@ public class WhiteMonsterItem extends BlockItem {
             }
         }
         if (level instanceof ServerLevel server && entity instanceof ServerPlayer player) {
+            player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 30 * 20, 0));
             Vec3 look = player.getLookAngle();
             Vec3 mouth = player.getEyePosition().add(look.scale(0.35D)).add(0.0D, -0.18D, 0.0D);
             for (ServerPlayer listener : server.players()) {

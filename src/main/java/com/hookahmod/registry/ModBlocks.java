@@ -25,6 +25,21 @@ public final class ModBlocks {
                     .lightLevel(state -> state.getValue(HookahBlock.HAS_COAL) ? 8 : 0))
     );
 
+    /**
+     * Temporary standalone preview for the new luxury model. Keeping it as a
+     * separate block lets us evaluate the asset in-game without replacing any
+     * of the existing hookah tiers.
+     */
+    public static final DeferredBlock<HookahBlock> LUXURY_HOOKAH_PREVIEW = BLOCKS.register(
+            "luxury_hookah_preview",
+            () -> new HookahBlock(BlockBehaviour.Properties.of()
+                    .mapColor(MapColor.COLOR_PURPLE)
+                    .strength(2.5F)
+                    .sound(SoundType.METAL)
+                    .noOcclusion()
+                    .lightLevel(state -> 6))
+    );
+
     public static final DeferredBlock<ModCropBlock> TOBACCO_CROP = BLOCKS.register(
             "tobacco_crop",
             () -> new ModCropBlock(cropProperties(), ModItems.TOBACCO_SEED)

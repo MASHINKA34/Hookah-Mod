@@ -1,0 +1,25 @@
+# Made in Blockbench 5.1.4
+newmtl m_4835bae7-1068-fce6-cde4-dff426531441
+map_Kd hookahmod:block/luxury_hookah_preview/hookah_water
+newmtl m_e29832b5-c05e-c9b9-9df2-3853c085de20
+map_Kd hookahmod:block/luxury_hookah_preview/hookah_glass
+newmtl m_417023fc-fb60-913a-5dfa-75ba19eb8773
+map_Kd hookahmod:block/luxury_hookah_preview/hookah_aged_gold
+newmtl m_058deebc-0957-a4e2-81f6-9d192cb6ff74
+map_Kd hookahmod:block/luxury_hookah_preview/hookah_dark_metal
+newmtl m_aef76ffc-605b-f0bc-a942-d1dea469ba4c
+Ka 0.05 0.30 0.42
+map_Kd hookahmod:block/luxury_hookah_preview/hookah_crystal
+newmtl m_a719c6db-a406-18c0-f50b-a48c244c40ef
+map_Kd hookahmod:block/luxury_hookah_preview/hookah_ceramic
+newmtl m_91be25ca-9168-e0cd-71b8-5141a8759f73
+Ka 0.18 0.04 0.01
+map_Kd hookahmod:block/luxury_hookah_preview/hookah_coals
+newmtl m_7e28de4f-ce4a-3259-8418-ad1635c98627
+Ka 1.0 0.42 0.06
+map_Kd hookahmod:block/luxury_hookah_preview/hookah_ember_glow
+newmtl m_1a854464-2084-110c-497e-4e863804e724
+map_Kd hookahmod:block/luxury_hookah_preview/hookah_burgundy_braid
+newmtl m_771d7c55-2896-90ea-7a59-86e467e9ca9a
+map_Kd hookahmod:block/luxury_hookah_preview/hookah_dark_wood
+newmtl none

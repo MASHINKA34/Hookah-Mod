@@ -4,6 +4,7 @@ import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlock;
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.item.HookahHoseType;
+import com.hookahmod.registry.ModBlocks;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -45,6 +46,10 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
         BlockState state = be.getBlockState();
         Direction facing = state.hasProperty(HookahBlock.FACING) ? state.getValue(HookahBlock.FACING) : Direction.NORTH;
         Level level = be.getLevel();
+
+        // The preview OBJ already contains its decorative hose, water and
+        // coals. Avoid drawing the legacy dynamic overlays on top of it.
+        if (state.is(ModBlocks.LUXURY_HOOKAH_PREVIEW.get())) return;
 
         // Hose render
         HookahHoseType type = be.getHoseType();

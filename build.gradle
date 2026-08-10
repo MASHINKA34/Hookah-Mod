@@ -70,6 +70,10 @@ configurations {
     runtimeClasspath.extendsFrom localRuntime
 }
 
+configurations.configureEach {
+    exclude group: 'dev.engine-room.flywheel', module: 'flywheel-neoforge-1.21.1'
+}
+
 repositories {
     mavenCentral()
     maven { url = 'https://maven.neoforged.net/releases' }
@@ -83,6 +87,7 @@ dependencies {
     implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.7.4"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+    localRuntime files('libs/flywheel-neoforge-1.21.1-1.0.6.jar')
     localRuntime("com.simibubi.create:create-${minecraft_version}:${create_version}") {
         exclude group: 'maven.modrinth'
         exclude group: 'dev.ftb.mods'

@@ -16,7 +16,11 @@ public final class ModBlockEntities {
 
     public static final Supplier<BlockEntityType<HookahBlockEntity>> HOOKAH = register(
             "hookah",
-            () -> BlockEntityType.Builder.of(HookahBlockEntity::new, ModBlocks.HOOKAH.get()).build(null)
+            () -> BlockEntityType.Builder.of(
+                    HookahBlockEntity::new,
+                    ModBlocks.HOOKAH.get(),
+                    ModBlocks.LUXURY_HOOKAH_PREVIEW.get()
+            ).build(null)
     );
 
     private static <T extends BlockEntityType<?>> DeferredHolder<BlockEntityType<?>, T> register(String name, Supplier<T> sup) {

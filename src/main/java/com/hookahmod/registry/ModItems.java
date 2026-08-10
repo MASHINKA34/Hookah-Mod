@@ -42,6 +42,11 @@ public final class ModItems {
             () -> new HookahBlockItem(ModBlocks.HOOKAH.get(), normalHookahProperties(), HookahTier.NORMAL)
     );
 
+    public static final DeferredItem<BlockItem> LUXURY_HOOKAH_PREVIEW = ITEMS.register(
+            "luxury_hookah_preview",
+            () -> new BlockItem(ModBlocks.LUXURY_HOOKAH_PREVIEW.get(), new Item.Properties().stacksTo(1))
+    );
+
     public static final DeferredItem<HookahBlockItem> HOOKAH_LEATHER = ITEMS.register(
             "hookah_leather",
             () -> new HookahBlockItem(ModBlocks.HOOKAH.get(), hookahProperties(HookahTier.LEATHER), HookahTier.LEATHER)

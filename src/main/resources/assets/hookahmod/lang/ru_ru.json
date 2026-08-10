@@ -2,6 +2,8 @@
   "itemGroup.hookahmod": "Hookah Mod",
   "block.hookahmod.hookah": "Кальян",
   "item.hookahmod.hookah": "Кальян",
+  "block.hookahmod.luxury_hookah_preview": "Роскошный кальян (тест)",
+  "item.hookahmod.luxury_hookah_preview": "Роскошный кальян (тест)",
   "item.hookahmod.hookah_leather": "Кожаный кальян",
   "item.hookahmod.hookah_gold": "Золотой кальян",
   "item.hookahmod.hookah_iron": "Железный кальян",

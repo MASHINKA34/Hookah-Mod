@@ -1,0 +1,41 @@
+{
+  "loader": "neoforge:obj",
+  "model": "hookahmod:models/block/luxury_hookah_preview/luxury_hookah_preview.obj",
+  "automatic_culling": false,
+  "shade_quads": true,
+  "flip_v": false,
+  "emissive_ambient": true,
+  "ambientocclusion": false,
+  "render_type": "translucent",
+  "textures": {
+    "particle": "hookahmod:block/luxury_hookah_preview/hookah_aged_gold"
+  },
+  "transform": {
+    "translation": [0.5, 0.0, 0.5]
+  },
+  "display": {
+    "gui": {
+      "rotation": [24, 42, 0],
+      "translation": [0, -3.0, 0],
+      "scale": [0.36, 0.36, 0.36]
+    },
+    "ground": {
+      "translation": [0, 1.0, 0],
+      "scale": [0.28, 0.28, 0.28]
+    },
+    "fixed": {
+      "translation": [0, -4.0, 0],
+      "scale": [0.38, 0.38, 0.38]
+    },
+    "thirdperson_righthand": {
+      "rotation": [72, 36, 0],
+      "translation": [0, 2.0, 0],
+      "scale": [0.24, 0.24, 0.24]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, 40, 0],
+      "translation": [0, -1.0, 0],
+      "scale": [0.22, 0.22, 0.22]
+    }
+  }
+}

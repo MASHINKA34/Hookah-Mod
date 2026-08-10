@@ -9,6 +9,7 @@ import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.network.HookahSyncPayload;
 import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModItems;
+import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
 import net.minecraft.world.InteractionHand;
@@ -245,6 +246,7 @@ public class HookahBlockEntity extends BlockEntity {
     }
 
     public void clientTick(Level level, BlockPos pos, BlockState state) {
+        if (state.is(ModBlocks.LUXURY_HOOKAH_PREVIEW.get())) return;
         if (items.get(SLOT_COAL).isEmpty()) return;
         if (level.random.nextInt(6) == 0) {
             double px = pos.getX() + 0.35 + level.random.nextDouble() * 0.30;

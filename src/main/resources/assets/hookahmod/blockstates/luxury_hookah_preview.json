@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "hookahmod:block/luxury_hookah_preview" },
+    "facing=east": { "model": "hookahmod:block/luxury_hookah_preview", "y": 90 },
+    "facing=south": { "model": "hookahmod:block/luxury_hookah_preview", "y": 180 },
+    "facing=west": { "model": "hookahmod:block/luxury_hookah_preview", "y": 270 }
+  }
+}

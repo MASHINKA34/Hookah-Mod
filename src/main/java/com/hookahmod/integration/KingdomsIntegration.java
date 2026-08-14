@@ -13,10 +13,14 @@ public final class KingdomsIntegration {
     private static volatile boolean classResolved;
     private static volatile Method combatMultiplierMethod;
     private static volatile Method hasHookahBonusMethod;
+    private static volatile Method hasHookahMasteryMethod;
+    private static volatile Method onHookahPuffMethod;
     private static volatile Method canEquipHookahMethod;
     private static volatile Method canMoveHookahBlockMethod;
     private static volatile boolean combatMultiplierResolved;
     private static volatile boolean hasHookahBonusResolved;
+    private static volatile boolean hasHookahMasteryResolved;
+    private static volatile boolean onHookahPuffResolved;
     private static volatile boolean canEquipHookahResolved;
     private static volatile boolean canMoveHookahBlockResolved;
 
@@ -42,6 +46,26 @@ public final class KingdomsIntegration {
         return invokeBoolean(resolveMethod("hasHookahBonus", ServerPlayer.class), false, player);
     }
 
+    public static boolean hasHookahMastery(ServerPlayer player) {
+        return invokeBoolean(resolveMethod("hasHookahMastery", ServerPlayer.class), false, player);
+    }
+
+    public static boolean hasHookahMastery(ServerPlayer player, ServerPlayer wearer) {
+        return hasHookahMastery(player) || hasHookahMastery(wearer);
+    }
+
+    public static void onHookahPuff(ServerPlayer player, float charge) {
+        Method method = resolveMethod("onHookahPuff", ServerPlayer.class, float.class);
+        if (method == null || player == null) {
+            return;
+        }
+        try {
+            method.invoke(null, player, charge);
+        } catch (ReflectiveOperationException | RuntimeException exception) {
+            onHookahPuffMethod = null;
+        }
+    }
+
     public static boolean canEquipHookah(ServerPlayer player) {
         return invokeBoolean(resolveMethod("canEquipHookah", ServerPlayer.class), true, player);
     }
@@ -65,6 +89,8 @@ public final class KingdomsIntegration {
         } catch (ReflectiveOperationException | RuntimeException exception) {
             if (method == hasHookahBonusMethod) {
                 hasHookahBonusMethod = null;
+            } else if (method == hasHookahMasteryMethod) {
+                hasHookahMasteryMethod = null;
             } else if (method == canEquipHookahMethod) {
                 canEquipHookahMethod = null;
             } else if (method == canMoveHookahBlockMethod) {
@@ -97,6 +123,8 @@ public final class KingdomsIntegration {
         return switch (name) {
             case "combatMultiplier" -> combatMultiplierMethod;
             case "hasHookahBonus" -> hasHookahBonusMethod;
+            case "hasHookahMastery" -> hasHookahMasteryMethod;
+            case "onHookahPuff" -> onHookahPuffMethod;
             case "canEquipHookah" -> canEquipHookahMethod;
             case "canMoveHookahBlock" -> canMoveHookahBlockMethod;
             default -> null;
@@ -107,6 +135,8 @@ public final class KingdomsIntegration {
         return switch (name) {
             case "combatMultiplier" -> combatMultiplierResolved;
             case "hasHookahBonus" -> hasHookahBonusResolved;
+            case "hasHookahMastery" -> hasHookahMasteryResolved;
+            case "onHookahPuff" -> onHookahPuffResolved;
             case "canEquipHookah" -> canEquipHookahResolved;
             case "canMoveHookahBlock" -> canMoveHookahBlockResolved;
             default -> true;
@@ -122,6 +152,14 @@ public final class KingdomsIntegration {
             case "hasHookahBonus" -> {
                 hasHookahBonusMethod = method;
                 hasHookahBonusResolved = true;
+            }
+            case "hasHookahMastery" -> {
+                hasHookahMasteryMethod = method;
+                hasHookahMasteryResolved = true;
+            }
+            case "onHookahPuff" -> {
+                onHookahPuffMethod = method;
+                onHookahPuffResolved = true;
             }
             case "canEquipHookah" -> {
                 canEquipHookahMethod = method;

@@ -188,7 +188,10 @@ public final class WornHookah {
             IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.REGULAR_TOBACCO_INTOXICATION, charge));
         }
 
-        depleteConsumables(stack, player);
+        KingdomsIntegration.onHookahPuff(player, charge);
+        if (!KingdomsIntegration.hasHookahMastery(player, wearer)) {
+            depleteConsumables(stack, player);
+        }
         wearer.setItemSlot(EquipmentSlot.CHEST, stack);
     }
 

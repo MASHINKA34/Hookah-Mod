@@ -219,6 +219,11 @@ public class HookahBlockEntity extends BlockEntity {
             IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.REGULAR_TOBACCO_INTOXICATION, charge));
         }
 
+        KingdomsIntegration.onHookahPuff(player, charge);
+        if (KingdomsIntegration.hasHookahMastery(player)) {
+            return;
+        }
+
         boolean changed = false;
         smokeTimer++;
         if (smokeTimer >= puffsPerSolid(tobaccoStack)) {

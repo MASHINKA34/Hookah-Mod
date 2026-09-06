@@ -62,9 +62,8 @@ public class WhiteMonsterItem extends BlockItem {
             player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SPEED, 30 * 20, 0));
             Vec3 look = player.getLookAngle();
             Vec3 mouth = player.getEyePosition().add(look.scale(0.35D)).add(0.0D, -0.18D, 0.0D);
-            for (ServerPlayer listener : server.players()) {
-                listener.playNotifySound(ModSounds.WHITE_MONSTER_BURP.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
-            }
+            server.playSound(null, mouth.x, mouth.y, mouth.z,
+                    ModSounds.WHITE_MONSTER_BURP.get(), SoundSource.PLAYERS, 1.0F, 1.0F);
             Vec3 referenceUp = Math.abs(look.y) > 0.95D ? new Vec3(1.0D, 0.0D, 0.0D) : new Vec3(0.0D, 1.0D, 0.0D);
             Vec3 right = look.cross(referenceUp).normalize();
             Vec3 coneUp = right.cross(look).normalize();

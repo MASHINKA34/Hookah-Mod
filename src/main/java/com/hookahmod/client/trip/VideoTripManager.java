@@ -33,13 +33,14 @@ public final class VideoTripManager {
     public static void tick() {
         if (!active) return;
         Minecraft mc = Minecraft.getInstance();
-        boolean alive = mc.player != null && mc.level != null
+        boolean alive = mc.player != null && mc.player.isAlive() && mc.level != null
                 && mc.player.getEffect(ModMobEffects.PALPALYCH_TRIP) != null
                 && currentFrame() < FRAME_COUNT;
         if (!alive) {
             stop();
             return;
         }
+        if (mc.isPaused()) return;
         ageTicks++;
         PalPalychSoundController.tick(mc, mc.player);
     }

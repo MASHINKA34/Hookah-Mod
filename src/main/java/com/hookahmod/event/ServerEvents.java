@@ -1,7 +1,6 @@
 package com.hookahmod.event;
 
 import com.hookahmod.HookahMod;
-import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.effect.ModMobEffects;
 import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.item.HookahBlockItem;
@@ -45,6 +44,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 
 import java.util.Map;
 import java.util.UUID;
@@ -61,6 +61,7 @@ public final class ServerEvents {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        ActiveSessions.server().tick();
         HookahSmoke.serverTick(event.getServer());
         tickIntoxication(event.getServer());
         tickPalPalychTrip(event.getServer());
@@ -95,8 +96,9 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onPlayerDeath(LivingDeathEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
+            releaseWornHookah(sp);
             removeWornHookahLight(sp.server, sp.getUUID());
-            releaseSession(sp.server, sp.getUUID());
+            ActiveSessions.server().release(sp.getUUID());
             endPalPalychTrip(sp);
         }
     }
@@ -105,8 +107,9 @@ public final class ServerEvents {
     public static void onPlayerLogout(PlayerEvent.PlayerLoggedOutEvent event) {
         Player p = event.getEntity();
         if (p instanceof ServerPlayer sp) {
+            releaseWornHookah(sp);
             removeWornHookahLight(sp.server, sp.getUUID());
-            releaseSession(sp.server, sp.getUUID());
+            ActiveSessions.server().release(sp.getUUID());
             endPalPalychTrip(sp);
         }
     }
@@ -114,8 +117,9 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onDimensionChange(PlayerEvent.PlayerChangedDimensionEvent event) {
         if (event.getEntity() instanceof ServerPlayer sp) {
+            releaseWornHookah(sp);
             removeWornHookahLight(sp.server, sp.getUUID());
-            releaseSession(sp.server, sp.getUUID());
+            ActiveSessions.server().release(sp.getUUID());
             IntoxicationState.sync(sp);
             endPalPalychTrip(sp);
         }
@@ -241,28 +245,16 @@ public final class ServerEvents {
         }
     }
 
-    private static void releaseSession(MinecraftServer server, UUID uuid) {
-        GlobalPos gp = ActiveSessions.server().get(uuid);
-        UUID wearerUuid = ActiveSessions.server().getWornWearer(uuid);
-        if (wearerUuid != null && server != null) {
-            ServerPlayer wearer = server.getPlayerList().getPlayer(wearerUuid);
-            if (wearer != null) {
-                ItemStack stack = wearer.getItemBySlot(EquipmentSlot.CHEST);
-                if (WornHookah.isHookahStack(stack)) {
-                    WornHookah.releaseMouthpiece(wearer, stack);
-                    return;
-                }
-            }
-            ActiveSessions.server().unregister(uuid);
-            return;
-        }
-        if (gp == null || server == null) return;
-        ServerLevel level = server.getLevel(gp.dimension());
-        if (level == null) return;
-        if (level.getBlockEntity(gp.pos()) instanceof HookahBlockEntity be) {
-            be.releaseMouthpieceIfHolder(uuid);
-        } else {
-            ActiveSessions.server().unregister(uuid);
+    private static void releaseWornHookah(ServerPlayer wearer) {
+        ItemStack stack = wearer.getItemBySlot(EquipmentSlot.CHEST);
+        if (WornHookah.isHookahStack(stack)) WornHookah.releaseMouthpiece(wearer, stack);
+    }
+
+    @SubscribeEvent
+    public static void onServerStopping(ServerStoppingEvent event) {
+        ActiveSessions.server().clear();
+        for (UUID uuid : java.util.List.copyOf(WORN_LIGHTS.keySet())) {
+            removeWornHookahLight(event.getServer(), uuid);
         }
     }
 

@@ -95,7 +95,7 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
     private boolean isInUseByMe() {
         UUID my = myUuid();
         if (menu.isWearable()) {
-            return my != null && ActiveSessions.client().getWornWearer(my) != null;
+            return my != null && menu.getWearerUuid().equals(ActiveSessions.client().getWornWearer(my));
         }
         return my != null && my.equals(menu.getActivePlayerUuid());
     }
@@ -284,7 +284,6 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
 
     @Override
     public void render(GuiGraphics gg, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(gg, mouseX, mouseY, partialTicks);
         super.render(gg, mouseX, mouseY, partialTicks);
         this.renderTooltip(gg, mouseX, mouseY);
     }

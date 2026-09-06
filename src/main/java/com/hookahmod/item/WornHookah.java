@@ -7,6 +7,7 @@ import com.hookahmod.network.WornHookahSyncPayload;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
+import com.hookahmod.smoking.HookahProgress;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -33,12 +34,6 @@ import java.util.UUID;
 public final class WornHookah {
 
     private static final String ACTIVE_PLAYER_TAG = "HookahActivePlayer";
-    private static final String SMOKE_TIMER_TAG = "HookahSmokeTimer";
-    private static final String WATER_TIMER_TAG = "HookahWaterTimer";
-
-    private static final int PUFFS_PER_SOLID = 20;
-    private static final int PUFFS_PER_WATER = 200;
-
     private WornHookah() {}
 
     public static boolean isHookahStack(ItemStack stack) {
@@ -84,6 +79,7 @@ public final class WornHookah {
     }
 
     public static void setActivePlayerUuid(ItemStack stack, @Nullable UUID uuid) {
+        if (uuid == null && getActivePlayerUuid(stack) == null) return;
         CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> {
             if (uuid == null) tag.remove(ACTIVE_PLAYER_TAG);
             else tag.putUUID(ACTIVE_PLAYER_TAG, uuid);
@@ -92,10 +88,9 @@ public final class WornHookah {
 
     public static void releaseMouthpiece(ServerPlayer wearer, ItemStack stack) {
         UUID active = getActivePlayerUuid(stack);
-        if (active != null) ActiveSessions.of(wearer.level()).unregister(active);
+        boolean released = active != null && ActiveSessions.server().unregister(active, stack);
         setActivePlayerUuid(stack, null);
-        wearer.setItemSlot(EquipmentSlot.CHEST, stack);
-        if (active != null) {
+        if (released) {
             ServerPlayer activePlayer = wearer.server.getPlayerList().getPlayer(active);
             if (activePlayer != null) {
                 PacketDistributor.sendToPlayer(activePlayer, WornHookahSyncPayload.release());
@@ -104,11 +99,16 @@ public final class WornHookah {
     }
 
     public static boolean tryTakeMouthpiece(ServerPlayer player, ServerPlayer wearer, ItemStack stack) {
+        if (wearer.getItemBySlot(EquipmentSlot.CHEST) != stack || !isHookahStack(stack)
+                || !player.isAlive() || !wearer.isAlive() || player.isSpectator() || wearer.isSpectator()
+                || player.level() != wearer.level()) return false;
+        clearStaleSession(stack);
         HookahHoseType hoseType = getHoseType(stack);
         if (!hoseType.isPresent()) {
             player.displayClientMessage(Component.translatable("message.hookahmod.install_hose"), true);
             return false;
         }
+        if (!isUserInRange(player, wearer, stack)) return false;
 
         UUID active = getActivePlayerUuid(stack);
         if (active != null && !active.equals(player.getUUID())) {
@@ -124,14 +124,13 @@ public final class WornHookah {
             return false;
         }
 
+        ActiveSessions.server().beginWorn(player, wearer, stack);
         setActivePlayerUuid(stack, player.getUUID());
-        ActiveSessions.of(player.level()).registerWorn(player.getUUID(), wearer.getUUID());
-        wearer.setItemSlot(EquipmentSlot.CHEST, stack);
         PacketDistributor.sendToPlayer(player, WornHookahSyncPayload.claim(wearer.getUUID()));
         return true;
     }
 
-    private static boolean playerHasMouthpiece(Player player) {
+    public static boolean playerHasMouthpiece(Player player) {
         Item mouthpiece = ModItems.HOOKAH_MOUTHPIECE.get();
         if (player.getMainHandItem().is(mouthpiece)) return true;
         if (player.getOffhandItem().is(mouthpiece)) return true;
@@ -157,11 +156,20 @@ public final class WornHookah {
 
     public static boolean isUserInRange(Player user, Player wearer, ItemStack stack) {
         int maxLength = getHoseType(stack).getMaxLength();
-        return maxLength > 0 && user.distanceToSqr(wearer) <= (double) maxLength * (double) maxLength;
+        return user.level() == wearer.level() && maxLength > 0
+                && user.distanceToSqr(wearer) <= (double) maxLength * (double) maxLength;
+    }
+
+    public static void clearStaleSession(ItemStack stack) {
+        UUID active = getActivePlayerUuid(stack);
+        if (active != null && !ActiveSessions.server().owns(active, stack)) setActivePlayerUuid(stack, null);
     }
 
     public static void applyExhale(ServerPlayer player, ServerPlayer wearer, ItemStack stack, float charge) {
         if (!(player.level() instanceof ServerLevel server)) return;
+        if (!ActiveSessions.server().owns(player.getUUID(), stack)
+                || wearer.getItemBySlot(EquipmentSlot.CHEST) != stack
+                || !isUserInRange(player, wearer, stack) || !hasAllConsumables(stack)) return;
 
         NonNullList<ItemStack> items = getItems(stack);
         ItemStack tobaccoStack = items.get(HookahBlockEntity.SLOT_TOBACCO);
@@ -192,48 +200,14 @@ public final class WornHookah {
         if (!KingdomsIntegration.hasHookahMastery(player, wearer)) {
             depleteConsumables(stack, player);
         }
-        wearer.setItemSlot(EquipmentSlot.CHEST, stack);
     }
 
     private static void depleteConsumables(ItemStack stack, ServerPlayer player) {
         NonNullList<ItemStack> items = getItems(stack);
-        boolean changed = false;
-
-        int smokeTimer = getInt(stack, SMOKE_TIMER_TAG) + 1;
-        if (smokeTimer >= puffsPerSolid(items.get(HookahBlockEntity.SLOT_TOBACCO))) {
-            smokeTimer = 0;
-            items.get(HookahBlockEntity.SLOT_TOBACCO).shrink(1);
-            items.get(HookahBlockEntity.SLOT_COAL).shrink(1);
-            changed = true;
-        }
-
-        int waterTimer = getInt(stack, WATER_TIMER_TAG) + 1;
-        if (waterTimer >= PUFFS_PER_WATER) {
-            waterTimer = 0;
-            ItemStack water = items.get(HookahBlockEntity.SLOT_WATER);
-            boolean whiteMonster = water.is(ModItems.WHITE_MONSTER.get());
-            water.shrink(1);
-            if (whiteMonster) WhiteMonsterItem.giveEmptyCan(player);
-            changed = true;
-        }
-
-        setInt(stack, SMOKE_TIMER_TAG, smokeTimer);
-        setInt(stack, WATER_TIMER_TAG, waterTimer);
-        if (changed) setItems(stack, items);
-    }
-
-    private static int puffsPerSolid(ItemStack tobaccoStack) {
-        return tobaccoStack.getItem() instanceof AbstractTobaccoItem tobacco && tobacco.category() == TobaccoCategory.COMBAT
-                ? 10
-                : PUFFS_PER_SOLID;
-    }
-
-    private static int getInt(ItemStack stack, String key) {
-        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag().getInt(key);
-    }
-
-    private static void setInt(ItemStack stack, String key, int value) {
-        CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> tag.putInt(key, value));
+        HookahProgress.Consumption consumed = HookahProgress.read(stack).consume(items);
+        consumed.progress().write(stack);
+        if (consumed.emptyCan()) WhiteMonsterItem.giveEmptyCan(player);
+        if (consumed.itemsChanged()) setItems(stack, items);
     }
 
     private static final class StackContainer implements Container {
@@ -299,12 +273,11 @@ public final class WornHookah {
         public void setChanged() {
             setItems(stack, items);
             lastSeen = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
-            if (wearer != null && !wearer.level().isClientSide) {
-                wearer.setItemSlot(EquipmentSlot.CHEST, stack);
-            }
         }
 
-        @Override public boolean stillValid(Player player) { return true; }
+        @Override public boolean stillValid(Player player) {
+            return wearer == player && wearer.getItemBySlot(EquipmentSlot.CHEST) == stack;
+        }
 
         @Override
         public void clearContent() {

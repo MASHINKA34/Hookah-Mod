@@ -5,7 +5,6 @@ import com.hookahmod.item.AbstractTobaccoItem;
 import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.WornHookah;
-import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModMenuTypes;
 import net.minecraft.core.BlockPos;
@@ -78,11 +77,7 @@ public class HookahMenu extends AbstractContainerMenu {
     }
 
     private void addHookahSlots() {
-        if (blockEntity != null) {
-            this.addSlot(new HoseSlot(container, HookahBlockEntity.SLOT_HOSE, HOSE_SLOT_X, HOSE_SLOT_Y, blockEntity));
-        } else {
-            this.addSlot(new Slot(container, HookahBlockEntity.SLOT_HOSE, HOSE_SLOT_X, HOSE_SLOT_Y));
-        }
+        this.addSlot(new HoseSlot(container, HookahBlockEntity.SLOT_HOSE, HOSE_SLOT_X, HOSE_SLOT_Y, this::isInUse));
         this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_TOBACCO, TOBACCO_X, CONSUME_ROW_Y, ModItems.HOOKAH_TOBACCO.get(), stack -> stack.getItem() instanceof AbstractTobaccoItem));
         this.addSlot(new FilteredSlot(container, HookahBlockEntity.SLOT_COAL, COAL_X, CONSUME_ROW_Y, ModItems.HOOKAH_CHARCOAL.get()));
         this.addSlot(new FilteredSlot(
@@ -151,7 +146,7 @@ public class HookahMenu extends AbstractContainerMenu {
     @Override
     public ItemStack quickMoveStack(Player player, int slotIndex) {
         Slot slot = this.slots.get(slotIndex);
-        if (!slot.hasItem()) return ItemStack.EMPTY;
+        if (!slot.hasItem() || !slot.mayPickup(player)) return ItemStack.EMPTY;
         ItemStack stack = slot.getItem();
         ItemStack copy = stack.copy();
         int containerSize = HookahBlockEntity.SLOT_COUNT;
@@ -178,8 +173,9 @@ public class HookahMenu extends AbstractContainerMenu {
     public boolean stillValid(Player player) {
         if (wearable) {
             return player.getUUID().equals(wearerUuid)
-                    && WornHookah.isHookahStack(player.getItemBySlot(EquipmentSlot.CHEST));
+                    && WornHookah.isHookahStack(player.getItemBySlot(EquipmentSlot.CHEST))
+                    && (player.level().isClientSide || container.stillValid(player));
         }
-        return stillValid(access, player, ModBlocks.HOOKAH.get());
+        return blockEntity != null && stillValid(access, player, blockEntity.getBlockState().getBlock());
     }
 }

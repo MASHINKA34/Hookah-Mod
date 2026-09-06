@@ -12,6 +12,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.TamableAnimal;
 import net.minecraft.world.entity.npc.Villager;
@@ -52,13 +53,16 @@ public class CombatTobaccoItem extends AbstractTobaccoItem {
     }
 
     private void applyHostile(ServerLevel level, ServerPlayer smoker, double range, float combatMult) {
-        SmokeCone.applyCone(level, smoker, range, 25.0, target -> target != smoker && !target.isAlliedTo(smoker), target -> {
+        SmokeCone.applyCone(level, smoker, range, 25.0,
+                target -> target != smoker && !target.isAlliedTo(smoker)
+                        && (!(target instanceof Player player) || smoker.canHarmPlayer(player)), target -> {
             switch (type) {
                 case POISON -> target.addEffect(new MobEffectInstance(MobEffects.POISON, seconds((2.0f + combatMult) * combatMult), 0, true, true, true), smoker);
                 case FIRE -> {
                     int fireTicks = seconds(3.0f + combatMult);
-                    target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), fireTicks));
-                    target.hurt(level.damageSources().onFire(), 0.75f + combatMult * 0.5f);
+                    if (target.hurt(new DamageSource(level.damageSources().onFire().typeHolder(), smoker), 0.75f + combatMult * 0.5f)) {
+                        target.setRemainingFireTicks(Math.max(target.getRemainingFireTicks(), fireTicks));
+                    }
                 }
                 case ICE -> {
                     target.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, seconds(2.5f * combatMult), 1, true, true, true), smoker);

@@ -18,8 +18,30 @@ java {
     withSourcesJar()
 }
 
+sourceSets {
+    gameTest {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    gameTestImplementation.extendsFrom implementation
+    gameTestRuntimeOnly.extendsFrom runtimeOnly
+}
+
 neoForge {
     version = neo_version
+    addModdingDependenciesTo sourceSets.gameTest
+
+    mods {
+        "${mod_id}" {
+            sourceSet sourceSets.main
+        }
+        hookahmod_tests {
+            sourceSet sourceSets.gameTest
+        }
+    }
 
     parchment {
         mappingsVersion = '2024.07.28'
@@ -28,6 +50,7 @@ neoForge {
 
     runs {
         configureEach {
+            loadedMods = [mods.getByName(mod_id)]
             systemProperty 'forge.logging.markers', 'REGISTRIES'
             logLevel = org.slf4j.event.Level.DEBUG
         }
@@ -48,7 +71,10 @@ neoForge {
         }
         gameTestServer {
             type = 'gameTestServer'
-            systemProperty 'neoforge.enabledGameTestNamespaces', mod_id
+            sourceSet = sourceSets.gameTest
+            loadedMods = [mods.getByName(mod_id), mods.hookahmod_tests]
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'hookahmod_tests'
+            gameDirectory = file('build/gameTest')
         }
         data {
             data()
@@ -56,10 +82,10 @@ neoForge {
         }
     }
 
-    mods {
-        "${mod_id}" {
-            sourceSet sourceSets.main
-        }
+    unitTest {
+        enable()
+        testedMod = mods.getByName(mod_id)
+        loadedMods = [mods.getByName(mod_id)]
     }
 }
 
@@ -84,6 +110,9 @@ repositories {
 }
 
 dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.11.4'
+    testImplementation "net.neoforged:testframework:${neo_version}"
     implementation "software.bernie.geckolib:geckolib-neoforge-1.21.1:4.7.4"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
@@ -96,6 +125,10 @@ dependencies {
         exclude group: 'cc.tweaked'
         exclude group: 'dev.architectury'
     }
+}
+
+tasks.named('test', Test).configure {
+    useJUnitPlatform()
 }
 
 tasks.withType(JavaCompile).configureEach {

@@ -32,6 +32,11 @@ public class HookahBlockItem extends BlockItem implements Equipable, TieredHooka
     }
 
     @Override
+    public void inventoryTick(ItemStack stack, Level level, net.minecraft.world.entity.Entity entity, int slotId, boolean selected) {
+        if (!level.isClientSide) WornHookah.clearStaleSession(stack);
+    }
+
+    @Override
     public String getDescriptionId() {
         return "item.hookahmod." + tier.itemId();
     }

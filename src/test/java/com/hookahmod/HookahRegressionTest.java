@@ -15,7 +15,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.testframework.junit.EphemeralTestServerProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -55,11 +58,21 @@ class HookahRegressionTest {
     @Test
     void blockItemRoundTripPreservesPartialConsumption(MinecraftServer server) {
         ItemStack original = filledHookah();
+        original.set(DataComponents.CUSTOM_NAME, Component.literal("My hookah"));
+        original.set(DataComponents.LORE, new ItemLore(List.of(Component.literal("Keeps its history"))));
+        CustomData.update(DataComponents.CUSTOM_DATA, original, tag -> tag.putString("OwnerNote", "Keep me"));
+        WornHookah.setActivePlayerUuid(original, UUID.randomUUID());
         new HookahProgress(19, 199).write(original);
         HookahBlockEntity hookah = new HookahBlockEntity(BlockPos.ZERO, ModBlocks.HOOKAH.get().defaultBlockState());
         hookah.loadItemsFromStack(original);
+        hookah = assertInstanceOf(HookahBlockEntity.class, BlockEntity.loadStatic(BlockPos.ZERO, hookah.getBlockState(),
+                hookah.saveWithFullMetadata(server.registryAccess()), server.registryAccess()));
         ItemStack pickedUp = new ItemStack(ModItems.HOOKAH.get());
         hookah.saveItemsToStack(pickedUp);
+        assertEquals(original.get(DataComponents.CUSTOM_NAME), pickedUp.get(DataComponents.CUSTOM_NAME));
+        assertEquals(original.get(DataComponents.LORE), pickedUp.get(DataComponents.LORE));
+        assertEquals("Keep me", pickedUp.get(DataComponents.CUSTOM_DATA).copyTag().getString("OwnerNote"));
+        assertNull(WornHookah.getActivePlayerUuid(pickedUp));
         assertEquals(original.get(DataComponents.CONTAINER), pickedUp.get(DataComponents.CONTAINER));
         assertEquals(new HookahProgress(19, 199), HookahProgress.read(pickedUp));
         NonNullList<ItemStack> items = WornHookah.getItems(pickedUp);
@@ -68,6 +81,20 @@ class HookahRegressionTest {
         assertEquals(1, items.get(HookahBlockEntity.SLOT_TOBACCO).getCount());
         assertEquals(1, items.get(HookahBlockEntity.SLOT_COAL).getCount());
         assertEquals(1, items.get(HookahBlockEntity.SLOT_WATER).getCount());
+    }
+
+    @Test
+    void creativeDataCopyUsesTheCurrentContents(MinecraftServer server) {
+        HookahBlockEntity hookah = new HookahBlockEntity(BlockPos.ZERO, ModBlocks.HOOKAH.get().defaultBlockState());
+        hookah.loadItemsFromStack(filledHookah());
+        hookah.getInventory().removeItem(HookahBlockEntity.SLOT_TOBACCO, 1);
+        hookah.getInventory().removeItemNoUpdate(HookahBlockEntity.SLOT_COAL);
+        ItemStack copy = new ItemStack(ModItems.HOOKAH.get());
+        hookah.saveToItem(copy, server.registryAccess());
+        HookahBlockEntity placed = new HookahBlockEntity(BlockPos.ZERO, hookah.getBlockState());
+        placed.loadItemsFromStack(copy);
+        assertEquals(1, placed.getInventory().getItem(HookahBlockEntity.SLOT_TOBACCO).getCount());
+        assertTrue(placed.getInventory().getItem(HookahBlockEntity.SLOT_COAL).isEmpty());
     }
 
     @Test

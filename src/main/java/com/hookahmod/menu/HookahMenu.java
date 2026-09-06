@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -40,6 +41,7 @@ public class HookahMenu extends AbstractContainerMenu {
     private final boolean wearable;
     private final java.util.UUID wearerUuid;
     private final Player menuPlayer;
+    private final DataSlot usageStatus;
 
     public HookahMenu(int id, Inventory playerInv, BlockPos pos) {
         super(ModMenuTypes.HOOKAH.get(), id);
@@ -51,6 +53,7 @@ public class HookahMenu extends AbstractContainerMenu {
         this.wearable = false;
         this.wearerUuid = null;
         this.menuPlayer = playerInv.player;
+        this.usageStatus = addDataSlot(createUsageStatus());
 
         addHookahSlots();
         addPlayerSlots(playerInv);
@@ -67,13 +70,28 @@ public class HookahMenu extends AbstractContainerMenu {
                 ? playerInv.player
                 : playerInv.player.level().getPlayerByUUID(wearerUuid);
         ItemStack stack = wearer == null ? ItemStack.EMPTY : wearer.getItemBySlot(EquipmentSlot.CHEST);
-        this.container = WornHookah.isHookahStack(stack)
+        this.container = !playerInv.player.level().isClientSide && WornHookah.isHookahStack(stack)
                 ? WornHookah.containerFor(stack, wearer)
                 : new SimpleContainer(HookahBlockEntity.SLOT_COUNT);
         this.access = ContainerLevelAccess.NULL;
+        this.usageStatus = addDataSlot(createUsageStatus());
 
         addHookahSlots();
         addPlayerSlots(playerInv);
+    }
+
+    private DataSlot createUsageStatus() {
+        if (menuPlayer.level().isClientSide) return DataSlot.standalone();
+        return new DataSlot() {
+            @Override
+            public int get() {
+                java.util.UUID active = getActivePlayerUuid();
+                return active == null ? 0 : active.equals(menuPlayer.getUUID()) ? 1 : 2;
+            }
+
+            @Override
+            public void set(int value) {}
+        };
     }
 
     private void addHookahSlots() {
@@ -118,8 +136,11 @@ public class HookahMenu extends AbstractContainerMenu {
     }
 
     public boolean isInUse() {
-        if (blockEntity != null) return blockEntity.isInUse();
-        return getActivePlayerUuid() != null;
+        return usageStatus.get() != 0;
+    }
+
+    public boolean isInUseByMe() {
+        return usageStatus.get() == 1;
     }
 
     public java.util.UUID getActivePlayerUuid() {
@@ -176,6 +197,7 @@ public class HookahMenu extends AbstractContainerMenu {
                     && WornHookah.isHookahStack(player.getItemBySlot(EquipmentSlot.CHEST))
                     && (player.level().isClientSide || container.stillValid(player));
         }
-        return blockEntity != null && stillValid(access, player, blockEntity.getBlockState().getBlock());
+        return player.level().isClientSide || blockEntity != null && container.stillValid(player)
+                && stillValid(access, player, blockEntity.getBlockState().getBlock());
     }
 }

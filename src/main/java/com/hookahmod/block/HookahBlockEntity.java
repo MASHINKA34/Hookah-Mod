@@ -17,6 +17,7 @@ import com.hookahmod.smoking.IntoxicationState;
 import com.hookahmod.smoking.HookahProgress;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
@@ -32,6 +33,7 @@ import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -65,15 +67,27 @@ public class HookahBlockEntity extends BlockEntity {
     public Container getInventory() { return inventory; }
 
     public void saveItemsToStack(ItemStack stack) {
-        stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
-        progress.write(stack);
+        stack.applyComponents(collectComponents());
     }
 
     public void loadItemsFromStack(ItemStack stack) {
-        ItemContainerContents contents = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
-        contents.copyInto(items);
+        applyComponentsFromItemStack(stack);
         progress = HookahProgress.read(stack);
         setChangedAndSync();
+    }
+
+    @Override
+    protected void applyImplicitComponents(DataComponentInput input) {
+        super.applyImplicitComponents(input);
+        input.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyInto(items);
+    }
+
+    @Override
+    protected void collectImplicitComponents(DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        components.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+        CustomData data = components().getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+        components.set(DataComponents.CUSTOM_DATA, WornHookah.withoutActivePlayer(progress.update(data)));
     }
 
     public void clearItemsForPickup() {
@@ -333,7 +347,7 @@ public class HookahBlockEntity extends BlockEntity {
         @Override public ItemStack removeItemNoUpdate(int slot) { return ContainerHelper.takeItem(backing, slot); }
         @Override public void setItem(int slot, ItemStack stack) { backing.set(slot, stack); onChange.run(); }
         @Override public void setChanged() { onChange.run(); }
-        @Override public boolean stillValid(Player player) { return true; }
+        @Override public boolean stillValid(Player player) { return Container.stillValidBlockEntity(be, player); }
         @Override public void clearContent() { backing.clear(); onChange.run(); }
     }
 }

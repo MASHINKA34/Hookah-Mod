@@ -1,14 +1,12 @@
 package com.hookahmod.client;
 
 import com.hookahmod.block.HookahBlockEntity;
-import com.hookahmod.event.ActiveSessions;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.menu.FilteredSlot;
 import com.hookahmod.menu.HookahMenu;
 import com.hookahmod.menu.HoseSlot;
 import com.hookahmod.network.ToggleMouthpiecePayload;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -17,7 +15,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.util.UUID;
 
 public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
 
@@ -88,16 +85,8 @@ public class HookahScreen extends AbstractContainerScreen<HookahMenu> {
 
     private HookahBlockEntity be() { return menu.getBlockEntity(); }
 
-    private UUID myUuid() {
-        return Minecraft.getInstance().player == null ? null : Minecraft.getInstance().player.getUUID();
-    }
-
     private boolean isInUseByMe() {
-        UUID my = myUuid();
-        if (menu.isWearable()) {
-            return my != null && menu.getWearerUuid().equals(ActiveSessions.client().getWornWearer(my));
-        }
-        return my != null && my.equals(menu.getActivePlayerUuid());
+        return menu.isInUseByMe();
     }
 
     private boolean isBusyByOther() {

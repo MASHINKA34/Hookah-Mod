@@ -2,9 +2,11 @@ package com.hookahmod.registry;
 
 import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlock;
+import com.hookahmod.block.HookahLightBlock;
 import com.hookahmod.block.ModCropBlock;
 import com.hookahmod.block.WhiteMonsterBlock;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
@@ -14,6 +16,11 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 public final class ModBlocks {
 
     public static final DeferredRegister.Blocks BLOCKS = DeferredRegister.createBlocks(HookahMod.MOD_ID);
+
+    public static final DeferredBlock<HookahLightBlock> HOOKAH_LIGHT = BLOCKS.register(
+            "hookah_light",
+            () -> new HookahLightBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.LIGHT).noLootTable())
+    );
 
     public static final DeferredBlock<HookahBlock> HOOKAH = BLOCKS.register(
             "hookah",

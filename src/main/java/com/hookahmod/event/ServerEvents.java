@@ -1,6 +1,7 @@
 package com.hookahmod.event;
 
 import com.hookahmod.HookahMod;
+import com.hookahmod.block.HookahLightBlock;
 import com.hookahmod.effect.ModMobEffects;
 import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.item.HookahBlockItem;
@@ -8,6 +9,7 @@ import com.hookahmod.item.WornHookah;
 import com.hookahmod.recipe.WhiteMonsterBrewingRecipe;
 import com.hookahmod.recipe.SweetWaterBrewingRecipe;
 import com.hookahmod.registry.ModItems;
+import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
 import net.minecraft.core.BlockPos;
@@ -31,8 +33,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
@@ -52,7 +52,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public final class ServerEvents {
 
-    private static final int WORN_LIGHT_LEVEL = 8;
     private static final Map<UUID, GlobalPos> WORN_LIGHTS = new ConcurrentHashMap<>();
     private static final float CHICKEN_POOP_CHANCE = 0.35F;
     private static final ResourceLocation PALPALYCH_LOCK_ID = HookahMod.id("palpalych_trip_lock");
@@ -271,8 +270,7 @@ public final class ServerEvents {
 
     private static void tickWornHookahLights(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            ItemStack stack = player.getItemBySlot(EquipmentSlot.CHEST);
-            if (WornHookah.isHookahStack(stack) && WornHookah.hasCoal(stack)) {
+            if (HookahLightBlock.hasLightSource(player)) {
                 updateWornHookahLight(player);
             } else {
                 removeWornHookahLight(server, player.getUUID());
@@ -283,7 +281,7 @@ public final class ServerEvents {
     private static void updateWornHookahLight(ServerPlayer player) {
         ServerLevel level = player.serverLevel();
         UUID uuid = player.getUUID();
-        BlockPos pos = BlockPos.containing(player.getX(), player.getY() + player.getBbHeight() * 0.72D, player.getZ());
+        BlockPos pos = HookahLightBlock.lightPosition(player);
         GlobalPos next = GlobalPos.of(level.dimension(), pos);
         GlobalPos current = WORN_LIGHTS.get(uuid);
 
@@ -292,10 +290,8 @@ public final class ServerEvents {
         }
 
         BlockState state = level.getBlockState(pos);
-        if (state.is(Blocks.LIGHT)) {
-            if (next.equals(WORN_LIGHTS.get(uuid)) && state.getValue(LightBlock.LEVEL) != WORN_LIGHT_LEVEL) {
-                level.setBlock(pos, state.setValue(LightBlock.LEVEL, WORN_LIGHT_LEVEL), 3);
-            }
+        if (state.is(ModBlocks.HOOKAH_LIGHT.get())) {
+            WORN_LIGHTS.put(uuid, next);
             return;
         }
         if (next.equals(WORN_LIGHTS.get(uuid))) {
@@ -303,17 +299,18 @@ public final class ServerEvents {
         }
         if (!state.isAir()) return;
 
-        level.setBlock(pos, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, WORN_LIGHT_LEVEL), 3);
-        WORN_LIGHTS.put(uuid, next);
+        if (level.setBlock(pos, ModBlocks.HOOKAH_LIGHT.get().defaultBlockState(), 3)) {
+            WORN_LIGHTS.put(uuid, next);
+        }
     }
 
     private static void removeWornHookahLight(MinecraftServer server, UUID uuid) {
         GlobalPos old = WORN_LIGHTS.remove(uuid);
-        if (old == null) return;
+        if (old == null || WORN_LIGHTS.containsValue(old)) return;
         ServerLevel level = server.getLevel(old.dimension());
-        if (level == null) return;
+        if (level == null || !level.hasChunkAt(old.pos())) return;
         BlockState state = level.getBlockState(old.pos());
-        if (state.is(Blocks.LIGHT) && state.getValue(LightBlock.LEVEL) == WORN_LIGHT_LEVEL) {
+        if (state.is(ModBlocks.HOOKAH_LIGHT.get())) {
             level.removeBlock(old.pos(), false);
         }
     }

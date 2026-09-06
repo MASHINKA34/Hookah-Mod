@@ -2,6 +2,7 @@ package com.hookahmod.block;
 
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.HookahHoseItem;
+import com.hookahmod.item.HookahMouthpieceItem;
 import com.hookahmod.item.HookahTier;
 import com.hookahmod.item.TieredHookahItem;
 import com.hookahmod.integration.KingdomsIntegration;
@@ -9,7 +10,6 @@ import com.hookahmod.registry.ModBlockEntities;
 import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.registry.ModItems;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -23,9 +23,11 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -39,11 +41,18 @@ import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.BlockEvent;
+
+import java.util.List;
 
 public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlock {
 
@@ -155,10 +164,10 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
             if (!player.getAbilities().instabuild) stack.shrink(1);
             return ItemInteractionResult.CONSUME;
         }
-        if (stack.getItem() instanceof com.hookahmod.item.HookahMouthpieceItem) {
+        if (stack.getItem() instanceof HookahMouthpieceItem mouthpiece) {
             if (level.isClientSide) {
-                player.startUsingItem(hand);
-                return ItemInteractionResult.SUCCESS;
+                mouthpiece.startSmoking(level, player, hand);
+                return ItemInteractionResult.CONSUME;
             }
             if (!be.getHoseType().isPresent()) {
                 player.displayClientMessage(Component.translatable("message.hookahmod.install_hose"), true);
@@ -176,8 +185,9 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
                 player.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
                 return ItemInteractionResult.CONSUME;
             }
-            player.startUsingItem(hand);
-            return ItemInteractionResult.SUCCESS;
+            if (!be.isPlayerInRange(player)) return ItemInteractionResult.FAIL;
+            mouthpiece.startSmoking(level, player, hand);
+            return ItemInteractionResult.CONSUME;
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
     }
@@ -190,7 +200,10 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
         }
         if (player.isShiftKeyDown() && !state.is(ModBlocks.LUXURY_HOOKAH_PREVIEW.get())) {
             if (level.isClientSide) return net.minecraft.world.InteractionResult.SUCCESS;
-            if (player instanceof ServerPlayer sp && !KingdomsIntegration.canMoveHookahBlock(sp, pos)) {
+            if (!(player instanceof ServerPlayer sp) || !sp.isAlive() || sp.isSpectator()
+                    || !sp.getAbilities().mayBuild || !level.mayInteract(sp, pos)
+                    || !KingdomsIntegration.canMoveHookahBlock(sp, pos)
+                    || !KingdomsIntegration.canEquipHookah(sp)) {
                 player.displayClientMessage(Component.translatable("message.hookahmod.protected_area"), true);
                 return net.minecraft.world.InteractionResult.CONSUME;
             }
@@ -199,11 +212,18 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
                 return net.minecraft.world.InteractionResult.CONSUME;
             }
 
-            ItemStack stack = stackForTier(state.getValue(TIER));
-            be.releaseMouthpiece();
+            if (NeoForge.EVENT_BUS.post(new BlockEvent.BreakEvent(level, pos, state, player)).isCanceled()) {
+                return net.minecraft.world.InteractionResult.FAIL;
+            }
+            if (level.getBlockEntity(pos) != be || level.getBlockState(pos) != state
+                    || !player.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) {
+                return net.minecraft.world.InteractionResult.FAIL;
+            }
+
+            ItemStack stack = stackForState(state);
             be.saveItemsToStack(stack);
+            if (!level.removeBlock(pos, false)) return net.minecraft.world.InteractionResult.FAIL;
             be.clearItemsForPickup();
-            level.removeBlock(pos, false);
             player.setItemSlot(EquipmentSlot.CHEST, stack);
             player.displayClientMessage(Component.translatable("message.hookahmod.worn"), true);
             return net.minecraft.world.InteractionResult.CONSUME;
@@ -218,8 +238,11 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
         return net.minecraft.world.InteractionResult.CONSUME;
     }
 
-    private static ItemStack stackForTier(HookahTier tier) {
-        return switch (tier) {
+    private static ItemStack stackForState(BlockState state) {
+        if (state.is(ModBlocks.LUXURY_HOOKAH_PREVIEW.get())) {
+            return new ItemStack(ModItems.LUXURY_HOOKAH_PREVIEW.get());
+        }
+        return switch (state.getValue(TIER)) {
             case LEATHER -> new ItemStack(ModItems.HOOKAH_LEATHER.get());
             case GOLD -> new ItemStack(ModItems.HOOKAH_GOLD.get());
             case IRON -> new ItemStack(ModItems.HOOKAH_IRON.get());
@@ -230,9 +253,37 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
     }
 
     @Override
+    public ItemStack getCloneItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos, Player player) {
+        return stackForState(state);
+    }
+
+    @Override
+    protected List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
+        List<ItemStack> drops = super.getDrops(state, params);
+        if (params.getOptionalParameter(LootContextParams.BLOCK_ENTITY) instanceof HookahBlockEntity be) {
+            for (ItemStack stack : drops) {
+                if (stack.getItem() instanceof BlockItem item && item.getBlock() == this) {
+                    be.saveItemsToStack(stack);
+                }
+            }
+        }
+        return drops;
+    }
+
+    @Override
+    public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
+        if (!level.isClientSide && player.isCreative()
+                && level.getBlockEntity(pos) instanceof HookahBlockEntity be && !be.getInventory().isEmpty()) {
+            ItemStack stack = stackForState(state);
+            be.saveItemsToStack(stack);
+            Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
+        }
+        return super.playerWillDestroy(level, pos, state, player);
+    }
+
+    @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (!level.isClientSide && level.getBlockEntity(pos) instanceof HookahBlockEntity be
-                && stack.has(DataComponents.CONTAINER)) {
+        if (!level.isClientSide && level.getBlockEntity(pos) instanceof HookahBlockEntity be) {
             be.loadItemsFromStack(stack);
         }
     }
@@ -258,7 +309,6 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
             if (!level.isClientSide && !level.restoringBlockSnapshots
                     && level.getBlockEntity(pos) instanceof HookahBlockEntity be) {
                 be.releaseMouthpiece();
-                Containers.dropContents(level, pos, be.getInventory());
             }
             super.onRemove(state, level, pos, newState, moved);
         }

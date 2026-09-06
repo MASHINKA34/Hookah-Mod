@@ -1,34 +1,52 @@
 package com.hookahmod.gametest;
 
 import com.hookahmod.block.HookahBlockEntity;
+import com.hookahmod.block.HookahBlock;
+import com.hookahmod.block.HookahLightBlock;
 import com.hookahmod.event.ActiveSessions;
 import com.hookahmod.event.ServerEvents;
 import com.hookahmod.item.HookahHoseType;
+import com.hookahmod.item.HookahTier;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.menu.HookahMenu;
 import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModSounds;
+import com.hookahmod.smoking.HookahProgress;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.PrimedTnt;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerSynchronizer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
+import net.minecraft.world.level.block.LightBlock;
+import net.minecraft.world.ticks.LevelChunkTicks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.BlockHitResult;
+import software.bernie.geckolib.animatable.GeoItem;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.NeoForge;
@@ -348,6 +366,233 @@ public class HookahGameTests {
                 new ItemStack(ModItems.HOOKAH_WATER_BOTTLE.get(), 2)));
         wearer.setItemSlot(EquipmentSlot.CHEST, stack);
         return stack;
+    }
+
+    @GameTest(template = "empty")
+    public static void pickupRespectsAdventureAndBreakCancellation(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer player = players.create(helper.getLevel());
+            HookahBlockEntity hookah = block(helper, new BlockPos(1, 1, 0));
+            ItemStack original = equip(player).copy();
+            original.set(DataComponents.CUSTOM_NAME, Component.literal("Named hookah"));
+            new HookahProgress(19, 199).write(original);
+            player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+            hookah.loadItemsFromStack(original);
+            helper.assertTrue(hookah.tryTakeMouthpiece(player), "Hookah must be claimable before pickup");
+            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            player.setShiftKeyDown(true);
+            player.setGameMode(GameType.ADVENTURE);
+            pickup(player, hookah);
+            helper.assertTrue(helper.getLevel().getBlockEntity(hookah.getBlockPos()) == hookah, "Adventure pickup must leave the block intact");
+            helper.assertTrue(player.getItemBySlot(EquipmentSlot.CHEST).isEmpty(), "Adventure pickup must not give an item");
+            player.setGameMode(GameType.SURVIVAL);
+            List<BlockEvent.BreakEvent> events = new ArrayList<>();
+            Consumer<BlockEvent.BreakEvent> deny = event -> {
+                if (event.getPlayer() == player && event.getPos().equals(hookah.getBlockPos())) {
+                    events.add(event);
+                    event.setCanceled(true);
+                }
+            };
+            NeoForge.EVENT_BUS.addListener(deny);
+            try {
+                pickup(player, hookah);
+                helper.assertTrue(events.size() == 1, "Pickup must check break protection");
+                helper.assertTrue(helper.getLevel().getBlockEntity(hookah.getBlockPos()) == hookah, "Canceled pickup must leave the block intact");
+                helper.assertTrue(player.getUUID().equals(hookah.getActivePlayerUuid()), "Canceled pickup must preserve the session");
+                helper.assertTrue(player.getItemBySlot(EquipmentSlot.CHEST).isEmpty(), "Canceled pickup must not equip a copy");
+            } finally {
+                NeoForge.EVENT_BUS.unregister(deny);
+            }
+            pickup(player, hookah);
+            ItemStack pickedUp = player.getItemBySlot(EquipmentSlot.CHEST);
+            helper.assertTrue(helper.getLevel().getBlockState(hookah.getBlockPos()).isAir(), "Allowed pickup must remove the block");
+            helper.assertTrue(original.get(DataComponents.CONTAINER).equals(pickedUp.get(DataComponents.CONTAINER)), "Pickup must preserve contents");
+            helper.assertTrue(original.get(DataComponents.CUSTOM_NAME).equals(pickedUp.get(DataComponents.CUSTOM_NAME)), "Pickup must preserve the name");
+            helper.assertTrue(new HookahProgress(19, 199).equals(HookahProgress.read(pickedUp)), "Pickup must preserve partial consumption");
+            helper.assertTrue(ActiveSessions.server().get(player.getUUID()) == null && WornHookah.getActivePlayerUuid(pickedUp) == null, "Pickup must end the session");
+            helper.succeed();
+        }
+    }
+
+    private static void pickup(ServerPlayer player, HookahBlockEntity hookah) {
+        BlockPos pos = hookah.getBlockPos();
+        player.gameMode.useItemOn(player, player.level(), ItemStack.EMPTY, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
+    }
+
+    @GameTest(template = "empty")
+    public static void breakingDropsOneHookahWithItsRemainingResources(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer player = players.create(helper.getLevel());
+            BlockPos relative = new BlockPos(2, 1, 0);
+            HookahBlockEntity hookah = block(helper, relative);
+            ItemStack original = equip(player).copy();
+            original.set(DataComponents.CUSTOM_NAME, Component.literal("Used hookah"));
+            new HookahProgress(19, 199).write(original);
+            player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+            hookah.loadItemsFromStack(original);
+            HookahMenu oldMenu = new HookahMenu(1, player.getInventory(), hookah.getBlockPos());
+            helper.assertTrue(player.gameMode.destroyBlock(hookah.getBlockPos()), "Survival breaking must succeed");
+            List<ItemEntity> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(hookah.getBlockPos()).inflate(0.5));
+            helper.assertTrue(drops.size() == 1 && drops.getFirst().getItem().is(ModItems.HOOKAH.get()), "Breaking must drop one packed hookah without loose duplicates");
+            ItemStack drop = drops.getFirst().getItem().copy();
+            helper.assertTrue(original.get(DataComponents.CUSTOM_NAME).equals(drop.get(DataComponents.CUSTOM_NAME)), "Breaking must preserve the name");
+            helper.assertTrue(original.get(DataComponents.CONTAINER).equals(drop.get(DataComponents.CONTAINER)), "Breaking must preserve all contents");
+            HookahBlockEntity replacement = block(helper, relative);
+            replacement.loadItemsFromStack(drop);
+            helper.assertTrue(!oldMenu.stillValid(player), "A menu must not retain access to a removed block entity");
+            ItemStack restored = new ItemStack(ModItems.HOOKAH.get());
+            replacement.saveItemsToStack(restored);
+            NonNullList<ItemStack> items = WornHookah.getItems(restored);
+            var consumed = HookahProgress.read(restored).consume(items);
+            helper.assertTrue(consumed.progress().equals(HookahProgress.EMPTY), "Breaking and replacing must not reset resource counters");
+            for (int slot = 1; slot < HookahBlockEntity.SLOT_COUNT; slot++) {
+                helper.assertTrue(items.get(slot).getCount() == 1, "The next puff must consume nearly exhausted resources");
+            }
+            drops.forEach(ItemEntity::discard);
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void creativeBreakingKeepsContentsWithoutDuplicatingThem(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer player = players.create(helper.getLevel());
+            HookahBlockEntity hookah = block(helper, new BlockPos(2, 1, 0));
+            ItemStack original = equip(player).copy();
+            player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+            hookah.loadItemsFromStack(original);
+            player.setGameMode(GameType.CREATIVE);
+            helper.assertTrue(player.gameMode.destroyBlock(hookah.getBlockPos()), "Creative breaking must succeed");
+            List<ItemEntity> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class, new AABB(hookah.getBlockPos()).inflate(0.5));
+            helper.assertTrue(drops.size() == 1 && drops.getFirst().getItem().is(ModItems.HOOKAH.get()), "Creative breaking must drop one packed hookah");
+            helper.assertTrue(original.get(DataComponents.CONTAINER).equals(drops.getFirst().getItem().get(DataComponents.CONTAINER)), "Creative breaking must preserve contents");
+            drops.forEach(ItemEntity::discard);
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void middleClickKeepsEveryHookahTier(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer player = players.create(helper.getLevel());
+            HookahBlockEntity hookah = block(helper, new BlockPos(1, 1, 0));
+            var expected = List.of(ModItems.HOOKAH.get(), ModItems.HOOKAH_LEATHER.get(), ModItems.HOOKAH_GOLD.get(),
+                    ModItems.HOOKAH_IRON.get(), ModItems.HOOKAH_DIAMOND.get(), ModItems.HOOKAH_NETHERITE.get());
+            for (HookahTier tier : HookahTier.values()) {
+                var state = ModBlocks.HOOKAH.get().defaultBlockState().setValue(HookahBlock.TIER, tier);
+                ItemStack copy = state.getCloneItemStack(new BlockHitResult(Vec3.atCenterOf(hookah.getBlockPos()), Direction.UP, hookah.getBlockPos(), false),
+                        helper.getLevel(), hookah.getBlockPos(), player);
+                helper.assertTrue(copy.is(expected.get(tier.ordinal())), "Middle click must preserve tier " + tier);
+                helper.assertTrue(!copy.has(DataComponents.CONTAINER), "Ordinary middle click must not duplicate the inventory");
+            }
+            var preview = ModBlocks.LUXURY_HOOKAH_PREVIEW.get().defaultBlockState();
+            ItemStack copy = preview.getCloneItemStack(new BlockHitResult(Vec3.atCenterOf(hookah.getBlockPos()), Direction.UP, hookah.getBlockPos(), false),
+                    helper.getLevel(), hookah.getBlockPos(), player);
+            helper.assertTrue(copy.is(ModItems.LUXURY_HOOKAH_PREVIEW.get()), "Preview must clone its own item");
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void openWornMenuSynchronizesGuestAndOwnerClaims(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer wearer = players.create(helper.getLevel());
+            ServerPlayer guest = players.create(helper.getLevel());
+            ItemStack stack = equip(wearer);
+            HookahMenu menu = new HookahMenu(1, wearer.getInventory(), wearer.getUUID());
+            List<Integer> statuses = new ArrayList<>();
+            menu.setSynchronizer(new ContainerSynchronizer() {
+                @Override
+                public void sendInitialData(AbstractContainerMenu container, NonNullList<ItemStack> items, ItemStack carriedItem, int[] initialData) {
+                    statuses.add(initialData[0]);
+                }
+
+                @Override
+                public void sendSlotChange(AbstractContainerMenu container, int slot, ItemStack itemStack) {}
+
+                @Override
+                public void sendCarriedChange(AbstractContainerMenu container, ItemStack itemStack) {}
+
+                @Override
+                public void sendDataChange(AbstractContainerMenu container, int id, int value) {
+                    if (id == 0) statuses.add(value);
+                }
+            });
+            helper.assertTrue(WornHookah.tryTakeMouthpiece(guest, wearer, stack), "Guest must claim the hookah");
+            menu.broadcastChanges();
+            helper.assertTrue(menu.isInUse() && !menu.isInUseByMe(), "Wearer's menu must recognize the guest");
+            helper.assertTrue(!menu.getSlot(0).mayPickup(wearer), "Guest's hose must remain locked");
+            WornHookah.releaseMouthpiece(wearer, stack);
+            menu.broadcastChanges();
+            helper.assertTrue(WornHookah.tryTakeMouthpiece(wearer, wearer, stack), "Owner must claim the released hookah");
+            menu.broadcastChanges();
+            helper.assertTrue(menu.isInUseByMe(), "Owner's menu must recognize their own claim");
+            WornHookah.releaseMouthpiece(wearer, stack);
+            menu.broadcastChanges();
+            helper.assertTrue(statuses.equals(List.of(0, 2, 0, 1, 0)), "All occupancy changes must reach the open menu's synchronizer");
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void clickingHookahStartsTheMouthpieceAnimation(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer player = players.create(helper.getLevel());
+            HookahBlockEntity hookah = block(helper, new BlockPos(1, 1, 0));
+            ItemStack contents = equip(player).copy();
+            player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+            hookah.loadItemsFromStack(contents);
+            helper.assertTrue(hookah.tryTakeMouthpiece(player), "Player must claim hookah");
+            ItemStack mouthpiece = new ItemStack(ModItems.HOOKAH_MOUTHPIECE.get());
+            player.setItemInHand(InteractionHand.MAIN_HAND, mouthpiece);
+            helper.assertTrue(GeoItem.getId(mouthpiece) == Long.MAX_VALUE, "New mouthpiece must have no animation id");
+            player.gameMode.useItemOn(player, helper.getLevel(), mouthpiece, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(hookah.getBlockPos()), Direction.UP, hookah.getBlockPos(), false));
+            helper.assertTrue(player.isUsingItem(), "Clicking the claimed block must start smoking");
+            helper.assertTrue(GeoItem.getId(mouthpiece) != Long.MAX_VALUE, "Block interaction must trigger GeckoLib animation setup");
+            player.stopUsingItem();
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void abandonedLightExpiresAndItsCleanupTickIsSaved(GameTestHelper helper) {
+        BlockPos relative = new BlockPos(2, 1, 0);
+        BlockPos pos = helper.absolutePos(relative);
+        var light = ModBlocks.HOOKAH_LIGHT.get();
+        helper.setBlock(relative, light.defaultBlockState().setValue(LightBlock.WATERLOGGED, true));
+        var chunk = helper.getLevel().getChunk(pos.getX() >> 4, pos.getZ() >> 4);
+        var saved = (ListTag) chunk.getTicksForSerialization().blocks().save(helper.getLevel().getGameTime(), block -> BuiltInRegistries.BLOCK.getKey(block).toString());
+        var loaded = LevelChunkTicks.load(saved, id -> BuiltInRegistries.BLOCK.getOptional(ResourceLocation.parse(id)), chunk.getPos());
+        helper.assertTrue(loaded.hasScheduledTick(pos, light), "Cleanup must survive chunk tick serialization");
+        BlockPos vanilla = new BlockPos(0, 3, 0);
+        helper.setBlock(vanilla, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, HookahLightBlock.LIGHT_LEVEL));
+        helper.runAfterDelay(HookahLightBlock.CHECK_INTERVAL + 2, () -> {
+            helper.assertBlockPresent(Blocks.WATER, relative);
+            helper.assertBlockPresent(Blocks.LIGHT, vanilla);
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty")
+    public static void lightRemainsWhileAnotherWearerStillUsesIt(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer first = players.create(helper.getLevel());
+            ServerPlayer second = players.create(helper.getLevel());
+            equip(first);
+            equip(second);
+            BlockPos pos = HookahLightBlock.lightPosition(first);
+            var state = ModBlocks.HOOKAH_LIGHT.get().defaultBlockState();
+            helper.getLevel().setBlock(pos, state, 3);
+            first.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+            state.tick(helper.getLevel(), pos, helper.getLevel().random);
+            helper.assertTrue(helper.getLevel().getBlockState(pos).is(ModBlocks.HOOKAH_LIGHT.get()), "Remaining wearer must keep the shared light");
+            second.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+            state.tick(helper.getLevel(), pos, helper.getLevel().random);
+            helper.assertTrue(helper.getLevel().getBlockState(pos).isAir(), "Light must disappear after its last source is gone");
+            helper.succeed();
+        }
     }
 
     private static HookahBlockEntity block(GameTestHelper helper, BlockPos pos) {

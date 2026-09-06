@@ -27,10 +27,14 @@ public record HookahProgress(int smokePuffs, int waterPuffs) {
     }
 
     public void write(ItemStack stack) {
-        CustomData.update(DataComponents.CUSTOM_DATA, stack, tag -> {
-            tag.putInt(SMOKE_TAG, smokePuffs);
-            tag.putInt(WATER_TAG, waterPuffs);
-        });
+        stack.set(DataComponents.CUSTOM_DATA, update(stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY)));
+    }
+
+    public CustomData update(CustomData data) {
+        CompoundTag tag = data.copyTag();
+        tag.putInt(SMOKE_TAG, smokePuffs);
+        tag.putInt(WATER_TAG, waterPuffs);
+        return CustomData.of(tag);
     }
 
     public Consumption consume(List<ItemStack> items) {

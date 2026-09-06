@@ -115,10 +115,14 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
                     return InteractionResultHolder.fail(player.getItemInHand(hand));
                 }
             }
-            triggerMouthpieceAnimation(level, player, player.getItemInHand(hand), "smoking");
         }
-        player.startUsingItem(hand);
+        startSmoking(level, player, hand);
         return InteractionResultHolder.consume(player.getItemInHand(hand));
+    }
+
+    public void startSmoking(Level level, Player player, InteractionHand hand) {
+        triggerMouthpieceAnimation(level, player, player.getItemInHand(hand), "smoking");
+        player.startUsingItem(hand);
     }
 
     // ── While holding ───────────────────────────────────────────────

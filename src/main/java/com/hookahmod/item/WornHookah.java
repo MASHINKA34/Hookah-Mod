@@ -86,6 +86,12 @@ public final class WornHookah {
         });
     }
 
+    public static CustomData withoutActivePlayer(CustomData data) {
+        CompoundTag tag = data.copyTag();
+        tag.remove(ACTIVE_PLAYER_TAG);
+        return CustomData.of(tag);
+    }
+
     public static void releaseMouthpiece(ServerPlayer wearer, ItemStack stack) {
         UUID active = getActivePlayerUuid(stack);
         boolean released = active != null && ActiveSessions.server().unregister(active, stack);

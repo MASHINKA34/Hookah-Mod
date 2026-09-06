@@ -24,6 +24,7 @@ public record OpenWornHookahPayload() implements CustomPacketPayload {
     public static void handle(OpenWornHookahPayload payload, IPayloadContext ctx) {
         ctx.enqueueWork(() -> {
             if (!(ctx.player() instanceof ServerPlayer player)) return;
+            if (!player.isAlive() || player.isSpectator()) return;
             ItemStack stack = player.getItemBySlot(EquipmentSlot.CHEST);
             if (!WornHookah.isHookahStack(stack)) {
                 player.displayClientMessage(Component.translatable("message.hookahmod.no_worn_hookah"), true);

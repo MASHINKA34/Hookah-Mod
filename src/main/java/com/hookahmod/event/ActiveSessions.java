@@ -1,13 +1,23 @@
 package com.hookahmod.event;
 
+import com.hookahmod.block.HookahBlockEntity;
+import com.hookahmod.item.WornHookah;
+import com.hookahmod.network.WornHookahSyncPayload;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.network.PacketDistributor;
 
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 
 /**
  * Tracks who is currently smoking which hookah.
@@ -25,6 +35,7 @@ public final class ActiveSessions {
 
     private final Map<UUID, GlobalPos> sessions = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> wornSessions = new ConcurrentHashMap<>();
+    private final Map<UUID, Session> owners = new HashMap<>();
 
     private ActiveSessions() {}
 
@@ -50,7 +61,69 @@ public final class ActiveSessions {
     public void unregister(UUID player) {
         sessions.remove(player);
         wornSessions.remove(player);
+        owners.remove(player);
     }
+
+    public boolean owns(UUID player, Object source) {
+        Session session = owners.get(player);
+        return session != null && session.source() == source;
+    }
+
+    public boolean unregister(UUID player, Object source) {
+        if (!owns(player, source)) return false;
+        unregister(player);
+        return true;
+    }
+
+    public void beginBlock(ServerPlayer player, HookahBlockEntity hookah) {
+        release(player.getUUID());
+        register(player.getUUID(), player.level().dimension(), hookah.getBlockPos());
+        owners.put(player.getUUID(), new Session(player, hookah, hookah::releaseMouthpiece, () ->
+                player.isAlive() && !player.isRemoved() && !player.isSpectator() && !hookah.isRemoved()
+                        && hookah.getLevel() == player.level()
+                        && player.getUUID().equals(hookah.getActivePlayerUuid())
+                        && hookah.isPlayerInRange(player)
+                        && WornHookah.playerHasMouthpiece(player)));
+    }
+
+    public void beginWorn(ServerPlayer player, ServerPlayer wearer, ItemStack stack) {
+        release(player.getUUID());
+        registerWorn(player.getUUID(), wearer.getUUID());
+        owners.put(player.getUUID(), new Session(player, stack, () -> WornHookah.releaseMouthpiece(wearer, stack), () ->
+                player.isAlive() && !player.isRemoved() && !player.isSpectator()
+                        && wearer.isAlive() && !wearer.isRemoved() && !wearer.isSpectator()
+                        && wearer.getItemBySlot(EquipmentSlot.CHEST) == stack
+                        && player.getUUID().equals(WornHookah.getActivePlayerUuid(stack))
+                        && WornHookah.isUserInRange(player, wearer, stack)
+                        && WornHookah.playerHasMouthpiece(player)));
+    }
+
+    public void release(UUID player) {
+        Session session = owners.get(player);
+        if (session == null) {
+            unregister(player);
+            return;
+        }
+        session.release().run();
+        if (owners.get(player) == session) {
+            unregister(player);
+            PacketDistributor.sendToPlayer(session.player(), WornHookahSyncPayload.release());
+        }
+    }
+
+    public void tick() {
+        for (Map.Entry<UUID, Session> entry : List.copyOf(owners.entrySet())) {
+            if (!entry.getValue().valid().getAsBoolean()) release(entry.getKey());
+        }
+    }
+
+    public void clear() {
+        for (UUID player : List.copyOf(owners.keySet())) release(player);
+        sessions.clear();
+        wornSessions.clear();
+    }
+
+    private record Session(ServerPlayer player, Object source, Runnable release, BooleanSupplier valid) {}
 
     public GlobalPos get(UUID player) {
         return sessions.get(player);

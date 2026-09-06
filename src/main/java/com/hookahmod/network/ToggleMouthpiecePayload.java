@@ -43,7 +43,7 @@ public record ToggleMouthpiecePayload(BlockPos pos, Optional<UUID> wearer) imple
             if (!(ctx.player() instanceof ServerPlayer player)) return;
             if (payload.wearer.isPresent()) {
                 ServerPlayer wearer = player.server.getPlayerList().getPlayer(payload.wearer.get());
-                if (wearer == null || player.distanceToSqr(wearer) > 64.0) return;
+                if (wearer == null || player.level() != wearer.level() || player.distanceToSqr(wearer) > 64.0) return;
                 ItemStack stack = wearer.getItemBySlot(EquipmentSlot.CHEST);
                 if (WornHookah.isHookahStack(stack)) {
                     WornHookah.tryTakeMouthpiece(player, wearer, stack);

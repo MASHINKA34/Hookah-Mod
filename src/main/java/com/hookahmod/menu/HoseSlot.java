@@ -1,29 +1,30 @@
 package com.hookahmod.menu;
 
-import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.item.HookahHoseItem;
 import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
+import java.util.function.BooleanSupplier;
+
 public class HoseSlot extends Slot {
 
-    private final HookahBlockEntity be;
+    private final BooleanSupplier inUse;
 
-    public HoseSlot(Container container, int slot, int x, int y, HookahBlockEntity be) {
+    public HoseSlot(Container container, int slot, int x, int y, BooleanSupplier inUse) {
         super(container, slot, x, y);
-        this.be = be;
+        this.inUse = inUse;
     }
 
     @Override
     public boolean mayPlace(ItemStack stack) {
-        return stack.getItem() instanceof HookahHoseItem && !be.isInUse();
+        return stack.getItem() instanceof HookahHoseItem && !inUse.getAsBoolean();
     }
 
     @Override
     public boolean mayPickup(Player player) {
-        return !be.isInUse();
+        return !inUse.getAsBoolean();
     }
 
     @Override

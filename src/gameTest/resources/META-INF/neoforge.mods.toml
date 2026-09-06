@@ -1,0 +1,15 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="All Rights Reserved"
+
+[[mods]]
+modId="hookahmod_tests"
+version="1.0.0"
+displayName="Hookah Regression Tests"
+
+[[dependencies.hookahmod_tests]]
+modId="hookahmod"
+type="required"
+versionRange="[1,)"
+ordering="AFTER"
+side="BOTH"

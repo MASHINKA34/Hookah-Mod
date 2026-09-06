@@ -59,7 +59,6 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
 
         if (lit) {
             renderCoal(pose, buffer, light, player);
-            spawnCoalParticles(player, partialTick);
         }
 
         HookahHoseType hoseType = WornHookah.getHoseType(stack);
@@ -194,12 +193,15 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         return new Vec3(x + rightX + fwdX, y, z + rightZ + fwdZ);
     }
 
-    private static void spawnCoalParticles(AbstractClientPlayer player, float partialTick) {
-        if (player.clientLevel.random.nextInt(18) != 0) return;
-        float yaw = (float) Math.toRadians(Mth.lerp(partialTick, player.yBodyRotO, player.yBodyRot));
-        double px = Mth.lerp(partialTick, player.xo, player.getX()) + Math.sin(yaw) * 0.42;
-        double py = Mth.lerp(partialTick, player.yo, player.getY()) + player.getBbHeight() * 0.92;
-        double pz = Mth.lerp(partialTick, player.zo, player.getZ()) - Math.cos(yaw) * 0.42;
+    public static void tickCoalParticles(net.neoforged.neoforge.event.tick.EntityTickEvent.Post event) {
+        if (!(event.getEntity() instanceof AbstractClientPlayer player)) return;
+        ItemStack stack = player.getItemBySlot(EquipmentSlot.CHEST);
+        if (!WornHookah.isHookahStack(stack) || !WornHookah.hasCoal(stack)) return;
+        if (player.clientLevel.random.nextInt(6) != 0) return;
+        float yaw = (float) Math.toRadians(player.yBodyRot);
+        double px = player.getX() + Math.sin(yaw) * 0.42;
+        double py = player.getY() + player.getBbHeight() * 0.92;
+        double pz = player.getZ() - Math.cos(yaw) * 0.42;
         player.clientLevel.addParticle(ParticleTypes.SMALL_FLAME,
                 px + (player.clientLevel.random.nextDouble() - 0.5) * 0.12,
                 py + player.clientLevel.random.nextDouble() * 0.08,

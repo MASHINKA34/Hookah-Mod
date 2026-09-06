@@ -5,15 +5,16 @@ import com.hookahmod.item.WhiteMonsterItem;
 import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.HookahTier;
+import com.hookahmod.item.WornHookah;
+import com.hookahmod.event.ActiveSessions;
 import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.network.HookahSyncPayload;
+import com.hookahmod.network.WornHookahSyncPayload;
 import com.hookahmod.registry.ModBlockEntities;
-import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.item.Item;
+import com.hookahmod.smoking.HookahProgress;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.HolderLookup;
@@ -49,17 +50,13 @@ public class HookahBlockEntity extends BlockEntity {
     public static final int SLOT_WATER = 3;
     public static final int SLOT_COUNT = 4;
 
-    private static final int PUFFS_PER_SOLID = 20;
-    private static final int PUFFS_PER_WATER = 200;
-
     private final NonNullList<ItemStack> items = NonNullList.withSize(SLOT_COUNT, ItemStack.EMPTY);
     private final Container inventory = new HookahContainer(items, this::setChangedAndSync, this);
 
     @Nullable
     private UUID activePlayerUuid;
 
-    private int smokeTimer = 0;
-    private int waterTimer = 0;
+    private HookahProgress progress = HookahProgress.EMPTY;
 
     public HookahBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.HOOKAH.get(), pos, state);
@@ -69,11 +66,13 @@ public class HookahBlockEntity extends BlockEntity {
 
     public void saveItemsToStack(ItemStack stack) {
         stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+        progress.write(stack);
     }
 
     public void loadItemsFromStack(ItemStack stack) {
         ItemContainerContents contents = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
         contents.copyInto(items);
+        progress = HookahProgress.read(stack);
         setChangedAndSync();
     }
 
@@ -109,10 +108,13 @@ public class HookahBlockEntity extends BlockEntity {
     }
 
     public boolean tryTakeMouthpiece(ServerPlayer player) {
+        if (player.level() != level || !player.isAlive() || player.isSpectator()) return false;
+        if (activePlayerUuid != null && !ActiveSessions.server().owns(activePlayerUuid, this)) releaseMouthpiece();
         if (!getHoseType().isPresent()) {
             player.displayClientMessage(Component.translatable("message.hookahmod.install_hose"), true);
             return false;
         }
+        if (!isPlayerInRange(player)) return false;
         if (activePlayerUuid != null && !activePlayerUuid.equals(player.getUUID())) {
             player.displayClientMessage(Component.translatable("message.hookahmod.busy"), true);
             return false;
@@ -121,35 +123,29 @@ public class HookahBlockEntity extends BlockEntity {
             releaseMouthpiece();
             return true;
         }
-        if (!playerHasMouthpiece(player)) {
+        if (!WornHookah.playerHasMouthpiece(player)) {
             player.displayClientMessage(Component.translatable("message.hookahmod.no_mouthpiece"), true);
             return false;
         }
+        ActiveSessions.server().beginBlock(player, this);
         activePlayerUuid = player.getUUID();
-        if (level != null) {
-            com.hookahmod.event.ActiveSessions.of(level).register(activePlayerUuid, level.dimension(), worldPosition);
-        }
         setChangedAndSync();
         return true;
     }
 
-    private static boolean playerHasMouthpiece(Player player) {
-        Item mp = ModItems.HOOKAH_MOUTHPIECE.get();
-        if (player.getMainHandItem().is(mp)) return true;
-        if (player.getOffhandItem().is(mp)) return true;
-        for (ItemStack s : player.getInventory().items) {
-            if (s.is(mp)) return true;
-        }
-        return false;
+    public boolean isPlayerInRange(Player player) {
+        int length = getHoseType().getMaxLength();
+        return player.level() == level && length > 0
+                && player.distanceToSqr(Vec3.atCenterOf(worldPosition)) <= (double) length * length;
     }
 
     public void releaseMouthpiece() {
         if (activePlayerUuid == null) return;
-        if (level != null) com.hookahmod.event.ActiveSessions.of(level).unregister(activePlayerUuid);
+        if (level instanceof ServerLevel server && ActiveSessions.server().unregister(activePlayerUuid, this)) {
+            ServerPlayer player = server.getServer().getPlayerList().getPlayer(activePlayerUuid);
+            if (player != null) PacketDistributor.sendToPlayer(player, WornHookahSyncPayload.release());
+        }
         activePlayerUuid = null;
-        // smokeTimer/waterTimer intentionally NOT reset: bowl depletion is
-        // tied to the hookah and persists across sessions, so partial puffs
-        // can't be reset by un-claiming or re-seating the consumables.
         setChangedAndSync();
     }
 
@@ -191,6 +187,7 @@ public class HookahBlockEntity extends BlockEntity {
 
     public void applyExhale(ServerPlayer player, float charge) {
         if (level == null || !(level instanceof ServerLevel server)) return;
+        if (!ActiveSessions.server().owns(player.getUUID(), this) || !isPlayerInRange(player) || !hasAllConsumables()) return;
 
         ItemStack tobaccoStack = items.get(SLOT_TOBACCO);
         Vector3f smokeColor = tobaccoStack.getItem() instanceof AbstractTobaccoItem tobaccoForSmoke
@@ -224,30 +221,11 @@ public class HookahBlockEntity extends BlockEntity {
             return;
         }
 
-        boolean changed = false;
-        smokeTimer++;
-        if (smokeTimer >= puffsPerSolid(tobaccoStack)) {
-            smokeTimer = 0;
-            items.get(SLOT_TOBACCO).shrink(1);
-            items.get(SLOT_COAL).shrink(1);
-            changed = true;
-        }
-        waterTimer++;
-        if (waterTimer >= PUFFS_PER_WATER) {
-            waterTimer = 0;
-            ItemStack water = items.get(SLOT_WATER);
-            boolean whiteMonster = water.is(ModItems.WHITE_MONSTER.get());
-            water.shrink(1);
-            if (whiteMonster) WhiteMonsterItem.giveEmptyCan(player);
-            changed = true;
-        }
-        if (changed) setChangedAndSync();
-    }
-
-    private static int puffsPerSolid(ItemStack tobaccoStack) {
-        return tobaccoStack.getItem() instanceof AbstractTobaccoItem tobacco && tobacco.category() == com.hookahmod.item.TobaccoCategory.COMBAT
-                ? 10
-                : PUFFS_PER_SOLID;
+        HookahProgress.Consumption consumed = progress.consume(items);
+        progress = consumed.progress();
+        if (consumed.emptyCan()) WhiteMonsterItem.giveEmptyCan(player);
+        if (consumed.itemsChanged()) setChangedAndSync();
+        else setChanged();
     }
 
     public void clientTick(Level level, BlockPos pos, BlockState state) {
@@ -290,18 +268,16 @@ public class HookahBlockEntity extends BlockEntity {
         super.loadAdditional(tag, lookup);
         items.clear();
         ContainerHelper.loadAllItems(tag, items, lookup);
-        activePlayerUuid = tag.hasUUID("ActivePlayer") ? tag.getUUID("ActivePlayer") : null;
-        smokeTimer = tag.getInt("SmokeTimer");
-        waterTimer = tag.getInt("WaterTimer");
+        activePlayerUuid = null;
+        progress = new HookahProgress(tag.getInt("SmokeTimer"), tag.getInt("WaterTimer"));
     }
 
     @Override
     protected void saveAdditional(CompoundTag tag, HolderLookup.Provider lookup) {
         super.saveAdditional(tag, lookup);
         ContainerHelper.saveAllItems(tag, items, lookup);
-        if (activePlayerUuid != null) tag.putUUID("ActivePlayer", activePlayerUuid);
-        tag.putInt("SmokeTimer", smokeTimer);
-        tag.putInt("WaterTimer", waterTimer);
+        tag.putInt("SmokeTimer", progress.smokePuffs());
+        tag.putInt("WaterTimer", progress.waterPuffs());
     }
 
     @Override

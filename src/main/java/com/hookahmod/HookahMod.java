@@ -12,6 +12,7 @@ import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModLootModifiers;
 import com.hookahmod.registry.ModMenuTypes;
 import com.hookahmod.registry.ModParticles;
+import com.hookahmod.registry.ModRecipeSerializers;
 import com.hookahmod.registry.ModSounds;
 import com.hookahmod.smoking.ModAttachments;
 import net.minecraft.resources.ResourceLocation;
@@ -40,6 +41,7 @@ public final class HookahMod {
         ModAttachments.ATTACHMENTS.register(modBus);
         ModMobEffects.MOB_EFFECTS.register(modBus);
         ModLootModifiers.LOOT_MODIFIERS.register(modBus);
+        ModRecipeSerializers.SERIALIZERS.register(modBus);
 
         modBus.addListener(NetworkHandler::register);
         modBus.addListener(ModCapabilities::register);

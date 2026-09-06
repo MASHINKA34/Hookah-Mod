@@ -1,10 +1,12 @@
 package com.hookahmod.client.trip;
 
 import com.hookahmod.HookahMod;
+import com.hookahmod.effect.ModMobEffects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PostChain;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffectInstance;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 
@@ -32,31 +34,35 @@ public final class HashishTripManager {
         totalDurationTicks = addTicks;
         ageTicks = 0;
         loadFailed = false;
-        intensity = Mth.clamp(Math.max(intensity, requestedIntensity), 0.2f, 1.75f);
+        intensity = Mth.clamp(requestedIntensity, 0.2f, 1.75f);
         ensurePostEffect();
         updateShaderUniforms(0.0f);
     }
 
     public static void tick(ClientTickEvent.Post event) {
-        tickCount++;
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) {
+        if (mc.player == null || mc.level == null || !mc.player.isAlive()) {
             clear();
             HashishTripSoundController.stop(mc);
             return;
         }
 
-        if (remainingTicks > 0) {
-            remainingTicks--;
-            ageTicks++;
-            ensurePostEffect();
-            updateShaderUniforms(0.0f);
-            HashishTripSoundController.tick(mc, mc.player);
+        if (mc.isPaused()) return;
+        tickCount++;
+        MobEffectInstance effect = mc.player.getEffect(ModMobEffects.HASHISH_TRIP);
+        if (effect == null) {
+            clear();
+            HashishTripSoundController.stop(mc);
             return;
         }
-
-        clear();
-        HashishTripSoundController.stop(mc);
+        int duration = effect.isInfiniteDuration() ? ADD_DURATION_TICKS : effect.getDuration();
+        if (remainingTicks <= 0) start(duration, 1.0f);
+        remainingTicks = duration;
+        totalDurationTicks = Math.max(totalDurationTicks, duration);
+        ageTicks++;
+        ensurePostEffect();
+        updateShaderUniforms(0.0f);
+        HashishTripSoundController.tick(mc, mc.player);
     }
 
     public static boolean isActive() {

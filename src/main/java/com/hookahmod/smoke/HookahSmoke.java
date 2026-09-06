@@ -94,12 +94,18 @@ public final class HookahSmoke {
         tickRoomSmoke(server);
     }
 
+    public static void clear() {
+        LINGERING_SMOKE.clear();
+        ROOM_SMOKE.clear();
+        roomPhaseCounter = 0;
+    }
+
     private static void tickLingeringSmoke(MinecraftServer server) {
         Iterator<LingeringSmoke> iterator = LINGERING_SMOKE.iterator();
         while (iterator.hasNext()) {
             LingeringSmoke smoke = iterator.next();
             ServerLevel level = server.getLevel(smoke.dimension);
-            if (level == null || smoke.remainingTicks-- <= 0) {
+            if (level == null || !isChunkLoaded(level, BlockPos.containing(smoke.position)) || smoke.remainingTicks-- <= 0) {
                 iterator.remove();
                 continue;
             }
@@ -115,6 +121,7 @@ public final class HookahSmoke {
     }
 
     private static void accumulateRoomSmoke(ServerLevel level, BlockPos origin, float strength, @Nullable Vector3f color) {
+        if (!isChunkLoaded(level, origin)) return;
         // Fast path: the puff happened inside a room we are already tracking, so
         // reuse it instead of running another flood fill. The periodic recheck in
         // tickRoomSmoke still re-validates the room, so staleness stays bounded.
@@ -166,7 +173,7 @@ public final class HookahSmoke {
         while (iterator.hasNext()) {
             RoomSmoke smoke = iterator.next().getValue();
             ServerLevel level = server.getLevel(smoke.key.dimension);
-            if (level == null) {
+            if (level == null || !isChunkLoaded(level, smoke.origin)) {
                 iterator.remove();
                 continue;
             }
@@ -219,6 +226,7 @@ public final class HookahSmoke {
     }
 
     private static RoomProbe findEnclosedRoom(ServerLevel level, BlockPos origin) {
+        if (level.isOutsideBuildHeight(origin) || !isChunkLoaded(level, origin)) return null;
         BlockPos start = findSmokeStart(level, origin);
         if (start == null) return null;
         if (hasVerticalLeak(level, start)) return null;
@@ -284,7 +292,8 @@ public final class HookahSmoke {
     }
 
     private static boolean isOutsideProbeBounds(ServerLevel level, BlockPos origin, BlockPos pos) {
-        return pos.getY() < level.getMinBuildHeight()
+        return !isChunkLoaded(level, pos)
+                || pos.getY() < level.getMinBuildHeight()
                 || pos.getY() >= level.getMaxBuildHeight()
                 || Math.abs(pos.getX() - origin.getX()) > MAX_ROOM_DISTANCE
                 || Math.abs(pos.getY() - origin.getY()) > MAX_ROOM_DISTANCE
@@ -292,12 +301,19 @@ public final class HookahSmoke {
     }
 
     private static boolean canSmokeOccupy(ServerLevel level, BlockPos pos) {
-        BlockState state = level.getBlockState(pos);
+        if (level.isOutsideBuildHeight(pos)) return false;
+        var chunk = level.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4);
+        if (chunk == null) return false;
+        BlockState state = chunk.getBlockState(pos);
         if (!state.getFluidState().isEmpty()) return false;
         if (state.isAir() || state.getCollisionShape(level, pos).isEmpty()) return true;
         if (state.getBlock() instanceof DoorBlock && state.getValue(DoorBlock.OPEN)) return true;
         if (state.getBlock() instanceof TrapDoorBlock && state.getValue(TrapDoorBlock.OPEN)) return true;
         return state.getBlock() instanceof FenceGateBlock && state.getValue(FenceGateBlock.OPEN);
+    }
+
+    private static boolean isChunkLoaded(ServerLevel level, BlockPos pos) {
+        return level.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4) != null;
     }
 
     private static void sendSmoke(ServerLevel level, double x, double y, double z,

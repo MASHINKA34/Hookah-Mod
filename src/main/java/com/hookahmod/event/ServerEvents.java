@@ -233,13 +233,23 @@ public final class ServerEvents {
 
     @SubscribeEvent
     public static void onEntityInteract(PlayerInteractEvent.EntityInteract event) {
-        if (!(event.getEntity() instanceof ServerPlayer player)) return;
-        if (!(event.getTarget() instanceof ServerPlayer wearer)) return;
+        if (event.getHand() != InteractionHand.MAIN_HAND) return;
+        Player player = event.getEntity();
+        if (!(event.getTarget() instanceof Player wearer)) return;
 
         ItemStack stack = wearer.getItemBySlot(EquipmentSlot.CHEST);
         if (!WornHookah.isHookahStack(stack)) return;
 
-        if (WornHookah.tryTakeMouthpiece(player, wearer, stack)) {
+        if (player.level().isClientSide) {
+            if (WornHookah.playerHasMouthpiece(player) || player.getUUID().equals(WornHookah.getActivePlayerUuid(stack))) {
+                event.setCancellationResult(InteractionResult.SUCCESS);
+                event.setCanceled(true);
+            }
+            return;
+        }
+
+        if (player instanceof ServerPlayer serverPlayer && wearer instanceof ServerPlayer serverWearer
+                && WornHookah.tryTakeMouthpiece(serverPlayer, serverWearer, stack)) {
             event.setCancellationResult(InteractionResult.CONSUME);
             event.setCanceled(true);
         }
@@ -253,6 +263,7 @@ public final class ServerEvents {
     @SubscribeEvent
     public static void onServerStopping(ServerStoppingEvent event) {
         ActiveSessions.server().clear();
+        HookahSmoke.clear();
         for (UUID uuid : java.util.List.copyOf(WORN_LIGHTS.keySet())) {
             removeWornHookahLight(event.getServer(), uuid);
         }

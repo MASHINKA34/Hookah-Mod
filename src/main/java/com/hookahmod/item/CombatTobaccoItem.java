@@ -1,6 +1,7 @@
 package com.hookahmod.item;
 
 import com.hookahmod.combat.SmokeCone;
+import com.hookahmod.combat.SmokeBlockChanges;
 import com.hookahmod.registry.ModParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -19,6 +20,7 @@ import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.TntBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -101,16 +103,21 @@ public class CombatTobaccoItem extends AbstractTobaccoItem {
 
         BlockPos hitPos = hit.getBlockPos();
         Direction face = hit.getDirection();
+        if (!SmokeBlockChanges.canChange(level, smoker, hitPos)) return;
         BlockState hitState = level.getBlockState(hitPos);
-        if (hitState.isFlammable(level, hitPos, face)) {
-            hitState.onCaughtFire(level, hitPos, face, smoker);
+        if (hitState.getBlock() instanceof TntBlock) {
+            if (SmokeBlockChanges.remove(level, smoker, hitPos)) {
+                hitState.onCaughtFire(level, hitPos, face, smoker);
+            }
+            return;
         }
 
         BlockPos firePos = hitPos.relative(face);
+        if (!SmokeBlockChanges.canChange(level, smoker, firePos)) return;
         if (!level.getBlockState(firePos).canBeReplaced()) return;
         BlockState fireState = BaseFireBlock.getState(level, firePos);
         if (fireState.canSurvive(level, firePos)) {
-            level.setBlockAndUpdate(firePos, fireState);
+            SmokeBlockChanges.place(level, smoker, firePos, fireState, face);
         }
     }
 
@@ -125,9 +132,10 @@ public class CombatTobaccoItem extends AbstractTobaccoItem {
         int radius = combatMult >= 1.5f ? 2 : 1;
         BlockPos.betweenClosed(center.offset(-radius, 0, -radius), center.offset(radius, 0, radius)).forEach(pos -> {
             if (Math.abs(pos.getX() - center.getX()) + Math.abs(pos.getZ() - center.getZ()) > radius + 1) return;
+            if (!SmokeBlockChanges.canChange(level, smoker, pos)) return;
             if (!level.getFluidState(pos).is(FluidTags.WATER) || !level.getFluidState(pos).isSource()) return;
             if (!level.getBlockState(pos).is(Blocks.WATER)) return;
-            level.setBlockAndUpdate(pos.immutable(), Blocks.ICE.defaultBlockState());
+            SmokeBlockChanges.place(level, smoker, pos.immutable(), Blocks.ICE.defaultBlockState(), hit.getDirection());
         });
     }
 

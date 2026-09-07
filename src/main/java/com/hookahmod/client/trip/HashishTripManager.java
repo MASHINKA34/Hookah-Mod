@@ -1,6 +1,7 @@
 package com.hookahmod.client.trip;
 
 import com.hookahmod.HookahMod;
+import com.hookahmod.config.HookahClientConfig;
 import com.hookahmod.effect.ModMobEffects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.PostChain;
@@ -75,7 +76,7 @@ public final class HashishTripManager {
     }
 
     public static void computeFov(ViewportEvent.ComputeFov event) {
-        float strength = visualStrength(event.getPartialTick());
+        float strength = visualStrength(event.getPartialTick()) * HookahClientConfig.cameraMotionScale();
         if (strength <= 0.0f) return;
 
         double phase = (tickCount + event.getPartialTick()) * 0.16;
@@ -83,7 +84,7 @@ public final class HashishTripManager {
     }
 
     public static void cameraAngles(ViewportEvent.ComputeCameraAngles event) {
-        float strength = visualStrength(event.getPartialTick());
+        float strength = visualStrength(event.getPartialTick()) * HookahClientConfig.cameraMotionScale();
         if (strength <= 0.0f) return;
 
         float phase = (float) (tickCount + event.getPartialTick());
@@ -93,7 +94,7 @@ public final class HashishTripManager {
     }
 
     private static void ensurePostEffect() {
-        if (loadFailed || remainingTicks <= 0) return;
+        if (loadFailed || remainingTicks <= 0 || !HookahClientConfig.spiralShaderEnabled()) return;
 
         Minecraft mc = Minecraft.getInstance();
         PostChain current = mc.gameRenderer.currentEffect();

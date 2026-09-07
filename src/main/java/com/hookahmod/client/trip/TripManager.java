@@ -2,6 +2,7 @@ package com.hookahmod.client.trip;
 
 import com.hookahmod.HookahMod;
 import com.hookahmod.client.ClientIntoxication;
+import com.hookahmod.config.HookahClientConfig;
 import com.hookahmod.smoking.IntoxicationBand;
 import com.hookahmod.smoking.IntoxicationState;
 import com.hookahmod.trip.TripVisionType;
@@ -51,7 +52,7 @@ public final class TripManager {
 
     public static void trigger(TripVisionType type, long seed) {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) return;
+        if (mc.player == null || mc.level == null || !HookahClientConfig.visionsEnabled()) return;
         if (type == TripVisionType.SKY_SHIFT) {
             skyShiftTicks = Math.max(skyShiftTicks, 220);
             return;
@@ -114,6 +115,7 @@ public final class TripManager {
 
     public static void render(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_ENTITIES) return;
+        if (!HookahClientConfig.visionsEnabled()) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null || VISIONS.isEmpty()) return;
 
@@ -141,7 +143,7 @@ public final class TripManager {
     }
 
     public static void renderScreamer(RenderGuiEvent.Post event) {
-        if (runnerScreamerTicks <= 0) return;
+        if (runnerScreamerTicks <= 0 || !HookahClientConfig.screamerEnabled()) return;
         if (Minecraft.getInstance().player == null) {
             runnerScreamerTicks = 0;
             return;
@@ -159,14 +161,14 @@ public final class TripManager {
     }
 
     public static void computeFov(ViewportEvent.ComputeFov event) {
-        float strength = visualStrength();
+        float strength = motionStrength();
         if (strength <= 0.0f) return;
         double wave = Math.sin((tickCount + event.getPartialTick()) * 0.11) * 2.3 * strength;
         event.setFOV(event.getFOV() + wave);
     }
 
     public static void cameraAngles(ViewportEvent.ComputeCameraAngles event) {
-        float strength = visualStrength();
+        float strength = motionStrength();
         if (strength <= 0.0f) return;
         float roll = event.getRoll() + (float) Math.sin((tickCount + event.getPartialTick()) * 0.09) * 2.8f * strength;
         event.setRoll(roll);
@@ -217,8 +219,12 @@ public final class TripManager {
     }
 
     private static float visualStrength(float intoxication) {
-        if (intoxication < 100.0f) return 0.0f;
+        if (intoxication < 100.0f || !HookahClientConfig.tripVisuals) return 0.0f;
         return Mth.clamp((intoxication - 90.0f) / 90.0f, 0.22f, intoxication >= 150.0f ? 1.0f : 0.72f);
+    }
+
+    private static float motionStrength() {
+        return visualStrength() * HookahClientConfig.cameraMotionScale();
     }
 
     private static Vec3 horizontal(Vec3 vec) {

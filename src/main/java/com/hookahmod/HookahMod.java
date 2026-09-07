@@ -1,5 +1,6 @@
 package com.hookahmod;
 
+import com.hookahmod.config.HookahClientConfig;
 import com.hookahmod.config.HookahConfig;
 import com.hookahmod.effect.ModMobEffects;
 import com.hookahmod.event.ServerEvents;
@@ -50,8 +51,11 @@ public final class HookahMod {
         modBus.addListener(ModCapabilities::register);
         modBus.addListener(HookahConfig::onLoad);
         modBus.addListener(HookahConfig::onReload);
+        modBus.addListener(HookahClientConfig::onLoad);
+        modBus.addListener(HookahClientConfig::onReload);
 
         container.registerConfig(ModConfig.Type.SERVER, HookahConfig.SPEC);
+        container.registerConfig(ModConfig.Type.CLIENT, HookahClientConfig.SPEC);
 
         NeoForge.EVENT_BUS.register(ServerEvents.class);
 

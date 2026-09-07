@@ -1,6 +1,7 @@
 package com.hookahmod.block;
 
 import com.hookahmod.item.HookahHoseType;
+import com.hookahmod.menu.HookahMenu;
 import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.item.HookahMouthpieceItem;
 import com.hookahmod.item.HookahTier;
@@ -165,31 +166,30 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
             return ItemInteractionResult.CONSUME;
         }
         if (stack.getItem() instanceof HookahMouthpieceItem mouthpiece) {
-            if (level.isClientSide) {
-                mouthpiece.startSmoking(level, player, hand);
-                return ItemInteractionResult.CONSUME;
-            }
             if (!be.getHoseType().isPresent()) {
-                player.displayClientMessage(Component.translatable("message.hookahmod.install_hose"), true);
-                return ItemInteractionResult.CONSUME;
+                return refuse(level, player, "message.hookahmod.install_hose");
             }
             if (be.getActivePlayerUuid() == null) {
-                player.displayClientMessage(Component.translatable("message.hookahmod.claim_first"), true);
-                return ItemInteractionResult.CONSUME;
+                return refuse(level, player, "message.hookahmod.claim_first");
             }
             if (!player.getUUID().equals(be.getActivePlayerUuid())) {
-                player.displayClientMessage(Component.translatable("message.hookahmod.busy"), true);
-                return ItemInteractionResult.CONSUME;
+                return refuse(level, player, "message.hookahmod.busy");
             }
             if (!be.hasAllConsumables()) {
-                player.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
-                return ItemInteractionResult.CONSUME;
+                return refuse(level, player, "gui.hookahmod.fill_slots");
             }
             if (!be.isPlayerInRange(player)) return ItemInteractionResult.FAIL;
             mouthpiece.startSmoking(level, player, hand);
             return ItemInteractionResult.CONSUME;
         }
         return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+    }
+
+    private static ItemInteractionResult refuse(Level level, Player player, String messageKey) {
+        if (!level.isClientSide) {
+            player.displayClientMessage(Component.translatable(messageKey), true);
+        }
+        return ItemInteractionResult.CONSUME;
     }
 
     @Override
@@ -298,7 +298,7 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
             @Nullable
             @Override
             public AbstractContainerMenu createMenu(int id, Inventory inv, Player player) {
-                return new com.hookahmod.menu.HookahMenu(id, inv, pos);
+                return new HookahMenu(id, inv, pos);
             }
         };
     }

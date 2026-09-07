@@ -26,6 +26,12 @@ public enum HookahHoseType {
         return this != NONE;
     }
 
+    public static double maxRangeSqr() {
+        int longest = 0;
+        for (HookahHoseType type : values()) longest = Math.max(longest, type.maxLength);
+        return (double) longest * longest;
+    }
+
     public static HookahHoseType byId(int id) {
         HookahHoseType[] values = values();
         if (id < 0 || id >= values.length) return NONE;

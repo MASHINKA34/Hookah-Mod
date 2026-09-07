@@ -357,8 +357,8 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
     }
 
     @Override
-    public boolean shouldRenderOffScreen(HookahBlockEntity be) { return true; }
+    public boolean shouldRenderOffScreen(HookahBlockEntity be) { return false; }
 
     @Override
-    public int getViewDistance() { return 64; }
+    public int getViewDistance() { return 32; }
 }

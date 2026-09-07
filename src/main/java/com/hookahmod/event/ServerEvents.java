@@ -54,6 +54,7 @@ public final class ServerEvents {
 
     private static final Map<UUID, GlobalPos> WORN_LIGHTS = new ConcurrentHashMap<>();
     private static final float CHICKEN_POOP_CHANCE = 0.35F;
+    private static final int WORN_LIGHT_INTERVAL = 4;
     private static final ResourceLocation PALPALYCH_LOCK_ID = HookahMod.id("palpalych_trip_lock");
 
     private ServerEvents() {}
@@ -202,6 +203,7 @@ public final class ServerEvents {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (event.getHand() != InteractionHand.MAIN_HAND) return;
         if (!player.isShiftKeyDown()) return;
+        if (!player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty()) return;
 
         ItemStack stack = player.getItemBySlot(EquipmentSlot.CHEST);
         if (!WornHookah.isHookahStack(stack)) return;
@@ -269,6 +271,7 @@ public final class ServerEvents {
     }
 
     private static void tickWornHookahLights(MinecraftServer server) {
+        if (server.getTickCount() % WORN_LIGHT_INTERVAL != 0) return;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             if (HookahLightBlock.hasLightSource(player)) {
                 updateWornHookahLight(player);

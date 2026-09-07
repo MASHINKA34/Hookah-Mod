@@ -13,17 +13,29 @@ public final class VideoTripManager {
     private static final float FPS = 15.0f;
     private static final int FRAME_W = 160;
     private static final int FRAME_H = 160;
+    private static final int SHEET_COLUMNS = 8;
+    private static final int SHEET_ROWS = 8;
+    private static final int FRAMES_PER_SHEET = SHEET_COLUMNS * SHEET_ROWS;
+    private static final int SHEET_W = FRAME_W * SHEET_COLUMNS;
+    private static final int SHEET_H = FRAME_H * SHEET_ROWS;
+    private static final int SHEET_COUNT = (FRAME_COUNT + FRAMES_PER_SHEET - 1) / FRAMES_PER_SHEET;
+    private static final ResourceLocation[] SHEETS = new ResourceLocation[SHEET_COUNT];
+
+    static {
+        for (int index = 0; index < SHEET_COUNT; index++) {
+            SHEETS[index] = HookahMod.id("textures/gui/palpalych_trip/sheet_" + index + ".png");
+        }
+    }
 
     private static boolean active;
     private static int ageTicks;
-    private static int lastFrame = -1;
 
     private VideoTripManager() {}
 
     public static void start() {
         active = true;
         ageTicks = 0;
-        lastFrame = -1;
+        preload();
     }
 
     public static boolean isActive() {
@@ -47,32 +59,43 @@ public final class VideoTripManager {
 
     public static void render(RenderGuiEvent.Post event) {
         if (!active) return;
-        int idx = currentFrame();
-        if (idx < 0 || idx >= FRAME_COUNT) return;
+        int frame = currentFrame();
+        if (frame < 0 || frame >= FRAME_COUNT) return;
 
         Minecraft mc = Minecraft.getInstance();
-        GuiGraphics g = event.getGuiGraphics();
-        int sw = mc.getWindow().getGuiScaledWidth();
-        int sh = mc.getWindow().getGuiScaledHeight();
-        g.blit(frameId(idx), 0, 0, sw, sh, 0.0F, 0.0F, FRAME_W, FRAME_H, FRAME_W, FRAME_H);
-        if (lastFrame >= 0 && lastFrame != idx) {
-            mc.getTextureManager().release(frameId(lastFrame));
-        }
-        lastFrame = idx;
+        GuiGraphics graphics = event.getGuiGraphics();
+        int screenWidth = mc.getWindow().getGuiScaledWidth();
+        int screenHeight = mc.getWindow().getGuiScaledHeight();
+        int local = frame % FRAMES_PER_SHEET;
+        graphics.blit(
+                SHEETS[frame / FRAMES_PER_SHEET],
+                0, 0,
+                screenWidth, screenHeight,
+                (local % SHEET_COLUMNS) * FRAME_W,
+                (float) (local / SHEET_COLUMNS) * FRAME_H,
+                FRAME_W, FRAME_H,
+                SHEET_W, SHEET_H
+        );
     }
 
     public static void stop() {
         if (!active) return;
         active = false;
-        lastFrame = -1;
-        PalPalychSoundController.stop(Minecraft.getInstance());
+        Minecraft mc = Minecraft.getInstance();
+        for (ResourceLocation sheet : SHEETS) {
+            mc.getTextureManager().release(sheet);
+        }
+        PalPalychSoundController.stop(mc);
+    }
+
+    private static void preload() {
+        Minecraft mc = Minecraft.getInstance();
+        for (ResourceLocation sheet : SHEETS) {
+            mc.getTextureManager().getTexture(sheet);
+        }
     }
 
     private static int currentFrame() {
         return (int) Math.floor(ageTicks / 20.0f * FPS);
-    }
-
-    private static ResourceLocation frameId(int idx) {
-        return HookahMod.id(String.format("textures/gui/palpalych_trip/frame_%04d.png", idx + 1));
     }
 }

@@ -12,7 +12,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.network.PacketDistributor;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -35,7 +34,7 @@ public final class ActiveSessions {
 
     private final Map<UUID, GlobalPos> sessions = new ConcurrentHashMap<>();
     private final Map<UUID, UUID> wornSessions = new ConcurrentHashMap<>();
-    private final Map<UUID, Session> owners = new HashMap<>();
+    private final Map<UUID, Session> owners = new ConcurrentHashMap<>();
 
     private ActiveSessions() {}
 

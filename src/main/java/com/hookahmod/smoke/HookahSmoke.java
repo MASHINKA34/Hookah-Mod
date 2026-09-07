@@ -36,10 +36,10 @@ public final class HookahSmoke {
     private static final int OPEN_LINGER_TICKS = 45;
     private static final int MAX_ROOM_DISTANCE = 64;
     private static final int MAX_ROOM_AIR_BLOCKS = 8192;
-    private static final int MAX_ROOM_CLOUDS = 128;
+    private static final int MAX_ROOM_CLOUDS = 32;
     private static final int ROOM_MIN_PUFFS = 5;
     private static final int ROOM_LINGER_TICKS = 20 * 30;
-    private static final int ROOM_RECHECK_TICKS = 20;
+    private static final int ROOM_RECHECK_TICKS = 60;
     private static final float ROOM_MAX_DENSITY = 14.0f;
 
     private static final List<LingeringSmoke> LINGERING_SMOKE = new ArrayList<>();
@@ -83,7 +83,7 @@ public final class HookahSmoke {
         float spread = 0.10f + strength * 0.30f;
         float speed = 0.018f + strength * 0.055f;
         sendSmoke(level, mouthPoint.x, mouthPoint.y, mouthPoint.z,
-                spread, 0.07f, spread, speed, mouthPuffs, color);
+                spread, 0.07f, spread, speed, mouthPuffs, color, player);
 
         LINGERING_SMOKE.add(new LingeringSmoke(level.dimension(), mouthPoint, look, strength, OPEN_LINGER_TICKS, color));
         accumulateRoomSmoke(level, BlockPos.containing(mouthPoint.x, mouthPoint.y, mouthPoint.z), strength, color);
@@ -136,8 +136,9 @@ public final class HookahSmoke {
         if (probe == null) return;
         if (!ROOM_SMOKE.containsKey(probe.key) && ROOM_SMOKE.size() >= MAX_ROOM_CLOUDS) return;
 
-        RoomSmoke smoke = ROOM_SMOKE.computeIfAbsent(probe.key, key -> new RoomSmoke(key, probe.airBlocks));
+        RoomSmoke smoke = ROOM_SMOKE.computeIfAbsent(probe.key, key -> new RoomSmoke(key, probe.airBlocks, probe.airLookup));
         smoke.airBlocks = probe.airBlocks;
+        smoke.airLookup = probe.airLookup;
         smoke.origin = probe.start;
         applyPuffToRoom(level, smoke, strength, color);
     }
@@ -146,13 +147,12 @@ public final class HookahSmoke {
         for (RoomSmoke smoke : ROOM_SMOKE.values()) {
             RoomKey k = smoke.key;
             if (!k.dimension.equals(dimension)) continue;
-            // Cheap bounding-box reject before the (rarely reached) list scan.
             if (pos.getX() < k.min.getX() || pos.getX() > k.max.getX()
                     || pos.getY() < k.min.getY() || pos.getY() > k.max.getY()
                     || pos.getZ() < k.min.getZ() || pos.getZ() > k.max.getZ()) {
                 continue;
             }
-            if (smoke.airBlocks.contains(pos)) return smoke;
+            if (smoke.airLookup.contains(pos)) return smoke;
         }
         return null;
     }
@@ -205,6 +205,7 @@ public final class HookahSmoke {
         if (probe == null || !probe.key.equals(smoke.key)) return false;
 
         smoke.airBlocks = probe.airBlocks;
+        smoke.airLookup = probe.airLookup;
         smoke.origin = probe.start;
         return true;
     }
@@ -236,6 +237,7 @@ public final class HookahSmoke {
         List<BlockPos> airBlocks = new ArrayList<>();
         BlockPos min = start;
         BlockPos max = start;
+        BlockPos anchor = start;
 
         queue.add(start);
         visited.add(start);
@@ -243,6 +245,7 @@ public final class HookahSmoke {
         while (!queue.isEmpty()) {
             BlockPos current = queue.removeFirst();
             airBlocks.add(current);
+            if (current.asLong() < anchor.asLong()) anchor = current;
 
             min = new BlockPos(
                     Math.min(min.getX(), current.getX()),
@@ -263,8 +266,8 @@ public final class HookahSmoke {
             }
         }
 
-        RoomKey key = new RoomKey(level.dimension(), min.immutable(), max.immutable());
-        return new RoomProbe(key, airBlocks, start);
+        RoomKey key = new RoomKey(level.dimension(), min.immutable(), max.immutable(), anchor.immutable());
+        return new RoomProbe(key, airBlocks, visited, start);
     }
 
     private static BlockPos findSmokeStart(ServerLevel level, BlockPos origin) {
@@ -317,13 +320,14 @@ public final class HookahSmoke {
     }
 
     private static void sendSmoke(ServerLevel level, double x, double y, double z,
-                                  float xSpread, float ySpread, float zSpread, float speed, int count) {
-        sendSmoke(level, x, y, z, xSpread, ySpread, zSpread, speed, count, null);
+                                  float xSpread, float ySpread, float zSpread, float speed, int count,
+                                  @Nullable Vector3f color) {
+        sendSmoke(level, x, y, z, xSpread, ySpread, zSpread, speed, count, color, null);
     }
 
     private static void sendSmoke(ServerLevel level, double x, double y, double z,
                                   float xSpread, float ySpread, float zSpread, float speed, int count,
-                                  @Nullable Vector3f color) {
+                                  @Nullable Vector3f color, @Nullable ServerPlayer except) {
         ParticleOptions particle = color == null
                 ? ParticleTypes.CAMPFIRE_COSY_SMOKE
                 : ColorParticleOption.create(ModParticles.COLORED_HOOKAH_SMOKE.get(), color.x(), color.y(), color.z());
@@ -331,6 +335,7 @@ public final class HookahSmoke {
                 particle, true,
                 x, y, z, xSpread, ySpread, zSpread, speed, count);
         for (ServerPlayer player : level.players()) {
+            if (player == except) continue;
             if (player.distanceToSqr(x, y, z) <= PARTICLE_RANGE * PARTICLE_RANGE) {
                 player.connection.send(packet);
             }
@@ -362,15 +367,16 @@ public final class HookahSmoke {
         }
     }
 
-    private record RoomKey(ResourceKey<Level> dimension, BlockPos min, BlockPos max) {}
+    private record RoomKey(ResourceKey<Level> dimension, BlockPos min, BlockPos max, BlockPos anchor) {}
 
-    private record RoomProbe(RoomKey key, List<BlockPos> airBlocks, BlockPos start) {}
+    private record RoomProbe(RoomKey key, List<BlockPos> airBlocks, Set<BlockPos> airLookup, BlockPos start) {}
 
     private static final class RoomSmoke {
         private final RoomKey key;
         private final int phase;
         private BlockPos origin;
         private List<BlockPos> airBlocks;
+        private Set<BlockPos> airLookup;
         private float density;
         @Nullable
         private Vector3f color;
@@ -379,9 +385,10 @@ public final class HookahSmoke {
         private int ticks;
         private int age;
 
-        private RoomSmoke(RoomKey key, List<BlockPos> airBlocks) {
+        private RoomSmoke(RoomKey key, List<BlockPos> airBlocks, Set<BlockPos> airLookup) {
             this.key = key;
             this.airBlocks = airBlocks;
+            this.airLookup = airLookup;
             this.origin = key.min;
             this.phase = roomPhaseCounter;
             roomPhaseCounter = (roomPhaseCounter + 1) % ROOM_RECHECK_TICKS;

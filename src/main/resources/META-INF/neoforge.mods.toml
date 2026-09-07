@@ -1,7 +1,7 @@
 modLoader = "javafml"
 loaderVersion = "${loader_version_range}"
 license = "${mod_license}"
-issueTrackerURL = "https://github.com/example/hookahmod/issues"
+issueTrackerURL = "https://github.com/MASHINKA34/Hookah-Mod/issues"
 
 [[mods]]
 modId = "${mod_id}"

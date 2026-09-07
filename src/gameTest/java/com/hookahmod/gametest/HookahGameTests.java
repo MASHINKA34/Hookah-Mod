@@ -595,6 +595,84 @@ public class HookahGameTests {
         }
     }
 
+    @GameTest(template = "empty")
+    public static void wornHookahIsOnlyPlacedWithEmptyHands(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer player = players.create(helper.getLevel());
+            player.setGameMode(GameType.SURVIVAL);
+            BlockPos ground = helper.absolutePos(new BlockPos(2, 0, 0));
+            helper.setBlock(new BlockPos(2, 0, 0), Blocks.STONE);
+            BlockPos target = ground.above();
+            equip(player);
+            player.setShiftKeyDown(true);
+
+            player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Blocks.STONE));
+            ServerEvents.onRightClickBlock(rightClick(player, ground));
+            helper.assertTrue(WornHookah.isHookahStack(player.getItemBySlot(EquipmentSlot.CHEST)),
+                    "A full main hand must not place the worn hookah");
+            helper.assertTrue(helper.getLevel().getBlockState(target).isAir(),
+                    "A full main hand must leave the world untouched");
+
+            player.setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            player.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Blocks.STONE));
+            ServerEvents.onRightClickBlock(rightClick(player, ground));
+            helper.assertTrue(WornHookah.isHookahStack(player.getItemBySlot(EquipmentSlot.CHEST)),
+                    "A full off hand must not place the worn hookah");
+
+            player.setItemInHand(InteractionHand.OFF_HAND, ItemStack.EMPTY);
+            ServerEvents.onRightClickBlock(rightClick(player, ground));
+            helper.assertTrue(helper.getLevel().getBlockState(target).is(ModBlocks.HOOKAH.get()),
+                    "Empty hands must place the worn hookah");
+            helper.assertTrue(player.getItemBySlot(EquipmentSlot.CHEST).isEmpty(),
+                    "Placing must clear the chest slot");
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void takingCoalWithoutUpdateStillSyncsTheBlockState(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer player = players.create(helper.getLevel());
+            BlockPos relative = new BlockPos(1, 1, 0);
+            HookahBlockEntity hookah = block(helper, relative);
+            ItemStack contents = equip(player).copy();
+            player.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+            hookah.loadItemsFromStack(contents);
+            helper.assertTrue(helper.getLevel().getBlockState(hookah.getBlockPos()).getValue(HookahBlock.HAS_COAL),
+                    "Loaded charcoal must light the block state");
+            hookah.getInventory().removeItemNoUpdate(HookahBlockEntity.SLOT_COAL);
+            helper.assertTrue(!helper.getLevel().getBlockState(hookah.getBlockPos()).getValue(HookahBlock.HAS_COAL),
+                    "removeItemNoUpdate must still refresh the charcoal block state");
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void mouthpieceOnBlockOwnedByAnotherPlayerDoesNotSmoke(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer owner = players.create(helper.getLevel());
+            ServerPlayer guest = players.create(helper.getLevel());
+            HookahBlockEntity hookah = block(helper, new BlockPos(1, 1, 0));
+            ItemStack contents = equip(owner).copy();
+            owner.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+            hookah.loadItemsFromStack(contents);
+            helper.assertTrue(hookah.tryTakeMouthpiece(owner), "Owner must claim the hookah");
+
+            ItemStack mouthpiece = new ItemStack(ModItems.HOOKAH_MOUTHPIECE.get());
+            guest.setItemInHand(InteractionHand.MAIN_HAND, mouthpiece);
+            guest.gameMode.useItemOn(guest, helper.getLevel(), mouthpiece, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(hookah.getBlockPos()), Direction.UP, hookah.getBlockPos(), false));
+            helper.assertTrue(!guest.isUsingItem(), "A guest must not start smoking somebody else's hookah");
+            helper.assertTrue(owner.getUUID().equals(hookah.getActivePlayerUuid()), "The owner must keep the session");
+            helper.succeed();
+        }
+    }
+
+    private static PlayerInteractEvent.RightClickBlock rightClick(ServerPlayer player, BlockPos pos) {
+        return new PlayerInteractEvent.RightClickBlock(player, InteractionHand.MAIN_HAND, pos,
+                new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false));
+    }
+
     private static HookahBlockEntity block(GameTestHelper helper, BlockPos pos) {
         helper.setBlock(pos, ModBlocks.HOOKAH.get());
         HookahBlockEntity hookah = helper.getBlockEntity(pos);

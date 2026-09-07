@@ -1,9 +1,11 @@
 package com.hookahmod.item;
 
 import com.hookahmod.block.HookahBlockEntity;
+import com.hookahmod.config.HookahConfig;
 import com.hookahmod.event.ActiveSessions;
 import com.hookahmod.registry.ModParticles;
 import com.hookahmod.smoke.HookahSmoke;
+import com.hookahmod.smoking.ModAttachments;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.particles.ColorParticleOption;
 import net.minecraft.core.particles.ParticleOptions;
@@ -166,7 +168,7 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
         if (!(entity instanceof Player player)) return;
         triggerMouthpieceAnimation(level, player, stack, "return");
         int held = MAX_CHARGE_TICKS - timeCharged;
-        if (held < 5) return;
+        if (held < HookahConfig.minimumChargeTicks) return;
         float charge = Math.min(held, MAX_CHARGE_TICKS) / (float) MAX_CHARGE_TICKS;
         exhale(player, level, charge);
     }
@@ -183,6 +185,7 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
 
     // ── Core exhale logic ───────────────────────────────────────────
     private void exhale(Player player, Level level, float charge) {
+        if (!consumeExhaleCooldown(player, level)) return;
         if (level.isClientSide) {
             int count = HookahSmoke.clientMouthPuffs(charge);
             float speed = HookahSmoke.clientMouthSpeed(charge);
@@ -222,6 +225,16 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
                 && WornHookah.hasAllConsumables(wornHookah)) {
             WornHookah.applyExhale(sp, serverWearer, wornHookah, charge);
         }
+    }
+
+    private static boolean consumeExhaleCooldown(Player player, Level level) {
+        int cooldown = HookahConfig.exhaleCooldownTicks;
+        if (cooldown <= 0) return true;
+        long now = level.getGameTime();
+        long last = player.getData(ModAttachments.LAST_EXHALE_TICK.get());
+        if (last != Long.MIN_VALUE && now >= last && now - last < cooldown) return false;
+        player.setData(ModAttachments.LAST_EXHALE_TICK.get(), now);
+        return true;
     }
 
     @Nullable

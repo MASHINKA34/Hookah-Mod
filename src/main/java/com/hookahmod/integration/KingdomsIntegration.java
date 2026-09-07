@@ -1,5 +1,7 @@
 package com.hookahmod.integration;
 
+import com.hookahmod.HookahMod;
+
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Optional;
@@ -74,6 +76,7 @@ public final class KingdomsIntegration {
         try {
             return method.invoke(null, args);
         } catch (ReflectiveOperationException | RuntimeException exception) {
+            HookahMod.LOGGER.warn("Kingdoms integration call '{}' failed and is now disabled for this session", name, exception);
             METHODS.put(name, Optional.empty());
             return null;
         }
@@ -87,6 +90,7 @@ public final class KingdomsIntegration {
             try {
                 return Optional.of(integration.getMethod(key, parameters));
             } catch (ReflectiveOperationException | RuntimeException exception) {
+                HookahMod.LOGGER.debug("Kingdoms integration has no method '{}', using the built-in behaviour", key);
                 return Optional.empty();
             }
         }).orElse(null);
@@ -108,7 +112,9 @@ public final class KingdomsIntegration {
                             false,
                             KingdomsIntegration.class.getClassLoader()
                     );
-                } catch (ReflectiveOperationException | RuntimeException ignored) {
+                } catch (ReflectiveOperationException | RuntimeException exception) {
+                    HookahMod.LOGGER.warn("Kingdoms is loaded but {} is missing; falling back to the built-in behaviour",
+                            HOOKAH_INTEGRATION_CLASS, exception);
                     integrationClass = null;
                 }
             }

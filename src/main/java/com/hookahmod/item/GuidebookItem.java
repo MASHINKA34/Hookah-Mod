@@ -19,6 +19,6 @@ public class GuidebookItem extends Item {
         if (level.isClientSide()) {
             ClientBridge.openGuide();
         }
-        return InteractionResultHolder.success(player.getItemInHand(hand));
+        return InteractionResultHolder.sidedSuccess(player.getItemInHand(hand), level.isClientSide());
     }
 }

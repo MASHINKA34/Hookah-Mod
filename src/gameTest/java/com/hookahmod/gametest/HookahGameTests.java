@@ -4,10 +4,12 @@ import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.block.HookahBlock;
 import com.hookahmod.block.HookahLightBlock;
 import com.hookahmod.event.ActiveSessions;
+import com.hookahmod.config.HookahConfig;
 import com.hookahmod.event.ServerEvents;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.HookahTier;
 import com.hookahmod.item.WornHookah;
+import com.hookahmod.smoking.IntoxicationState;
 import com.hookahmod.menu.HookahMenu;
 import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.registry.ModItems;
@@ -665,6 +667,83 @@ public class HookahGameTests {
             helper.assertTrue(!guest.isUsingItem(), "A guest must not start smoking somebody else's hookah");
             helper.assertTrue(owner.getUUID().equals(hookah.getActivePlayerUuid()), "The owner must keep the session");
             helper.succeed();
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void exhaleCooldownRejectsSpammedDraws(GameTestHelper helper) {
+        int previousCooldown = HookahConfig.exhaleCooldownTicks;
+        try (Players players = new Players(helper)) {
+            HookahConfig.exhaleCooldownTicks = 10;
+            ServerPlayer smoker = players.create(helper.getLevel());
+            HookahBlockEntity hookah = block(helper, new BlockPos(1, 1, 0));
+            ItemStack contents = equip(smoker).copy();
+            smoker.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+            hookah.loadItemsFromStack(contents);
+            helper.assertTrue(hookah.tryTakeMouthpiece(smoker), "Smoker must claim the hookah");
+
+            ItemStack mouthpiece = new ItemStack(ModItems.HOOKAH_MOUTHPIECE.get());
+            smoker.setItemInHand(InteractionHand.MAIN_HAND, mouthpiece);
+            IntoxicationState.setAndSync(smoker, 0.0f);
+
+            ModItems.HOOKAH_MOUTHPIECE.get().releaseUsing(mouthpiece, helper.getLevel(), smoker, 0);
+            float afterFirst = IntoxicationState.get(smoker);
+            helper.assertTrue(afterFirst > 0.0f, "First draw must register");
+
+            ModItems.HOOKAH_MOUTHPIECE.get().releaseUsing(mouthpiece, helper.getLevel(), smoker, 0);
+            helper.assertTrue(IntoxicationState.get(smoker) == afterFirst, "A draw inside the cooldown must be ignored");
+
+            HookahConfig.exhaleCooldownTicks = 0;
+            ModItems.HOOKAH_MOUTHPIECE.get().releaseUsing(mouthpiece, helper.getLevel(), smoker, 0);
+            helper.assertTrue(IntoxicationState.get(smoker) > afterFirst, "Disabling the cooldown must allow drawing again");
+            helper.succeed();
+        } finally {
+            HookahConfig.exhaleCooldownTicks = previousCooldown;
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void configuredHoseRangeDrivesTheSessionCheck(GameTestHelper helper) {
+        int previousLong = HookahConfig.longHoseRange;
+        try (Players players = new Players(helper)) {
+            ServerPlayer smoker = players.create(helper.getLevel());
+            HookahBlockEntity hookah = block(helper, new BlockPos(1, 1, 0));
+            helper.assertTrue(hookah.isPlayerInRange(smoker), "Smoker must start inside the default hose range");
+            HookahConfig.longHoseRange = 1;
+            helper.assertTrue(!hookah.isPlayerInRange(smoker), "Shrinking the hose range must push the smoker out of reach");
+            HookahConfig.longHoseRange = previousLong;
+            helper.assertTrue(hookah.isPlayerInRange(smoker), "Restoring the hose range must bring the smoker back in reach");
+            helper.succeed();
+        } finally {
+            HookahConfig.longHoseRange = previousLong;
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void combatBlendsHonourTheirConfigSwitches(GameTestHelper helper) {
+        boolean previousEnabled = HookahConfig.combatEnabled;
+        boolean previousBlockChanges = HookahConfig.combatBlockChanges;
+        BlockPos target = new BlockPos(0, 2, 3);
+        try (Players players = new Players(helper)) {
+            ServerPlayer smoker = players.create(helper.getLevel());
+            var cow = helper.spawn(EntityType.COW, new BlockPos(0, 1, 3));
+
+            HookahConfig.combatEnabled = false;
+            ModItems.TOBACCO_POISON.get().onExhale(helper.getLevel(), smoker, 1.0f, 1.0f, 1.0f);
+            helper.assertTrue(!cow.hasEffect(MobEffects.POISON), "Disabled combat blends must not apply effects");
+
+            HookahConfig.combatEnabled = true;
+            HookahConfig.combatBlockChanges = false;
+            ModItems.TOBACCO_POISON.get().onExhale(helper.getLevel(), smoker, 1.0f, 1.0f, 1.0f);
+            helper.assertTrue(cow.hasEffect(MobEffects.POISON), "Entity effects must survive with block changes disabled");
+
+            helper.setBlock(target, Blocks.TNT);
+            ModItems.TOBACCO_FIRE.get().onExhale(helper.getLevel(), smoker, 1.0f, 1.0f, 1.0f);
+            helper.assertBlockPresent(Blocks.TNT, target);
+            helper.succeed();
+        } finally {
+            HookahConfig.combatEnabled = previousEnabled;
+            HookahConfig.combatBlockChanges = previousBlockChanges;
         }
     }
 

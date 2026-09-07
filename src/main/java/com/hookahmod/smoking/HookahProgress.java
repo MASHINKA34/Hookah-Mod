@@ -1,6 +1,7 @@
 package com.hookahmod.smoking;
 
 import com.hookahmod.block.HookahBlockEntity;
+import com.hookahmod.config.HookahConfig;
 import com.hookahmod.item.AbstractTobaccoItem;
 import com.hookahmod.item.TobaccoCategory;
 import com.hookahmod.registry.ModItems;
@@ -17,8 +18,12 @@ public record HookahProgress(int smokePuffs, int waterPuffs) {
     private static final String WATER_TAG = "HookahWaterTimer";
 
     public HookahProgress {
-        smokePuffs = Math.clamp(smokePuffs, 0, 19);
-        waterPuffs = Math.clamp(waterPuffs, 0, 199);
+        smokePuffs = Math.clamp(smokePuffs, 0, maxSolidPuffs() - 1);
+        waterPuffs = Math.clamp(waterPuffs, 0, HookahConfig.waterPuffsPerBottle - 1);
+    }
+
+    private static int maxSolidPuffs() {
+        return Math.max(HookahConfig.solidPuffsPerCharge, HookahConfig.combatPuffsPerCharge);
     }
 
     public static HookahProgress read(ItemStack stack) {
@@ -39,7 +44,9 @@ public record HookahProgress(int smokePuffs, int waterPuffs) {
 
     public Consumption consume(List<ItemStack> items) {
         ItemStack tobacco = items.get(HookahBlockEntity.SLOT_TOBACCO);
-        int solidLimit = tobacco.getItem() instanceof AbstractTobaccoItem item && item.category() == TobaccoCategory.COMBAT ? 10 : 20;
+        int solidLimit = tobacco.getItem() instanceof AbstractTobaccoItem item && item.category() == TobaccoCategory.COMBAT
+                ? HookahConfig.combatPuffsPerCharge
+                : HookahConfig.solidPuffsPerCharge;
         int smoke = smokePuffs + 1;
         int water = waterPuffs + 1;
         boolean changed = false;
@@ -50,7 +57,7 @@ public record HookahProgress(int smokePuffs, int waterPuffs) {
             items.get(HookahBlockEntity.SLOT_COAL).shrink(1);
             changed = true;
         }
-        if (water >= 200) {
+        if (water >= HookahConfig.waterPuffsPerBottle) {
             water = 0;
             ItemStack liquid = items.get(HookahBlockEntity.SLOT_WATER);
             emptyCan = liquid.is(ModItems.WHITE_MONSTER.get());

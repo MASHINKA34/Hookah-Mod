@@ -2,6 +2,7 @@ package com.hookahmod.event;
 
 import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahLightBlock;
+import com.hookahmod.config.HookahConfig;
 import com.hookahmod.effect.ModMobEffects;
 import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.item.HookahBlockItem;
@@ -53,7 +54,6 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class ServerEvents {
 
     private static final Map<UUID, GlobalPos> WORN_LIGHTS = new ConcurrentHashMap<>();
-    private static final float CHICKEN_POOP_CHANCE = 0.35F;
     private static final int WORN_LIGHT_INTERVAL = 4;
     private static final ResourceLocation PALPALYCH_LOCK_ID = HookahMod.id("palpalych_trip_lock");
 
@@ -88,7 +88,7 @@ public final class ServerEvents {
         if (!(chicken.level() instanceof ServerLevel)) return;
         if (!chicken.isAlive() || chicken.isBaby() || chicken.isChickenJockey()) return;
         if (chicken.eggTime != 1) return;
-        if (chicken.getRandom().nextFloat() >= CHICKEN_POOP_CHANCE) return;
+        if (chicken.getRandom().nextFloat() >= HookahConfig.chickenPoopChance) return;
 
         chicken.spawnAtLocation(ModItems.CHICKEN_POOP.get());
     }
@@ -272,8 +272,9 @@ public final class ServerEvents {
 
     private static void tickWornHookahLights(MinecraftServer server) {
         if (server.getTickCount() % WORN_LIGHT_INTERVAL != 0) return;
+        boolean enabled = HookahConfig.wornHookahLight;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-            if (HookahLightBlock.hasLightSource(player)) {
+            if (enabled && HookahLightBlock.hasLightSource(player)) {
                 updateWornHookahLight(player);
             } else {
                 removeWornHookahLight(server, player.getUUID());
@@ -301,6 +302,7 @@ public final class ServerEvents {
             WORN_LIGHTS.remove(uuid);
         }
         if (!state.isAir()) return;
+        if (!level.mayInteract(player, pos) || !KingdomsIntegration.canMoveHookahBlock(player, pos)) return;
 
         if (level.setBlock(pos, ModBlocks.HOOKAH_LIGHT.get().defaultBlockState(), 3)) {
             WORN_LIGHTS.put(uuid, next);

@@ -29,6 +29,24 @@ built-in guidebook.
 - **Intoxication** — five bands from sober to overdose, read with the tonometer, decaying over time.
 - **Smoke** — exhaled smoke lingers, drifts, and fills enclosed rooms.
 
+## Configuration
+
+Balance lives in `hookahmod-server.toml`, a per-world **server** config
+(`saves/<world>/serverconfig/` in single player, `world/serverconfig/` on a dedicated server).
+NeoForge syncs it to connecting clients, so hose reach and intoxication bands stay identical
+on both sides. Changing the file and reloading applies without a restart.
+
+| Section | What it controls |
+|---|---|
+| `[smoking]` | Short and long hose reach, exhale cooldown, minimum draw length, how many puffs a tobacco charge and a bottle last |
+| `[intoxication]` | Meter ceiling, decay per second, plain-tobacco gain, and the four band thresholds |
+| `[combat]` | Master switch for combat cones, whether fire may ignite and ice may freeze blocks, cone reach and half-angle |
+| `[smoke]` | Room smoke on/off, particle range, largest room mapped, concurrent smoke-filled rooms, linger time, failed-probe cooldown |
+| `[misc]` | Worn-hookah light block, chicken poop chance, luxury preview visibility |
+
+Servers that want no PvP impact can set `combat.enabled = false`; servers on tight CPU budgets can
+lower `smoke.maxRoomAirBlocks` or turn `smoke.roomSmokeEnabled` off entirely.
+
 ## Building
 
 ```
@@ -40,8 +58,8 @@ The jar lands in `build/libs/`.
 | Task | What it does |
 |---|---|
 | `./gradlew build` | Compiles and packages the mod |
-| `./gradlew test` | JUnit regression tests on an ephemeral server |
-| `./gradlew runGameTestServer` | 28 in-world GameTests |
+| `./gradlew test` | 8 JUnit regression tests on an ephemeral server |
+| `./gradlew runGameTestServer` | 33 in-world GameTests |
 | `./gradlew runClient` | Dev client |
 | `./gradlew runServer` | Dev dedicated server |
 | `./gradlew runClient2` | Second client (`run2/`) for multiplayer testing |
@@ -54,6 +72,7 @@ integration; it is not part of the published jar.
 ```
 src/main/java/com/hookahmod/
   block/       hookah block, block entity, light block, crops
+  config/      server config spec and its baked values
   item/        hookah tiers, hoses, mouthpiece, tobaccos, worn-hookah helpers
   menu/        container menu and filtered slots
   network/     payloads (NeoForge play network)

@@ -27,5 +27,10 @@ public final class ModAttachments {
             () -> AttachmentType.builder(() -> 0).build()
     );
 
+    public static final DeferredHolder<AttachmentType<?>, AttachmentType<Long>> LAST_EXHALE_TICK = ATTACHMENTS.register(
+            "last_exhale_tick",
+            () -> AttachmentType.builder(() -> Long.MIN_VALUE).build()
+    );
+
     private ModAttachments() {}
 }

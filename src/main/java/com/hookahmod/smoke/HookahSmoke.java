@@ -1,5 +1,6 @@
 package com.hookahmod.smoke;
 
+import com.hookahmod.config.HookahConfig;
 import com.hookahmod.registry.ModParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -32,19 +33,22 @@ import java.util.Set;
 
 public final class HookahSmoke {
 
-    private static final int PARTICLE_RANGE = 128;
     private static final int OPEN_LINGER_TICKS = 45;
     private static final int MAX_ROOM_DISTANCE = 64;
-    private static final int MAX_ROOM_AIR_BLOCKS = 8192;
-    private static final int MAX_ROOM_CLOUDS = 32;
     private static final int ROOM_MIN_PUFFS = 5;
-    private static final int ROOM_LINGER_TICKS = 20 * 30;
     private static final int ROOM_RECHECK_TICKS = 60;
+    private static final int PROBE_PRUNE_INTERVAL = 100;
+    private static final int PROBE_CELL_BITS = 2;
     private static final float ROOM_MAX_DENSITY = 14.0f;
 
     private static final List<LingeringSmoke> LINGERING_SMOKE = new ArrayList<>();
     private static final Map<RoomKey, RoomSmoke> ROOM_SMOKE = new HashMap<>();
+    private static final Map<ProbeKey, Integer> FAILED_PROBES = new HashMap<>();
     private static int roomPhaseCounter = 0;
+
+    private static int roomLingerTicks() {
+        return HookahConfig.roomLingerSeconds * 20;
+    }
 
     private HookahSmoke() {}
 
@@ -92,12 +96,19 @@ public final class HookahSmoke {
     public static void serverTick(MinecraftServer server) {
         tickLingeringSmoke(server);
         tickRoomSmoke(server);
+        if (server.getTickCount() % PROBE_PRUNE_INTERVAL == 0) pruneFailedProbes(server.getTickCount());
     }
 
     public static void clear() {
         LINGERING_SMOKE.clear();
         ROOM_SMOKE.clear();
+        FAILED_PROBES.clear();
         roomPhaseCounter = 0;
+    }
+
+    private static void pruneFailedProbes(int tickCount) {
+        if (FAILED_PROBES.isEmpty()) return;
+        FAILED_PROBES.values().removeIf(expiry -> expiry <= tickCount);
     }
 
     private static void tickLingeringSmoke(MinecraftServer server) {
@@ -121,7 +132,7 @@ public final class HookahSmoke {
     }
 
     private static void accumulateRoomSmoke(ServerLevel level, BlockPos origin, float strength, @Nullable Vector3f color) {
-        if (!isChunkLoaded(level, origin)) return;
+        if (!HookahConfig.roomSmokeEnabled || !isChunkLoaded(level, origin)) return;
         // Fast path: the puff happened inside a room we are already tracking, so
         // reuse it instead of running another flood fill. The periodic recheck in
         // tickRoomSmoke still re-validates the room, so staleness stays bounded.
@@ -132,9 +143,20 @@ public final class HookahSmoke {
         }
 
         // Slow path: discover the enclosing room with a one-off flood fill.
+        int tickCount = level.getServer().getTickCount();
+        ProbeKey probeKey = ProbeKey.of(level.dimension(), origin);
+        Integer retryAt = FAILED_PROBES.get(probeKey);
+        if (retryAt != null && tickCount < retryAt) return;
+
         RoomProbe probe = findEnclosedRoom(level, origin);
-        if (probe == null) return;
-        if (!ROOM_SMOKE.containsKey(probe.key) && ROOM_SMOKE.size() >= MAX_ROOM_CLOUDS) return;
+        if (probe == null) {
+            if (HookahConfig.roomProbeCooldownTicks > 0) {
+                FAILED_PROBES.put(probeKey, tickCount + HookahConfig.roomProbeCooldownTicks);
+            }
+            return;
+        }
+        FAILED_PROBES.remove(probeKey);
+        if (!ROOM_SMOKE.containsKey(probe.key) && ROOM_SMOKE.size() >= HookahConfig.maxRoomClouds) return;
 
         RoomSmoke smoke = ROOM_SMOKE.computeIfAbsent(probe.key, key -> new RoomSmoke(key, probe.airBlocks, probe.airLookup));
         smoke.airBlocks = probe.airBlocks;
@@ -159,7 +181,7 @@ public final class HookahSmoke {
 
     private static void applyPuffToRoom(ServerLevel level, RoomSmoke smoke, float strength, @Nullable Vector3f color) {
         smoke.puffs = Math.min(ROOM_MIN_PUFFS, smoke.puffs + 1);
-        smoke.remainingTicks = ROOM_LINGER_TICKS;
+        smoke.remainingTicks = roomLingerTicks();
         smoke.color = copyColor(color);
         if (smoke.puffs < ROOM_MIN_PUFFS) return;
 
@@ -256,7 +278,7 @@ public final class HookahSmoke {
                     Math.max(max.getY(), current.getY()),
                     Math.max(max.getZ(), current.getZ()));
 
-            if (airBlocks.size() > MAX_ROOM_AIR_BLOCKS) return null;
+            if (airBlocks.size() > HookahConfig.maxRoomAirBlocks) return null;
 
             for (Direction direction : Direction.values()) {
                 BlockPos next = current.relative(direction);
@@ -334,9 +356,10 @@ public final class HookahSmoke {
         var packet = new net.minecraft.network.protocol.game.ClientboundLevelParticlesPacket(
                 particle, true,
                 x, y, z, xSpread, ySpread, zSpread, speed, count);
+        double particleRangeSqr = (double) HookahConfig.smokeParticleRange * HookahConfig.smokeParticleRange;
         for (ServerPlayer player : level.players()) {
             if (player == except) continue;
-            if (player.distanceToSqr(x, y, z) <= PARTICLE_RANGE * PARTICLE_RANGE) {
+            if (player.distanceToSqr(x, y, z) <= particleRangeSqr) {
                 player.connection.send(packet);
             }
         }
@@ -369,6 +392,15 @@ public final class HookahSmoke {
 
     private record RoomKey(ResourceKey<Level> dimension, BlockPos min, BlockPos max, BlockPos anchor) {}
 
+    private record ProbeKey(ResourceKey<Level> dimension, int cellX, int cellY, int cellZ) {
+        private static ProbeKey of(ResourceKey<Level> dimension, BlockPos pos) {
+            return new ProbeKey(dimension,
+                    pos.getX() >> PROBE_CELL_BITS,
+                    pos.getY() >> PROBE_CELL_BITS,
+                    pos.getZ() >> PROBE_CELL_BITS);
+        }
+    }
+
     private record RoomProbe(RoomKey key, List<BlockPos> airBlocks, Set<BlockPos> airLookup, BlockPos start) {}
 
     private static final class RoomSmoke {
@@ -381,7 +413,7 @@ public final class HookahSmoke {
         @Nullable
         private Vector3f color;
         private int puffs;
-        private int remainingTicks = ROOM_LINGER_TICKS;
+        private int remainingTicks = roomLingerTicks();
         private int ticks;
         private int age;
 

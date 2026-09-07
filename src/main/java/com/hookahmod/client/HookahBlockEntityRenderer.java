@@ -4,7 +4,6 @@ import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlock;
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.item.HookahHoseType;
-import com.hookahmod.registry.ModBlocks;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -49,7 +48,7 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
 
         // The preview OBJ already contains its decorative hose, water and
         // coals. Avoid drawing the legacy dynamic overlays on top of it.
-        if (state.is(ModBlocks.LUXURY_HOOKAH_PREVIEW.get())) return;
+        if (!(state.getBlock() instanceof HookahBlock hookah) || !hookah.hasDynamicParts()) return;
 
         // Hose render
         HookahHoseType type = be.getHoseType();

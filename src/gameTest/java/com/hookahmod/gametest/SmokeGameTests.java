@@ -1,5 +1,6 @@
 package com.hookahmod.gametest;
 
+import com.hookahmod.config.HookahConfig;
 import com.hookahmod.event.ServerEvents;
 import com.hookahmod.smoke.HookahSmoke;
 import com.mojang.authlib.GameProfile;
@@ -96,6 +97,76 @@ public class SmokeGameTests {
         }
     }
 
+    @GameTest(template = "empty")
+    public static void failedRoomProbeIsCachedUntilItExpires(GameTestHelper helper) throws ReflectiveOperationException {
+        ServerLevel level = helper.getLevel();
+        BlockPos center = helper.absolutePos(new BlockPos(1, 1, 1)).above(30);
+        Map<BlockPos, BlockState> previous = new HashMap<>();
+        int previousMaxAir = HookahConfig.maxRoomAirBlocks;
+        int previousCooldown = HookahConfig.roomProbeCooldownTicks;
+        HookahSmoke.clear();
+        try {
+            for (BlockPos cursor : BlockPos.betweenClosed(center.offset(-2, -2, -2), center.offset(2, 2, 2))) {
+                BlockPos pos = cursor.immutable();
+                previous.put(pos, level.getBlockState(pos));
+                boolean shell = Math.abs(pos.getX() - center.getX()) == 2
+                        || Math.abs(pos.getY() - center.getY()) == 2
+                        || Math.abs(pos.getZ() - center.getZ()) == 2;
+                level.setBlock(pos, shell ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState(),
+                        Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE);
+            }
+
+            HookahConfig.roomProbeCooldownTicks = 40;
+            HookahConfig.maxRoomAirBlocks = 4;
+            exhale(level, center);
+            helper.assertTrue(rooms().isEmpty(), "A room over the air-block budget must not be tracked");
+            helper.assertTrue(failedProbes().size() == 1, "A failed probe must be cached");
+
+            exhale(level, center);
+            helper.assertTrue(failedProbes().size() == 1, "Repeated puffs must reuse the cached failure");
+
+            HookahConfig.maxRoomAirBlocks = previousMaxAir;
+            exhale(level, center);
+            helper.assertTrue(rooms().isEmpty(), "The cached failure must short-circuit the flood fill");
+
+            failedProbes().clear();
+            exhale(level, center);
+            helper.assertTrue(rooms().size() == 1, "An expired cache entry must let the room be discovered");
+            helper.succeed();
+        } finally {
+            HookahConfig.maxRoomAirBlocks = previousMaxAir;
+            HookahConfig.roomProbeCooldownTicks = previousCooldown;
+            previous.forEach((pos, state) -> level.setBlock(pos, state, Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE));
+            HookahSmoke.clear();
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void disablingRoomSmokeSkipsDiscoveryEntirely(GameTestHelper helper) throws ReflectiveOperationException {
+        boolean previous = HookahConfig.roomSmokeEnabled;
+        HookahSmoke.clear();
+        try {
+            BlockPos center = new BlockPos(2, 2, 2);
+            for (BlockPos pos : BlockPos.betweenClosed(1, 1, 1, 3, 3, 3)) {
+                helper.setBlock(pos, pos.equals(center) ? Blocks.AIR : Blocks.STONE);
+            }
+            BlockPos absolute = helper.absolutePos(center);
+
+            HookahConfig.roomSmokeEnabled = false;
+            exhale(helper.getLevel(), absolute);
+            helper.assertTrue(rooms().isEmpty() && failedProbes().isEmpty(), "Disabled room smoke must not probe at all");
+            helper.assertTrue(lingering().size() == 1, "Open-air smoke must still be emitted");
+
+            HookahConfig.roomSmokeEnabled = true;
+            exhale(helper.getLevel(), absolute);
+            helper.assertTrue(rooms().size() == 1, "Re-enabling room smoke must resume discovery");
+            helper.succeed();
+        } finally {
+            HookahConfig.roomSmokeEnabled = previous;
+            HookahSmoke.clear();
+        }
+    }
+
     private static void exhale(ServerLevel level, BlockPos origin) {
         FakePlayer player = new FakePlayer(level, new GameProfile(UUID.randomUUID(), "SmokeTest"));
         player.setYRot(0);
@@ -106,6 +177,10 @@ public class SmokeGameTests {
 
     private static Map<?, ?> rooms() throws ReflectiveOperationException {
         return (Map<?, ?>) field(HookahSmoke.class, null, "ROOM_SMOKE");
+    }
+
+    private static Map<?, ?> failedProbes() throws ReflectiveOperationException {
+        return (Map<?, ?>) field(HookahSmoke.class, null, "FAILED_PROBES");
     }
 
     private static List<?> lingering() throws ReflectiveOperationException {

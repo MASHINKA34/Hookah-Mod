@@ -1,5 +1,6 @@
 package com.hookahmod.smoking;
 
+import com.hookahmod.config.HookahConfig;
 import com.hookahmod.effect.ModMobEffects;
 import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.network.IntoxicationSyncPayload;
@@ -14,12 +15,18 @@ import net.neoforged.neoforge.network.PacketDistributor;
 
 public final class IntoxicationState {
 
-    public static final float MAX_VALUE = 220.0f;
-    public static final float REGULAR_TOBACCO_INTOXICATION = 16.0f;
     private static final int ABYSS_TRIP_WINDOW = 36;
     private static final float TRIP_VISION_CHANCE = 0.2f;
 
     private IntoxicationState() {}
+
+    public static float maxValue() {
+        return HookahConfig.maxIntoxication;
+    }
+
+    public static float plainTobaccoIntoxication() {
+        return HookahConfig.plainTobaccoIntoxication;
+    }
 
     public static float get(Player player) {
         return player.getData(ModAttachments.INTOXICATION.get());
@@ -34,7 +41,7 @@ public final class IntoxicationState {
     }
 
     public static void setAndSync(ServerPlayer player, float value) {
-        float clamped = Mth.clamp(value, 0.0f, MAX_VALUE);
+        float clamped = Mth.clamp(value, 0.0f, HookahConfig.maxIntoxication);
         if (Math.abs(get(player) - clamped) < 0.001f) return;
         player.setData(ModAttachments.INTOXICATION.get(), clamped);
         sync(player);
@@ -46,7 +53,7 @@ public final class IntoxicationState {
 
     public static void decayTick(ServerPlayer player) {
         float value = get(player);
-        if (value > 0.0f) setAndSync(player, value - 1.0f);
+        if (value > 0.0f) setAndSync(player, value - HookahConfig.intoxicationDecayPerSecond);
     }
 
     public static void applyBandEffects(ServerPlayer player) {
@@ -121,10 +128,10 @@ public final class IntoxicationState {
     }
 
     public static IntoxicationBand band(float value) {
-        if (value >= 150.0f) return IntoxicationBand.OVERDOSE;
-        if (value >= 100.0f) return IntoxicationBand.TRIP;
-        if (value >= 60.0f) return IntoxicationBand.HIGH;
-        if (value >= 30.0f) return IntoxicationBand.RELAXED;
+        if (value >= HookahConfig.overdoseThreshold) return IntoxicationBand.OVERDOSE;
+        if (value >= HookahConfig.tripThreshold) return IntoxicationBand.TRIP;
+        if (value >= HookahConfig.highThreshold) return IntoxicationBand.HIGH;
+        if (value >= HookahConfig.relaxedThreshold) return IntoxicationBand.RELAXED;
         return IntoxicationBand.SOBER;
     }
 

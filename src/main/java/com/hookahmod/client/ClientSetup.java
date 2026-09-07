@@ -59,6 +59,7 @@ public final class ClientSetup {
         NeoForge.EVENT_BUS.addListener(TripManager::fogColor);
         NeoForge.EVENT_BUS.addListener(HashishTripManager::computeFov);
         NeoForge.EVENT_BUS.addListener(HashishTripManager::cameraAngles);
+        NeoForge.EVENT_BUS.addListener(HashishTripManager::updateFrame);
         NeoForge.EVENT_BUS.addListener(VideoTripManager::render);
     }
 

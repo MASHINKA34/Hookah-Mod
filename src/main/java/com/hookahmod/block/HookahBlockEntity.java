@@ -11,12 +11,10 @@ import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.network.HookahSyncPayload;
 import com.hookahmod.network.WornHookahSyncPayload;
 import com.hookahmod.registry.ModBlockEntities;
-import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
 import com.hookahmod.smoking.HookahProgress;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.HolderLookup;
@@ -228,7 +226,7 @@ public class HookahBlockEntity extends BlockEntity {
                     tier.combatMult() * KingdomsIntegration.hookahCombatMultiplier(player)
             );
         } else {
-            IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.REGULAR_TOBACCO_INTOXICATION, charge));
+            IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.plainTobaccoIntoxication(), charge));
         }
 
         KingdomsIntegration.onHookahPuff(player, charge);
@@ -244,7 +242,7 @@ public class HookahBlockEntity extends BlockEntity {
     }
 
     public void clientTick(Level level, BlockPos pos, BlockState state) {
-        if (state.is(ModBlocks.LUXURY_HOOKAH_PREVIEW.get())) return;
+        if (!(state.getBlock() instanceof HookahBlock hookah) || !hookah.hasDynamicParts()) return;
         if (items.get(SLOT_COAL).isEmpty()) return;
         if (level.random.nextInt(6) == 0) {
             double px = pos.getX() + 0.35 + level.random.nextDouble() * 0.30;
@@ -269,11 +267,12 @@ public class HookahBlockEntity extends BlockEntity {
             } else {
                 server.sendBlockUpdated(worldPosition, s, s, 3);
             }
-            PacketDistributor.sendToPlayersTrackingChunk(
-                    server,
-                    new ChunkPos(worldPosition),
-                    new HookahSyncPayload(worldPosition, activePlayerUuid)
-            );
+            if (activePlayerUuid != null) {
+                ServerPlayer active = server.getServer().getPlayerList().getPlayer(activePlayerUuid);
+                if (active != null) {
+                    PacketDistributor.sendToPlayer(active, new HookahSyncPayload(worldPosition, activePlayerUuid));
+                }
+            }
         }
     }
 

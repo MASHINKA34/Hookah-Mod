@@ -1,6 +1,7 @@
 package com.hookahmod.registry;
 
 import com.hookahmod.HookahMod;
+import com.hookahmod.config.HookahConfig;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.CreativeModeTab;
@@ -19,7 +20,7 @@ public final class ModCreativeTabs {
                     .icon(() -> ModItems.HOOKAH.get().getDefaultInstance())
                     .displayItems((params, output) -> {
                         output.accept(ModItems.HOOKAH.get());
-                        output.accept(ModItems.LUXURY_HOOKAH_PREVIEW.get());
+                        if (HookahConfig.showLuxuryPreview) output.accept(ModItems.LUXURY_HOOKAH_PREVIEW.get());
                         output.accept(ModItems.HOOKAH_LEATHER.get());
                         output.accept(ModItems.HOOKAH_GOLD.get());
                         output.accept(ModItems.HOOKAH_IRON.get());

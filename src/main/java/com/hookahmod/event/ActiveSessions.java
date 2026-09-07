@@ -111,13 +111,16 @@ public final class ActiveSessions {
     }
 
     public void tick() {
+        if (owners.isEmpty()) return;
         for (Map.Entry<UUID, Session> entry : List.copyOf(owners.entrySet())) {
             if (!entry.getValue().valid().getAsBoolean()) release(entry.getKey());
         }
     }
 
     public void clear() {
-        for (UUID player : List.copyOf(owners.keySet())) release(player);
+        if (!owners.isEmpty()) {
+            for (UUID player : List.copyOf(owners.keySet())) release(player);
+        }
         sessions.clear();
         wornSessions.clear();
     }

@@ -207,7 +207,7 @@ public final class WornHookah {
                     tier.combatMult() * KingdomsIntegration.hookahCombatMultiplier(player, wearer)
             );
         } else {
-            IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.REGULAR_TOBACCO_INTOXICATION, charge));
+            IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.plainTobaccoIntoxication(), charge));
         }
 
         KingdomsIntegration.onHookahPuff(player, charge);

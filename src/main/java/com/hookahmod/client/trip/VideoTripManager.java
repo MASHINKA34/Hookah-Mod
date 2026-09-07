@@ -27,15 +27,21 @@ public final class VideoTripManager {
         }
     }
 
+    private static final int PRELOAD_LEAD_FRAMES = 15;
+
     private static boolean active;
     private static int ageTicks;
+    private static int loadedSheets;
+    private static int releasedSheets;
 
     private VideoTripManager() {}
 
     public static void start() {
         active = true;
         ageTicks = 0;
-        preload();
+        loadedSheets = 0;
+        releasedSheets = 0;
+        streamSheets();
     }
 
     public static boolean isActive() {
@@ -54,6 +60,7 @@ public final class VideoTripManager {
         }
         if (mc.isPaused()) return;
         ageTicks++;
+        streamSheets();
         PalPalychSoundController.tick(mc, mc.player);
     }
 
@@ -81,6 +88,8 @@ public final class VideoTripManager {
     public static void stop() {
         if (!active) return;
         active = false;
+        loadedSheets = 0;
+        releasedSheets = 0;
         Minecraft mc = Minecraft.getInstance();
         for (ResourceLocation sheet : SHEETS) {
             mc.getTextureManager().release(sheet);
@@ -88,10 +97,19 @@ public final class VideoTripManager {
         PalPalychSoundController.stop(mc);
     }
 
-    private static void preload() {
+    private static void streamSheets() {
         Minecraft mc = Minecraft.getInstance();
-        for (ResourceLocation sheet : SHEETS) {
-            mc.getTextureManager().getTexture(sheet);
+        int frame = Math.max(0, currentFrame());
+        int wanted = Math.min(SHEET_COUNT, (frame + PRELOAD_LEAD_FRAMES) / FRAMES_PER_SHEET + 1);
+        for (int index = loadedSheets; index < wanted; index++) {
+            mc.getTextureManager().getTexture(SHEETS[index]);
+        }
+        loadedSheets = Math.max(loadedSheets, wanted);
+
+        int playing = frame / FRAMES_PER_SHEET;
+        while (releasedSheets < playing) {
+            mc.getTextureManager().release(SHEETS[releasedSheets]);
+            releasedSheets++;
         }
     }
 

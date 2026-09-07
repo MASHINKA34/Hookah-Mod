@@ -1,11 +1,15 @@
 package com.hookahmod;
 
 import com.hookahmod.block.HookahBlockEntity;
+import com.hookahmod.config.HookahConfig;
+import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.recipe.HookahUpgradeRecipe;
 import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.smoking.HookahProgress;
+import com.hookahmod.smoking.IntoxicationBand;
+import com.hookahmod.smoking.IntoxicationState;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
@@ -119,6 +123,69 @@ class HookahRegressionTest {
                     PotionContents.createItemStack(Items.POTION, potion),
                     new ItemStack(Items.GLASS), new ItemStack(Items.GLASS), new ItemStack(Items.GLASS)));
             assertEquals(potion == Potions.WATER, recipe.matches(input, server.overworld()));
+        }
+    }
+
+    @Test
+    void configuredPuffLimitsDriveConsumption(MinecraftServer server) {
+        int previousSolid = HookahConfig.solidPuffsPerCharge;
+        int previousWater = HookahConfig.waterPuffsPerBottle;
+        try {
+            HookahConfig.solidPuffsPerCharge = 3;
+            HookahConfig.waterPuffsPerBottle = 5;
+            NonNullList<ItemStack> items = WornHookah.getItems(filledHookah());
+
+            var afterFirst = new HookahProgress(0, 0).consume(items);
+            assertEquals(new HookahProgress(1, 1), afterFirst.progress());
+            assertFalse(afterFirst.itemsChanged());
+            assertEquals(2, items.get(HookahBlockEntity.SLOT_TOBACCO).getCount());
+
+            var afterThird = new HookahProgress(2, 2).consume(items);
+            assertEquals(0, afterThird.progress().smokePuffs());
+            assertTrue(afterThird.itemsChanged());
+            assertEquals(1, items.get(HookahBlockEntity.SLOT_TOBACCO).getCount());
+            assertEquals(1, items.get(HookahBlockEntity.SLOT_COAL).getCount());
+
+            var afterWater = new HookahProgress(0, 4).consume(items);
+            assertEquals(0, afterWater.progress().waterPuffs());
+            assertEquals(1, items.get(HookahBlockEntity.SLOT_WATER).getCount());
+        } finally {
+            HookahConfig.solidPuffsPerCharge = previousSolid;
+            HookahConfig.waterPuffsPerBottle = previousWater;
+        }
+    }
+
+    @Test
+    void configuredThresholdsDriveIntoxicationBands(MinecraftServer server) {
+        float previousTrip = HookahConfig.tripThreshold;
+        float previousOverdose = HookahConfig.overdoseThreshold;
+        try {
+            assertEquals(IntoxicationBand.HIGH, IntoxicationState.band(80.0f));
+            assertEquals(IntoxicationBand.TRIP, IntoxicationState.band(120.0f));
+            HookahConfig.tripThreshold = 70.0f;
+            HookahConfig.overdoseThreshold = 90.0f;
+            assertEquals(IntoxicationBand.TRIP, IntoxicationState.band(80.0f));
+            assertEquals(IntoxicationBand.OVERDOSE, IntoxicationState.band(120.0f));
+        } finally {
+            HookahConfig.tripThreshold = previousTrip;
+            HookahConfig.overdoseThreshold = previousOverdose;
+        }
+    }
+
+    @Test
+    void configuredHoseRangeIsUsedForReachChecks(MinecraftServer server) {
+        int previousShort = HookahConfig.shortHoseRange;
+        int previousLong = HookahConfig.longHoseRange;
+        try {
+            HookahConfig.shortHoseRange = 3;
+            HookahConfig.longHoseRange = 12;
+            assertEquals(0, HookahHoseType.NONE.getMaxLength());
+            assertEquals(3, HookahHoseType.SHORT.getMaxLength());
+            assertEquals(12, HookahHoseType.LONG.getMaxLength());
+            assertEquals(144.0, HookahHoseType.maxRangeSqr());
+        } finally {
+            HookahConfig.shortHoseRange = previousShort;
+            HookahConfig.longHoseRange = previousLong;
         }
     }
 

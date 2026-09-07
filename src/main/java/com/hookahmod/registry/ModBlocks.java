@@ -3,6 +3,7 @@ package com.hookahmod.registry;
 import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlock;
 import com.hookahmod.block.HookahLightBlock;
+import com.hookahmod.block.LuxuryHookahPreviewBlock;
 import com.hookahmod.block.ModCropBlock;
 import com.hookahmod.block.WhiteMonsterBlock;
 import net.minecraft.world.level.block.Block;
@@ -37,9 +38,9 @@ public final class ModBlocks {
      * separate block lets us evaluate the asset in-game without replacing any
      * of the existing hookah tiers.
      */
-    public static final DeferredBlock<HookahBlock> LUXURY_HOOKAH_PREVIEW = BLOCKS.register(
+    public static final DeferredBlock<LuxuryHookahPreviewBlock> LUXURY_HOOKAH_PREVIEW = BLOCKS.register(
             "luxury_hookah_preview",
-            () -> new HookahBlock(BlockBehaviour.Properties.of()
+            () -> new LuxuryHookahPreviewBlock(BlockBehaviour.Properties.of()
                     .mapColor(MapColor.COLOR_PURPLE)
                     .strength(2.5F)
                     .sound(SoundType.METAL)

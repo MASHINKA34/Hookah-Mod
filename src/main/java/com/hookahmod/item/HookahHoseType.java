@@ -1,25 +1,24 @@
 package com.hookahmod.item;
 
+import com.hookahmod.config.HookahConfig;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 
 public enum HookahHoseType {
-    NONE(0),
-    SHORT(5),
-    LONG(10);
+    NONE,
+    SHORT,
+    LONG;
 
     public static final StreamCodec<RegistryFriendlyByteBuf, HookahHoseType> STREAM_CODEC =
             ByteBufCodecs.idMapper(HookahHoseType::byId, HookahHoseType::ordinal).cast();
 
-    private final int maxLength;
-
-    HookahHoseType(int maxLength) {
-        this.maxLength = maxLength;
-    }
-
     public int getMaxLength() {
-        return maxLength;
+        return switch (this) {
+            case SHORT -> HookahConfig.shortHoseRange;
+            case LONG -> HookahConfig.longHoseRange;
+            default -> 0;
+        };
     }
 
     public boolean isPresent() {
@@ -28,7 +27,7 @@ public enum HookahHoseType {
 
     public static double maxRangeSqr() {
         int longest = 0;
-        for (HookahHoseType type : values()) longest = Math.max(longest, type.maxLength);
+        for (HookahHoseType type : values()) longest = Math.max(longest, type.getMaxLength());
         return (double) longest * longest;
     }
 

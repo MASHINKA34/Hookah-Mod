@@ -2,6 +2,7 @@ package com.hookahmod.item;
 
 import com.hookahmod.combat.SmokeCone;
 import com.hookahmod.combat.SmokeBlockChanges;
+import com.hookahmod.config.HookahConfig;
 import com.hookahmod.registry.ModParticles;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -38,12 +39,14 @@ public class CombatTobaccoItem extends AbstractTobaccoItem {
 
     @Override
     public void onExhale(ServerLevel level, ServerPlayer smoker, float charge, float effectMult, float combatMult) {
-        double range = 4.0 + combatMult * 1.5 + Mth.clamp(charge, 0.0f, 1.0f) * 2.0;
+        if (!HookahConfig.combatEnabled) return;
+        double range = HookahConfig.combatBaseRange + combatMult * 1.5 + Mth.clamp(charge, 0.0f, 1.0f) * 2.0;
         spawnConeParticles(level, smoker, range, type.color());
         if (type == CombatType.HEAL) {
             applyHeal(level, smoker, range, combatMult);
         } else {
             applyHostile(level, smoker, range, combatMult);
+            if (!HookahConfig.combatBlockChanges) return;
             if (type == CombatType.FIRE) igniteLookTarget(level, smoker, range);
             if (type == CombatType.ICE) freezeWaterLookTarget(level, smoker, range, combatMult);
         }
@@ -55,7 +58,7 @@ public class CombatTobaccoItem extends AbstractTobaccoItem {
     }
 
     private void applyHostile(ServerLevel level, ServerPlayer smoker, double range, float combatMult) {
-        SmokeCone.applyCone(level, smoker, range, 25.0,
+        SmokeCone.applyCone(level, smoker, range, HookahConfig.combatConeHalfAngle,
                 target -> target != smoker && !target.isAlliedTo(smoker)
                         && (!(target instanceof Player player) || smoker.canHarmPlayer(player)), target -> {
             switch (type) {
@@ -79,7 +82,7 @@ public class CombatTobaccoItem extends AbstractTobaccoItem {
     private void applyHeal(ServerLevel level, ServerPlayer smoker, double range, float combatMult) {
         smoker.addEffect(new MobEffectInstance(MobEffects.REGENERATION, seconds(3.0f * combatMult), 1, true, true, true), smoker);
         smoker.heal(1.0f + combatMult);
-        SmokeCone.applyCone(level, smoker, range, 25.0, target -> target != smoker && isFriendly(target), target -> {
+        SmokeCone.applyCone(level, smoker, range, HookahConfig.combatConeHalfAngle, target -> target != smoker && isFriendly(target), target -> {
             target.addEffect(new MobEffectInstance(MobEffects.REGENERATION, seconds(3.0f * combatMult), 1, true, true, true), smoker);
             target.heal(0.5f + combatMult);
         });

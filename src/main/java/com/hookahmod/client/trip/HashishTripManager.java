@@ -8,6 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.client.event.ViewportEvent;
 
 public final class HashishTripManager {
@@ -61,12 +62,16 @@ public final class HashishTripManager {
         totalDurationTicks = Math.max(totalDurationTicks, duration);
         ageTicks++;
         ensurePostEffect();
-        updateShaderUniforms(0.0f);
         HashishTripSoundController.tick(mc, mc.player);
     }
 
     public static boolean isActive() {
         return remainingTicks > 0;
+    }
+
+    public static void updateFrame(RenderFrameEvent.Pre event) {
+        if (remainingTicks <= 0) return;
+        updateShaderUniforms(event.getPartialTick().getGameTimeDeltaPartialTick(false));
     }
 
     public static void computeFov(ViewportEvent.ComputeFov event) {

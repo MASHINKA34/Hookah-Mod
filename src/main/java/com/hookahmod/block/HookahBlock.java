@@ -8,7 +8,6 @@ import com.hookahmod.item.HookahTier;
 import com.hookahmod.item.TieredHookahItem;
 import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.registry.ModBlockEntities;
-import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.registry.ModItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -71,12 +70,6 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
             Block.box(5.5, 22, 5.5, 10.5, 25, 10.5)
     );
 
-    private static final VoxelShape LUXURY_PREVIEW_SHAPE = Shapes.or(
-            Block.box(-0.5, 0, -0.5, 16.5, 12, 16.5),
-            Block.box(4, 12, 4, 12, 34, 12),
-            Block.box(2, 34, 2, 14, 43, 14)
-    );
-
     public static final com.mojang.serialization.MapCodec<HookahBlock> CODEC = simpleCodec(HookahBlock::new);
 
     public HookahBlock(Properties props) {
@@ -107,7 +100,15 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext ctx) {
-        return state.is(ModBlocks.LUXURY_HOOKAH_PREVIEW.get()) ? LUXURY_PREVIEW_SHAPE : SHAPE;
+        return SHAPE;
+    }
+
+    public boolean supportsWearing() {
+        return true;
+    }
+
+    public boolean hasDynamicParts() {
+        return true;
     }
 
     @Override
@@ -198,7 +199,7 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
         if (!(level.getBlockEntity(pos) instanceof HookahBlockEntity be)) {
             return net.minecraft.world.InteractionResult.PASS;
         }
-        if (player.isShiftKeyDown() && !state.is(ModBlocks.LUXURY_HOOKAH_PREVIEW.get())) {
+        if (player.isShiftKeyDown() && supportsWearing()) {
             if (level.isClientSide) return net.minecraft.world.InteractionResult.SUCCESS;
             if (!(player instanceof ServerPlayer sp) || !sp.isAlive() || sp.isSpectator()
                     || !sp.getAbilities().mayBuild || !level.mayInteract(sp, pos)
@@ -238,10 +239,7 @@ public class HookahBlock extends HorizontalDirectionalBlock implements EntityBlo
         return net.minecraft.world.InteractionResult.CONSUME;
     }
 
-    private static ItemStack stackForState(BlockState state) {
-        if (state.is(ModBlocks.LUXURY_HOOKAH_PREVIEW.get())) {
-            return new ItemStack(ModItems.LUXURY_HOOKAH_PREVIEW.get());
-        }
+    protected ItemStack stackForState(BlockState state) {
         return switch (state.getValue(TIER)) {
             case LEATHER -> new ItemStack(ModItems.HOOKAH_LEATHER.get());
             case GOLD -> new ItemStack(ModItems.HOOKAH_GOLD.get());

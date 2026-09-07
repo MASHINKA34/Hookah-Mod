@@ -21,6 +21,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
+
 public class HookahMenu extends AbstractContainerMenu {
 
     public static final int HOSE_SLOT_X = 76;
@@ -39,7 +41,7 @@ public class HookahMenu extends AbstractContainerMenu {
     private final Container container;
     private final HookahBlockEntity blockEntity;
     private final boolean wearable;
-    private final java.util.UUID wearerUuid;
+    private final UUID wearerUuid;
     private final Player menuPlayer;
     private final DataSlot usageStatus;
 
@@ -59,7 +61,7 @@ public class HookahMenu extends AbstractContainerMenu {
         addPlayerSlots(playerInv);
     }
 
-    public HookahMenu(int id, Inventory playerInv, java.util.UUID wearerUuid) {
+    public HookahMenu(int id, Inventory playerInv, UUID wearerUuid) {
         super(ModMenuTypes.HOOKAH.get(), id);
         this.pos = BlockPos.ZERO;
         this.blockEntity = null;
@@ -85,7 +87,7 @@ public class HookahMenu extends AbstractContainerMenu {
         return new DataSlot() {
             @Override
             public int get() {
-                java.util.UUID active = getActivePlayerUuid();
+                UUID active = getActivePlayerUuid();
                 return active == null ? 0 : active.equals(menuPlayer.getUUID()) ? 1 : 2;
             }
 
@@ -123,7 +125,7 @@ public class HookahMenu extends AbstractContainerMenu {
 
     public boolean isWearable() { return wearable; }
 
-    public java.util.UUID getWearerUuid() { return wearerUuid; }
+    public UUID getWearerUuid() { return wearerUuid; }
 
     @Nullable
     public HookahBlockEntity getBlockEntity() { return blockEntity; }
@@ -143,7 +145,7 @@ public class HookahMenu extends AbstractContainerMenu {
         return usageStatus.get() == 1;
     }
 
-    public java.util.UUID getActivePlayerUuid() {
+    public UUID getActivePlayerUuid() {
         if (blockEntity != null) return blockEntity.getActivePlayerUuid();
         ItemStack stack = getWearerStack();
         return WornHookah.isHookahStack(stack) ? WornHookah.getActivePlayerUuid(stack) : null;

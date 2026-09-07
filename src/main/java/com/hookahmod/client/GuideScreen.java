@@ -36,38 +36,42 @@ public class GuideScreen extends Screen {
     private static final int SLOT = 0xFFE1D39D;
 
     private static final List<Chapter> CHAPTERS = List.of(
-            new Chapter("Обзор", 0, 0xFF9B5B28),
-            new Chapter("Кальян", 1, 0xFFB56B2D),
-            new Chapter("Табаки", 4, 0xFF557D3B),
-            new Chapter("Эффекты", 6, 0xFF76518F),
-            new Chapter("Мир", 7, 0xFF477D83)
+            new Chapter("guide.hookahmod.chapter.overview", 0, 0xFF9B5B28),
+            new Chapter("guide.hookahmod.chapter.hookah", 1, 0xFFB56B2D),
+            new Chapter("guide.hookahmod.chapter.tobacco", 4, 0xFF557D3B),
+            new Chapter("guide.hookahmod.chapter.effects", 6, 0xFF76518F),
+            new Chapter("guide.hookahmod.chapter.world", 7, 0xFF477D83)
     );
 
     private static final List<GuidePage> PAGES = List.of(
             textPage(
-                    "Руководство по кальяну",
+                    "guide.hookahmod.intro.title",
                     stack(ModItems.GUIDEBOOK.get()),
-                    "Практическая энциклопедия Hookah Mod.",
+                    "guide.hookahmod.intro.line1",
                     "",
-                    "Кальяны, табаки, эффекты, культуры и совместимость.",
+                    "guide.hookahmod.intro.line2",
                     "",
-                    "Листайте стрелками, колёсиком мыши или вкладками сверху."
+                    "guide.hookahmod.intro.line3"
             ),
             indexPage(
-                    "Оглавление",
-                    new String[]{"Кальяны", "Табаки", "Эффекты", "Культуры"},
+                    "guide.hookahmod.contents.title",
+                    new String[]{
+                            "guide.hookahmod.contents.caption1",
+                            "guide.hookahmod.contents.caption2",
+                            "guide.hookahmod.contents.caption3",
+                            "guide.hookahmod.contents.caption4"
+                    },
                     stack(ModItems.HOOKAH.get()),
                     stack(ModItems.HOOKAH_TOBACCO.get()),
                     stack(ModItems.TONOMETER.get()),
                     stack(ModItems.TOBACCO_SEED.get())
             ),
-
             flowPage(
-                    "Быстрый старт",
+                    "guide.hookahmod.quickstart.title",
                     new String[]{
-                            "Установите кальян и шланг.",
-                            "Добавьте табак, уголь и воду.",
-                            "С мундштуком нажмите «Взять» в меню. Для курения держите ПКМ с ним в руке."
+                            "guide.hookahmod.quickstart.line1",
+                            "guide.hookahmod.quickstart.line2",
+                            "guide.hookahmod.quickstart.line3"
                     },
                     stack(ModItems.HOOKAH.get()),
                     stack(ModItems.SHORT_HOOKAH_HOSE.get()),
@@ -77,25 +81,36 @@ public class GuideScreen extends Screen {
                     stack(ModItems.HOOKAH_MOUTHPIECE.get())
             ),
             gridPage(
-                    "Шланги и игроки",
-                    new String[]{"5 блоков", "10 блоков", "Мундштук", "Тонометр"},
+                    "guide.hookahmod.hoses.title",
                     new String[]{
-                            "Один шланг — один игрок.",
-                            "Для группы нужны отдельные кальяны.",
-                            "Тонометр: накуренность."
+                            "guide.hookahmod.hoses.caption1",
+                            "guide.hookahmod.hoses.caption2",
+                            "guide.hookahmod.hoses.caption3",
+                            "guide.hookahmod.hoses.caption4"
+                    },
+                    new String[]{
+                            "guide.hookahmod.hoses.line1",
+                            "guide.hookahmod.hoses.line2",
+                            "guide.hookahmod.hoses.line3"
                     },
                     stack(ModItems.SHORT_HOOKAH_HOSE.get()),
                     stack(ModItems.LONG_HOOKAH_HOSE.get()),
                     stack(ModItems.HOOKAH_MOUTHPIECE.get()),
                     stack(ModItems.TONOMETER.get())
             ),
-
             gridPage(
-                    "Уровни кальяна",
-                    new String[]{"Normal", "Leather", "Gold", "Iron", "Diamond", "Netherite"},
+                    "guide.hookahmod.tiers.title",
                     new String[]{
-                            "Каждый следующий уровень даёт больше брони, когда кальян надет в слот нагрудника.",
-                            "Тип сохраняется при установке и переносе."
+                            "guide.hookahmod.tiers.caption1",
+                            "guide.hookahmod.tiers.caption2",
+                            "guide.hookahmod.tiers.caption3",
+                            "guide.hookahmod.tiers.caption4",
+                            "guide.hookahmod.tiers.caption5",
+                            "guide.hookahmod.tiers.caption6"
+                    },
+                    new String[]{
+                            "guide.hookahmod.tiers.line1",
+                            "guide.hookahmod.tiers.line2"
                     },
                     stack(ModItems.HOOKAH.get()),
                     stack(ModItems.HOOKAH_LEATHER.get()),
@@ -105,32 +120,38 @@ public class GuideScreen extends Screen {
                     stack(ModItems.HOOKAH_NETHERITE.get())
             ),
             flowPage(
-                    "Устройство кальяна",
+                    "guide.hookahmod.parts.title",
                     new String[]{
-                            "Колба, шахта и чаша образуют основной кальян.",
-                            "Для работы дополнительно нужны шланг, табак, уголь и вода."
+                            "guide.hookahmod.parts.line1",
+                            "guide.hookahmod.parts.line2"
                     },
                     stack(ModItems.HOOKAH_FLASK.get()),
                     stack(ModItems.HOOKAH_SHAFT.get()),
                     stack(ModItems.HOOKAH_BOWL.get()),
                     stack(ModItems.HOOKAH.get())
             ),
-
             textPage(
-                    "Кальян на спине",
+                    "guide.hookahmod.worn.title",
                     stack(ModItems.HOOKAH_NETHERITE.get()),
-                    "Кальян можно надеть в слот нагрудника.",
+                    "guide.hookahmod.worn.line1",
                     "",
-                    "Назначенная клавиша открывает его интерфейс. Другие игроки могут подключаться к кальяну владельца.",
+                    "guide.hookahmod.worn.line2",
                     "",
-                    "Сила брони зависит от уровня кальяна."
+                    "guide.hookahmod.worn.line3"
             ),
             gridPage(
-                    "Расходники",
-                    new String[]{"Уголь", "Вода", "Мундштук", "Короткий", "Длинный", "Контроль"},
+                    "guide.hookahmod.supplies.title",
                     new String[]{
-                            "Переплавьте уголь: получите 4 кальянных угля.",
-                            "Бутылка воды + 3 стекла = 2 воды для кальяна."
+                            "guide.hookahmod.supplies.caption1",
+                            "guide.hookahmod.supplies.caption2",
+                            "guide.hookahmod.supplies.caption3",
+                            "guide.hookahmod.supplies.caption4",
+                            "guide.hookahmod.supplies.caption5",
+                            "guide.hookahmod.supplies.caption6"
+                    },
+                    new String[]{
+                            "guide.hookahmod.supplies.line1",
+                            "guide.hookahmod.supplies.line2"
                     },
                     stack(ModItems.HOOKAH_CHARCOAL.get()),
                     stack(ModItems.HOOKAH_WATER_BOTTLE.get()),
@@ -139,23 +160,29 @@ public class GuideScreen extends Screen {
                     stack(ModItems.LONG_HOOKAH_HOSE.get()),
                     stack(ModItems.TONOMETER.get())
             ),
-
             textPage(
-                    "Основа табаков",
+                    "guide.hookahmod.tobacco_base.title",
                     stack(ModItems.HOOKAH_TOBACCO.get()),
-                    "Базовый табак выращивается из семян табака.",
+                    "guide.hookahmod.tobacco_base.line1",
                     "",
-                    "Все смеси создаются на его основе и складываются по 64.",
+                    "guide.hookahmod.tobacco_base.line2",
                     "",
-                    "Обычный табак не даёт дополнительного эффекта."
+                    "guide.hookahmod.tobacco_base.line3"
             ),
             gridPage(
-                    "Полезные смеси I",
-                    new String[]{"Яблоко", "Мёд", "Цитрус", "Кофе", "Мята", "Лаванда"},
+                    "guide.hookahmod.blends1.title",
                     new String[]{
-                            "Регенерация 20с • Насыщение 10с",
-                            "Спешка 30с • Скорость + Спешка 30с",
-                            "Скорость 30с • Ночное зрение 45с"
+                            "guide.hookahmod.blends1.caption1",
+                            "guide.hookahmod.blends1.caption2",
+                            "guide.hookahmod.blends1.caption3",
+                            "guide.hookahmod.blends1.caption4",
+                            "guide.hookahmod.blends1.caption5",
+                            "guide.hookahmod.blends1.caption6"
+                    },
+                    new String[]{
+                            "guide.hookahmod.blends1.line1",
+                            "guide.hookahmod.blends1.line2",
+                            "guide.hookahmod.blends1.line3"
                     },
                     stack(ModItems.TOBACCO_APPLE.get()),
                     stack(ModItems.TOBACCO_HONEY.get()),
@@ -164,61 +191,77 @@ public class GuideScreen extends Screen {
                     stack(ModItems.TOBACCO_MINT.get()),
                     stack(ModItems.TOBACCO_LAVENDER.get())
             ),
-
             gridPage(
-                    "Полезные смеси II",
-                    new String[]{"Шахтёр", "Путник", "Рыбак"},
+                    "guide.hookahmod.blends2.title",
                     new String[]{
-                            "Шахтёр: Ночное зрение + Спешка 45с.",
-                            "Путешественник: Скорость II 25с.",
-                            "Рыбак: Удача моря II 30с."
+                            "guide.hookahmod.blends2.caption1",
+                            "guide.hookahmod.blends2.caption2",
+                            "guide.hookahmod.blends2.caption3"
+                    },
+                    new String[]{
+                            "guide.hookahmod.blends2.line1",
+                            "guide.hookahmod.blends2.line2",
+                            "guide.hookahmod.blends2.line3"
                     },
                     stack(ModItems.TOBACCO_MINER.get()),
                     stack(ModItems.TOBACCO_TRAVELER.get()),
                     stack(ModItems.TOBACCO_FISHER.get())
             ),
             gridPage(
-                    "Боевые смеси",
-                    new String[]{"Яд", "Огонь", "Лёд", "Лечение"},
+                    "guide.hookahmod.combat.title",
                     new String[]{
-                            "Яд отравляет ближайших врагов.",
-                            "Огонь поджигает, лёд замедляет.",
-                            "Лечебный табак восстанавливает здоровье ближайших игроков."
+                            "guide.hookahmod.combat.caption1",
+                            "guide.hookahmod.combat.caption2",
+                            "guide.hookahmod.combat.caption3",
+                            "guide.hookahmod.combat.caption4"
+                    },
+                    new String[]{
+                            "guide.hookahmod.combat.line1",
+                            "guide.hookahmod.combat.line2",
+                            "guide.hookahmod.combat.line3"
                     },
                     stack(ModItems.TOBACCO_POISON.get()),
                     stack(ModItems.TOBACCO_FIRE.get()),
                     stack(ModItems.TOBACCO_ICE.get()),
                     stack(ModItems.TOBACCO_HEAL.get())
             ),
-
             gridPage(
-                    "Особые смеси",
-                    new String[]{"Бездна", "Гашиш", "Пал Палыч"},
+                    "guide.hookahmod.special.title",
                     new String[]{
-                            "Бездна: собственный эффект.",
-                            "Гашиш: визуальный шейдер.",
-                            "Пал Палыч: психоделический трип."
+                            "guide.hookahmod.special.caption1",
+                            "guide.hookahmod.special.caption2",
+                            "guide.hookahmod.special.caption3"
+                    },
+                    new String[]{
+                            "guide.hookahmod.special.line1",
+                            "guide.hookahmod.special.line2",
+                            "guide.hookahmod.special.line3"
                     },
                     stack(ModItems.TOBACCO_ABYSS.get()),
                     stack(ModItems.TOBACCO_HASHISH.get()),
                     stack(ModItems.TOBACCO_PALPALYCH.get())
             ),
             stagesPage(
-                    "Накуренность",
-                    "Трезв",
-                    "Расслаблен",
-                    "Накурен",
-                    "Трип",
-                    "Передоз"
+                    "guide.hookahmod.stages.title",
+                    "guide.hookahmod.stages.line1",
+                    "guide.hookahmod.stages.line2",
+                    "guide.hookahmod.stages.line3",
+                    "guide.hookahmod.stages.line4",
+                    "guide.hookahmod.stages.line5"
             ),
-
             gridPage(
-                    "Культуры",
-                    new String[]{"Табак", "Мята", "Лаванда", "Лист мяты", "Лаванда"},
+                    "guide.hookahmod.crops.title",
                     new String[]{
-                            "Посадка — на грядку.",
-                            "У культур 8 стадий роста.",
-                            "Урожай для табаков."
+                            "guide.hookahmod.crops.caption1",
+                            "guide.hookahmod.crops.caption2",
+                            "guide.hookahmod.crops.caption3",
+                            "guide.hookahmod.crops.caption4",
+                            "guide.hookahmod.crops.caption5"
+                    },
+                    new String[]{
+                            "guide.hookahmod.crops.line1",
+                            "guide.hookahmod.crops.line2",
+                            "guide.hookahmod.crops.line3"
                     },
                     stack(ModItems.TOBACCO_SEED.get()),
                     stack(ModItems.MINT_SEED.get()),
@@ -227,36 +270,40 @@ public class GuideScreen extends Screen {
                     stack(ModItems.LAVENDER.get())
             ),
             gridPage(
-                    "Croptopia",
-                    new String[]{"Цитрус", "Кофе", "Морковь", "Какао"},
+                    "guide.hookahmod.croptopia.title",
                     new String[]{
-                            "С Croptopia: апельсин, лимон, лайм и coffee_beans.",
-                            "Без неё: морковь и cocoa_beans."
+                            "guide.hookahmod.croptopia.caption1",
+                            "guide.hookahmod.croptopia.caption2",
+                            "guide.hookahmod.croptopia.caption3",
+                            "guide.hookahmod.croptopia.caption4"
+                    },
+                    new String[]{
+                            "guide.hookahmod.croptopia.line1",
+                            "guide.hookahmod.croptopia.line2"
                     },
                     stack(ModItems.TOBACCO_CITRUS.get()),
                     stack(ModItems.TOBACCO_COFFEE.get()),
                     stack(Items.CARROT),
                     stack(Items.COCOA_BEANS)
             ),
-
             flowPage(
-                    "Полезные рецепты",
+                    "guide.hookahmod.recipes.title",
                     new String[]{
-                            "Книга создаётся из обычной книги и базового табака.",
-                            "Рецепты доступны в JEI, если он установлен."
+                            "guide.hookahmod.recipes.line1",
+                            "guide.hookahmod.recipes.line2"
                     },
                     stack(Items.BOOK),
                     stack(ModItems.HOOKAH_TOBACCO.get()),
                     stack(ModItems.GUIDEBOOK.get())
             ),
             textPage(
-                    "Добрый дым",
+                    "guide.hookahmod.outro.title",
                     stack(ModItems.GUIDEBOOK.get()),
-                    "Следите за стадией накуренности тонометром.",
+                    "guide.hookahmod.outro.line1",
                     "",
-                    "Передозировка даёт отрицательные эффекты, поэтому делайте перерывы.",
+                    "guide.hookahmod.outro.line2",
                     "",
-                    "Наведение на любую иконку в книге показывает название предмета."
+                    "guide.hookahmod.outro.line3"
             )
     );
 
@@ -268,7 +315,7 @@ public class GuideScreen extends Screen {
     private ItemStack hoveredStack = ItemStack.EMPTY;
 
     public GuideScreen() {
-        super(Component.literal("Руководство по кальяну"));
+        super(Component.translatable("guide.hookahmod.screen_title"));
     }
 
     @Override
@@ -289,7 +336,7 @@ public class GuideScreen extends Screen {
                     bookY - 13,
                     tabWidth,
                     18,
-                    Component.literal(chapter.name()),
+                    Component.translatable(chapter.nameKey()),
                     pressed -> jumpToChapter(chapter),
                     chapter.color()
             );
@@ -303,7 +350,7 @@ public class GuideScreen extends Screen {
         ));
         this.contentsButton = this.addRenderableWidget(new BookButton(
                 bookX + BOOK_WIDTH / 2 - 38, navigationY, 76, 18,
-                Component.literal("Оглавление"), button -> setSpread(0), COVER
+                Component.translatable("guide.hookahmod.contents_button"), button -> setSpread(0), COVER
         ));
         this.nextButton = this.addRenderableWidget(new BookButton(
                 bookX + BOOK_WIDTH - 46, navigationY, 28, 18,
@@ -545,7 +592,7 @@ public class GuideScreen extends Screen {
 
         graphics.drawCenteredString(
                 this.font,
-                Component.literal("Выберите вкладку сверху").withStyle(ChatFormatting.ITALIC),
+                Component.translatable("guide.hookahmod.index_hint").withStyle(ChatFormatting.ITALIC),
                 x + PAGE_WIDTH / 2,
                 y + 151,
                 INK_MUTED
@@ -568,14 +615,14 @@ public class GuideScreen extends Screen {
 
         graphics.drawCenteredString(
                 this.font,
-                Component.literal("Передозировка даёт").withStyle(ChatFormatting.DARK_RED),
+                Component.translatable("guide.hookahmod.overdose_warning1").withStyle(ChatFormatting.DARK_RED),
                 x + PAGE_WIDTH / 2,
                 y + 145,
                 0xFF8B2525
         );
         graphics.drawCenteredString(
                 this.font,
-                Component.literal("негативные эффекты").withStyle(ChatFormatting.DARK_RED),
+                Component.translatable("guide.hookahmod.overdose_warning2").withStyle(ChatFormatting.DARK_RED),
                 x + PAGE_WIDTH / 2,
                 y + 154,
                 0xFF8B2525
@@ -727,7 +774,7 @@ public class GuideScreen extends Screen {
 
     private static GuidePage textPage(String title, ItemStack icon, String... lines) {
         return new GuidePage(
-                Component.literal(title),
+                Component.translatable(title),
                 components(lines),
                 List.of(icon),
                 List.of(),
@@ -737,7 +784,7 @@ public class GuideScreen extends Screen {
 
     private static GuidePage flowPage(String title, String[] lines, ItemStack... icons) {
         return new GuidePage(
-                Component.literal(title),
+                Component.translatable(title),
                 components(lines),
                 List.of(icons),
                 List.of(),
@@ -752,7 +799,7 @@ public class GuideScreen extends Screen {
             ItemStack... icons
     ) {
         return new GuidePage(
-                Component.literal(title),
+                Component.translatable(title),
                 components(lines),
                 List.of(icons),
                 components(captions),
@@ -762,7 +809,7 @@ public class GuideScreen extends Screen {
 
     private static GuidePage indexPage(String title, String[] captions, ItemStack... icons) {
         return new GuidePage(
-                Component.literal(title),
+                Component.translatable(title),
                 List.of(),
                 List.of(icons),
                 components(captions),
@@ -772,7 +819,7 @@ public class GuideScreen extends Screen {
 
     private static GuidePage stagesPage(String title, String... stages) {
         return new GuidePage(
-                Component.literal(title),
+                Component.translatable(title),
                 components(stages),
                 List.of(stack(ModItems.TONOMETER.get())),
                 List.of(),
@@ -780,10 +827,10 @@ public class GuideScreen extends Screen {
         );
     }
 
-    private static List<Component> components(String... lines) {
-        List<Component> components = new ArrayList<>(lines.length);
-        for (String line : lines) {
-            components.add(Component.literal(line));
+    private static List<Component> components(String... keys) {
+        List<Component> components = new ArrayList<>(keys.length);
+        for (String key : keys) {
+            components.add(key.isEmpty() ? Component.empty() : Component.translatable(key));
         }
         return List.copyOf(components);
     }
@@ -792,7 +839,7 @@ public class GuideScreen extends Screen {
         return new ItemStack(item);
     }
 
-    private record Chapter(String name, int firstSpread, int color) {
+    private record Chapter(String nameKey, int firstSpread, int color) {
     }
 
     private record GuidePage(

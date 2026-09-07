@@ -16,6 +16,7 @@ import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
 import com.hookahmod.smoking.HookahProgress;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.HolderLookup;
@@ -200,7 +201,7 @@ public class HookahBlockEntity extends BlockEntity {
     }
 
     public void applyExhale(ServerPlayer player, float charge) {
-        if (level == null || !(level instanceof ServerLevel server)) return;
+        if (!(level instanceof ServerLevel server)) return;
         if (!ActiveSessions.server().owns(player.getUUID(), this) || !isPlayerInRange(player) || !hasAllConsumables()) return;
 
         ItemStack tobaccoStack = items.get(SLOT_TOBACCO);
@@ -262,18 +263,17 @@ public class HookahBlockEntity extends BlockEntity {
         if (level instanceof ServerLevel server) {
             BlockState s = getBlockState();
             boolean hasCoal = !items.get(SLOT_COAL).isEmpty();
-            if (s.hasProperty(com.hookahmod.block.HookahBlock.HAS_COAL)
-                    && s.getValue(com.hookahmod.block.HookahBlock.HAS_COAL) != hasCoal) {
-                server.setBlock(worldPosition, s.setValue(com.hookahmod.block.HookahBlock.HAS_COAL, hasCoal), 3);
+            if (s.hasProperty(HookahBlock.HAS_COAL)
+                    && s.getValue(HookahBlock.HAS_COAL) != hasCoal) {
+                server.setBlock(worldPosition, s.setValue(HookahBlock.HAS_COAL, hasCoal), 3);
             } else {
                 server.sendBlockUpdated(worldPosition, s, s, 3);
             }
-            HookahSyncPayload payload = new HookahSyncPayload(worldPosition, activePlayerUuid);
-            for (ServerPlayer p : server.players()) {
-                if (p.distanceToSqr(Vec3.atCenterOf(worldPosition)) < 128.0 * 128.0) {
-                    PacketDistributor.sendToPlayer(p, payload);
-                }
-            }
+            PacketDistributor.sendToPlayersTrackingChunk(
+                    server,
+                    new ChunkPos(worldPosition),
+                    new HookahSyncPayload(worldPosition, activePlayerUuid)
+            );
         }
     }
 
@@ -344,7 +344,13 @@ public class HookahBlockEntity extends BlockEntity {
             return s;
         }
 
-        @Override public ItemStack removeItemNoUpdate(int slot) { return ContainerHelper.takeItem(backing, slot); }
+        @Override
+        public ItemStack removeItemNoUpdate(int slot) {
+            ItemStack s = ContainerHelper.takeItem(backing, slot);
+            if (!s.isEmpty()) onChange.run();
+            return s;
+        }
+
         @Override public void setItem(int slot, ItemStack stack) { backing.set(slot, stack); onChange.run(); }
         @Override public void setChanged() { onChange.run(); }
         @Override public boolean stillValid(Player player) { return Container.stillValidBlockEntity(be, player); }

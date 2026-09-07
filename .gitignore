@@ -12,3 +12,6 @@ run-data/
 bin/
 *.class
 *.log
+
+build_out.txt
+*.tmp

@@ -2,6 +2,7 @@ package com.hookahmod.network;
 
 import com.hookahmod.HookahMod;
 import com.hookahmod.block.HookahBlockEntity;
+import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.WornHookah;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -43,7 +44,8 @@ public record ToggleMouthpiecePayload(BlockPos pos, Optional<UUID> wearer) imple
             if (!(ctx.player() instanceof ServerPlayer player)) return;
             if (payload.wearer.isPresent()) {
                 ServerPlayer wearer = player.server.getPlayerList().getPlayer(payload.wearer.get());
-                if (wearer == null || player.level() != wearer.level() || player.distanceToSqr(wearer) > 64.0) return;
+                if (wearer == null || player.level() != wearer.level()
+                        || player.distanceToSqr(wearer) > HookahHoseType.maxRangeSqr()) return;
                 ItemStack stack = wearer.getItemBySlot(EquipmentSlot.CHEST);
                 if (WornHookah.isHookahStack(stack)) {
                     WornHookah.tryTakeMouthpiece(player, wearer, stack);
@@ -51,7 +53,7 @@ public record ToggleMouthpiecePayload(BlockPos pos, Optional<UUID> wearer) imple
                 return;
             }
             if (!player.level().isLoaded(payload.pos)) return;
-            if (player.distanceToSqr(Vec3.atCenterOf(payload.pos)) > 64.0) return;
+            if (player.distanceToSqr(Vec3.atCenterOf(payload.pos)) > HookahHoseType.maxRangeSqr()) return;
             if (player.level().getBlockEntity(payload.pos) instanceof HookahBlockEntity be) {
                 be.tryTakeMouthpiece(player);
             }

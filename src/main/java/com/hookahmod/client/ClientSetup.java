@@ -36,7 +36,7 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
-@EventBusSubscriber(modid = HookahMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = HookahMod.MOD_ID, value = Dist.CLIENT)
 public final class ClientSetup {
 
     private static final KeyMapping OPEN_WORN_HOOKAH = new KeyMapping(

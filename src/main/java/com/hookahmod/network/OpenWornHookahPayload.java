@@ -2,6 +2,7 @@ package com.hookahmod.network;
 
 import com.hookahmod.HookahMod;
 import com.hookahmod.item.WornHookah;
+import com.hookahmod.menu.HookahMenu;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.StreamCodec;
@@ -31,7 +32,7 @@ public record OpenWornHookahPayload() implements CustomPacketPayload {
                 return;
             }
             player.openMenu(new SimpleMenuProvider(
-                    (id, inv, p) -> new com.hookahmod.menu.HookahMenu(id, inv, player.getUUID()),
+                    (id, inv, p) -> new HookahMenu(id, inv, player.getUUID()),
                     Component.translatable("container.hookahmod.hookah")
             ), buf -> buf.writeBoolean(true));
         });

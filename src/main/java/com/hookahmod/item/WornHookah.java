@@ -54,26 +54,33 @@ public final class WornHookah {
         return new StackContainer(stack, wearer);
     }
 
+    public static ItemStack itemAt(ItemStack stack, int slot) {
+        ItemContainerContents contents = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+        return slot < contents.getSlots() ? contents.getStackInSlot(slot) : ItemStack.EMPTY;
+    }
+
     public static HookahHoseType getHoseType(ItemStack stack) {
-        ItemStack hoseStack = getItems(stack).get(HookahBlockEntity.SLOT_HOSE);
+        ItemStack hoseStack = itemAt(stack, HookahBlockEntity.SLOT_HOSE);
         if (hoseStack.getItem() instanceof HookahHoseItem hose) return hose.getHoseType();
         return HookahHoseType.NONE;
     }
 
     public static boolean hasAllConsumables(ItemStack stack) {
-        NonNullList<ItemStack> items = getItems(stack);
-        return !items.get(HookahBlockEntity.SLOT_TOBACCO).isEmpty()
-                && !items.get(HookahBlockEntity.SLOT_COAL).isEmpty()
-                && !items.get(HookahBlockEntity.SLOT_WATER).isEmpty();
+        ItemContainerContents contents = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+        return contents.getSlots() > HookahBlockEntity.SLOT_WATER
+                && !contents.getStackInSlot(HookahBlockEntity.SLOT_TOBACCO).isEmpty()
+                && !contents.getStackInSlot(HookahBlockEntity.SLOT_COAL).isEmpty()
+                && !contents.getStackInSlot(HookahBlockEntity.SLOT_WATER).isEmpty();
     }
 
     public static boolean hasCoal(ItemStack stack) {
-        return !getItems(stack).get(HookahBlockEntity.SLOT_COAL).isEmpty();
+        return !itemAt(stack, HookahBlockEntity.SLOT_COAL).isEmpty();
     }
 
     @Nullable
     public static UUID getActivePlayerUuid(ItemStack stack) {
         CustomData data = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
+        if (!data.contains(ACTIVE_PLAYER_TAG)) return null;
         CompoundTag tag = data.copyTag();
         return tag.hasUUID(ACTIVE_PLAYER_TAG) ? tag.getUUID(ACTIVE_PLAYER_TAG) : null;
     }
@@ -87,6 +94,7 @@ public final class WornHookah {
     }
 
     public static CustomData withoutActivePlayer(CustomData data) {
+        if (!data.contains(ACTIVE_PLAYER_TAG)) return data;
         CompoundTag tag = data.copyTag();
         tag.remove(ACTIVE_PLAYER_TAG);
         return CustomData.of(tag);

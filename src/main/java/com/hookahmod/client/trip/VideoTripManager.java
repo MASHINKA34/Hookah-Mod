@@ -1,6 +1,7 @@
 package com.hookahmod.client.trip;
 
 import com.hookahmod.HookahMod;
+import com.hookahmod.config.HookahClientConfig;
 import com.hookahmod.effect.ModMobEffects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -37,6 +38,7 @@ public final class VideoTripManager {
     private VideoTripManager() {}
 
     public static void start() {
+        if (!HookahClientConfig.videoTripEnabled()) return;
         active = true;
         ageTicks = 0;
         loadedSheets = 0;

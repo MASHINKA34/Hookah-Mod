@@ -47,6 +47,11 @@ on both sides. Changing the file and reloading applies without a restart.
 Servers that want no PvP impact can set `combat.enabled = false`; servers on tight CPU budgets can
 lower `smoke.maxRoomAirBlocks` or turn `smoke.roomSmokeEnabled` off entirely.
 
+Trip visuals are separate. `hookahmod-client.toml` (in `config/`) is local to each player and never
+affects gameplay, so anyone sensitive to flashing images, jump scares or camera motion can turn off
+the in-world visions, the screamer, the full-screen video, the spiral shader, or the camera sway
+on its own — `trips.enabled = false` disables all of them at once.
+
 ## Building
 
 ```

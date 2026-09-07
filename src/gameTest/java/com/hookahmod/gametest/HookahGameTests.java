@@ -4,6 +4,7 @@ import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.block.HookahBlock;
 import com.hookahmod.block.HookahLightBlock;
 import com.hookahmod.event.ActiveSessions;
+import com.hookahmod.event.ChickenPoopHandler;
 import com.hookahmod.config.HookahConfig;
 import com.hookahmod.event.ServerEvents;
 import com.hookahmod.item.HookahHoseType;
@@ -32,6 +33,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -745,6 +747,97 @@ public class HookahGameTests {
             HookahConfig.combatEnabled = previousEnabled;
             HookahConfig.combatBlockChanges = previousBlockChanges;
         }
+    }
+
+    @GameTest(template = "empty")
+    public static void removingADesyncedHookahDoesNotBringTheBlockBack(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer player = players.create(helper.getLevel());
+            BlockPos pos = new BlockPos(1, 1, 0);
+            HookahBlockEntity hookah = block(helper, pos);
+            hookah.getInventory().setItem(HookahBlockEntity.SLOT_COAL, new ItemStack(ModItems.HOOKAH_CHARCOAL.get()));
+            helper.assertTrue(hookah.tryTakeMouthpiece(player), "Smoker must claim the hookah");
+
+            // Force the block state to disagree with the coal slot, which is what
+            // would make the release path write the hookah back over the air.
+            BlockPos absolute = helper.absolutePos(pos);
+            helper.getLevel().setBlock(absolute,
+                    helper.getBlockState(pos).setValue(HookahBlock.HAS_COAL, false), 3);
+            helper.assertTrue(!hookah.getBlockState().getValue(HookahBlock.HAS_COAL),
+                    "Test needs the block state and the coal slot to disagree");
+
+            helper.getLevel().removeBlock(absolute, false);
+            helper.assertBlockNotPresent(ModBlocks.HOOKAH.get(), pos);
+            helper.assertTrue(hookah.getActivePlayerUuid() == null, "Removal must end the session");
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = "empty")
+    public static void bothCarriersRefuseADrawOutOfReach(GameTestHelper helper) {
+        try (Players players = new Players(helper)) {
+            ServerPlayer smoker = players.create(helper.getLevel());
+            ServerPlayer wearer = players.create(helper.getLevel());
+            HookahBlockEntity hookah = block(helper, new BlockPos(1, 1, 0));
+            ItemStack contents = equip(smoker).copy();
+            smoker.setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY);
+            hookah.loadItemsFromStack(contents);
+
+            helper.assertTrue(hookah.tryTakeMouthpiece(smoker), "Smoker must claim the block hookah");
+            IntoxicationState.setAndSync(smoker, 0.0f);
+            smoker.setPos(smoker.getX() + 200.0, smoker.getY(), smoker.getZ());
+            hookah.applyExhale(smoker, 1.0f);
+            helper.assertTrue(IntoxicationState.get(smoker) == 0.0f, "A block draw out of reach must do nothing");
+            hookah.releaseMouthpiece();
+
+            smoker.setPos(wearer.getX(), wearer.getY(), wearer.getZ());
+            ItemStack worn = equip(wearer);
+            helper.assertTrue(WornHookah.tryTakeMouthpiece(smoker, wearer, worn), "Smoker must claim the worn hookah");
+            smoker.setPos(smoker.getX() + 200.0, smoker.getY(), smoker.getZ());
+            WornHookah.applyExhale(smoker, wearer, worn, 1.0f);
+            helper.assertTrue(IntoxicationState.get(smoker) == 0.0f, "A worn draw out of reach must do nothing");
+            helper.succeed();
+        }
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void chickenPoopIsDroppedWhileItsChanceIsPositive(GameTestHelper helper) {
+        float previous = HookahConfig.chickenPoopChance;
+        HookahConfig.chickenPoopChance = 1.0f;
+        ChickenPoopHandler.syncRegistration();
+        Chicken chicken = helper.spawn(EntityType.CHICKEN, new BlockPos(1, 2, 1));
+        chicken.eggTime = 1;
+        helper.runAfterDelay(3, () -> {
+            HookahConfig.chickenPoopChance = previous;
+            ChickenPoopHandler.syncRegistration();
+            helper.assertTrue(droppedPoop(helper), "A laying chicken must drop poop at chance 1");
+            helper.succeed();
+        });
+    }
+
+    @GameTest(template = "empty", timeoutTicks = 60)
+    public static void chickenPoopStopsWhenItsChanceIsZero(GameTestHelper helper) {
+        float previous = HookahConfig.chickenPoopChance;
+        HookahConfig.chickenPoopChance = 0.0f;
+        ChickenPoopHandler.syncRegistration();
+        Chicken chicken = helper.spawn(EntityType.CHICKEN, new BlockPos(1, 2, 1));
+        chicken.eggTime = 1;
+        helper.runAfterDelay(3, () -> {
+            HookahConfig.chickenPoopChance = previous;
+            ChickenPoopHandler.syncRegistration();
+            helper.assertTrue(!droppedPoop(helper), "Chance 0 must unhook the listener entirely");
+            helper.succeed();
+        });
+    }
+
+    private static boolean droppedPoop(GameTestHelper helper) {
+        AABB area = AABB.encapsulatingFullBlocks(
+                helper.absolutePos(new BlockPos(-2, 0, -2)),
+                helper.absolutePos(new BlockPos(4, 5, 4)));
+        for (ItemEntity item : helper.getLevel().getEntitiesOfClass(ItemEntity.class, area)) {
+            if (item.getItem().is(ModItems.CHICKEN_POOP.get())) return true;
+        }
+        return false;
     }
 
     private static PlayerInteractEvent.RightClickBlock rightClick(ServerPlayer player, BlockPos pos) {

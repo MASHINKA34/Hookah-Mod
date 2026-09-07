@@ -5,6 +5,8 @@ import com.hookahmod.config.HookahConfig;
 import com.hookahmod.event.ActiveSessions;
 import com.hookahmod.registry.ModParticles;
 import com.hookahmod.smoke.HookahSmoke;
+import com.hookahmod.smoking.HookahHost;
+import com.hookahmod.smoking.HookahSessions;
 import com.hookahmod.smoking.ModAttachments;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.core.particles.ColorParticleOption;
@@ -34,7 +36,6 @@ import software.bernie.geckolib.util.GeckoLibUtil;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
-import java.util.UUID;
 
 public class HookahMouthpieceItem extends Item implements GeoItem {
 
@@ -82,44 +83,24 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
     // ── Start using ─────────────────────────────────────────────────
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
-        if (level.isClientSide
-                && ActiveSessions.of(level).get(player.getUUID()) == null
-                && ActiveSessions.of(level).getWornWearer(player.getUUID()) == null) {
-            return InteractionResultHolder.fail(player.getItemInHand(hand));
-        }
-        if (!level.isClientSide
-                && ActiveSessions.of(level).get(player.getUUID()) == null
-                && ActiveSessions.of(level).getWornWearer(player.getUUID()) == null) {
-            player.displayClientMessage(Component.translatable("message.hookahmod.claim_first"), true);
-            return InteractionResultHolder.fail(player.getItemInHand(hand));
+        ItemStack held = player.getItemInHand(hand);
+        if (!isClaimedBy(player, level)) {
+            if (!level.isClientSide) {
+                player.displayClientMessage(Component.translatable("message.hookahmod.claim_first"), true);
+            }
+            return InteractionResultHolder.fail(held);
         }
         if (!level.isClientSide) {
-            HookahBlockEntity be = findClaimedHookah(player, level);
-            if (be != null) {
-                if (player.distanceToSqr(Vec3.atCenterOf(be.getBlockPos())) > be.getHoseType().getMaxLength() * be.getHoseType().getMaxLength()) {
-                    player.displayClientMessage(Component.translatable("message.hookahmod.slipped"), true);
-                    return InteractionResultHolder.fail(player.getItemInHand(hand));
-                }
-                if (!be.hasAllConsumables()) {
-                    player.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
-                    return InteractionResultHolder.fail(player.getItemInHand(hand));
-                }
-            } else {
-                Player wearer = WornHookah.findClaimedWearer(player, level);
-                ItemStack wornHookah = WornHookah.findClaimedStack(player, level);
-                if (wearer == null || wornHookah.isEmpty()) return InteractionResultHolder.fail(player.getItemInHand(hand));
-                if (!WornHookah.isUserInRange(player, wearer, wornHookah)) {
-                    player.displayClientMessage(Component.translatable("message.hookahmod.slipped"), true);
-                    return InteractionResultHolder.fail(player.getItemInHand(hand));
-                }
-                if (!WornHookah.hasAllConsumables(wornHookah)) {
-                    player.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
-                    return InteractionResultHolder.fail(player.getItemInHand(hand));
-                }
+            HookahHost host = claimedHost(player, level);
+            if (host == null) return InteractionResultHolder.fail(held);
+            DrawBlocker blocker = blocker(host, player);
+            if (blocker != null) {
+                player.displayClientMessage(Component.translatable(blocker.messageKey), true);
+                return InteractionResultHolder.fail(held);
             }
         }
         startSmoking(level, player, hand);
-        return InteractionResultHolder.consume(player.getItemInHand(hand));
+        return InteractionResultHolder.consume(held);
     }
 
     public void startSmoking(Level level, Player player, InteractionHand hand) {
@@ -133,33 +114,16 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
         if (!(entity instanceof Player player)) return;
         if (level.isClientSide || remainingTicks % 5 != 0) return;
 
-        HookahBlockEntity be = findClaimedHookah(player, level);
-        if (be != null) {
-            if (player.distanceToSqr(Vec3.atCenterOf(be.getBlockPos())) > be.getHoseType().getMaxLength() * be.getHoseType().getMaxLength()) {
-                triggerMouthpieceAnimation(level, player, stack, "return");
-                player.stopUsingItem();
-                return;
-            }
-            if (!be.hasAllConsumables()) {
-                if (player instanceof ServerPlayer sp)
-                    sp.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
-                triggerMouthpieceAnimation(level, player, stack, "return");
-                player.stopUsingItem();
-            }
-            return;
-        }
+        HookahHost host = claimedHost(player, level);
+        DrawBlocker blocker = host == null ? DrawBlocker.OUT_OF_REACH : blocker(host, player);
+        if (blocker == null) return;
 
-        Player wearer = WornHookah.findClaimedWearer(player, level);
-        ItemStack wornHookah = WornHookah.findClaimedStack(player, level);
-        if (wearer == null || wornHookah.isEmpty()
-                || !WornHookah.isUserInRange(player, wearer, wornHookah)
-                || !WornHookah.hasAllConsumables(wornHookah)) {
-            if (player instanceof ServerPlayer sp && !wornHookah.isEmpty() && !WornHookah.hasAllConsumables(wornHookah)) {
-                sp.displayClientMessage(Component.translatable("gui.hookahmod.fill_slots"), true);
-            }
-            triggerMouthpieceAnimation(level, player, stack, "return");
-            player.stopUsingItem();
+        // Walking out of reach speaks for itself; an empty bowl does not.
+        if (blocker.announceWhileDrawing) {
+            player.displayClientMessage(Component.translatable(blocker.messageKey), true);
         }
+        triggerMouthpieceAnimation(level, player, stack, "return");
+        player.stopUsingItem();
     }
 
     // ── Released early: exhale based on charge ───────────────────────
@@ -212,19 +176,8 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
         }
 
         if (!(player instanceof ServerPlayer sp)) return;
-        HookahBlockEntity be = findClaimedHookah(player, level);
-        if (be != null) {
-            if (be.hasAllConsumables()) be.applyExhale(sp, charge);
-            return;
-        }
-
-        Player wearer = WornHookah.findClaimedWearer(player, level);
-        ItemStack wornHookah = WornHookah.findClaimedStack(player, level);
-        if (wearer instanceof ServerPlayer serverWearer
-                && !wornHookah.isEmpty()
-                && WornHookah.hasAllConsumables(wornHookah)) {
-            WornHookah.applyExhale(sp, serverWearer, wornHookah, charge);
-        }
+        HookahHost host = claimedHost(player, level);
+        if (host != null) HookahSessions.exhale(sp, host, charge);
     }
 
     private static boolean consumeExhaleCooldown(Player player, Level level) {
@@ -235,6 +188,49 @@ public class HookahMouthpieceItem extends Item implements GeoItem {
         if (last != Long.MIN_VALUE && now >= last && now - last < cooldown) return false;
         player.setData(ModAttachments.LAST_EXHALE_TICK.get(), now);
         return true;
+    }
+
+    /**
+     * The mouthpiece treats a hookah on the floor and one on a back the same
+     * way; only resolving the claimed hookah differs.
+     */
+    @Nullable
+    private static HookahHost claimedHost(Player player, Level level) {
+        HookahBlockEntity be = findClaimedHookah(player, level);
+        if (be != null) return be;
+
+        Player wearer = WornHookah.findClaimedWearer(player, level);
+        ItemStack worn = WornHookah.findClaimedStack(player, level);
+        if (wearer instanceof ServerPlayer serverWearer && !worn.isEmpty()) {
+            return new WornHookahHost(serverWearer, worn);
+        }
+        return null;
+    }
+
+    private static boolean isClaimedBy(Player player, Level level) {
+        ActiveSessions sessions = ActiveSessions.of(level);
+        return sessions.get(player.getUUID()) != null || sessions.getWornWearer(player.getUUID()) != null;
+    }
+
+    /** What stops the draw, or null when it may go on. */
+    @Nullable
+    private static DrawBlocker blocker(HookahHost host, Player player) {
+        if (!host.inRange(player)) return DrawBlocker.OUT_OF_REACH;
+        if (!host.hasAllConsumables()) return DrawBlocker.EMPTY_BOWL;
+        return null;
+    }
+
+    private enum DrawBlocker {
+        OUT_OF_REACH("message.hookahmod.slipped", false),
+        EMPTY_BOWL("gui.hookahmod.fill_slots", true);
+
+        private final String messageKey;
+        private final boolean announceWhileDrawing;
+
+        DrawBlocker(String messageKey, boolean announceWhileDrawing) {
+            this.messageKey = messageKey;
+            this.announceWhileDrawing = announceWhileDrawing;
+        }
     }
 
     @Nullable

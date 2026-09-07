@@ -15,3 +15,6 @@ bin/
 
 build_out.txt
 *.tmp
+
+# Third-party jars are resolved from Maven, not committed
+libs/

@@ -7,6 +7,7 @@ import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModMenuTypes;
+import com.hookahmod.smoking.HookahHost;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.Container;
 import net.minecraft.world.SimpleContainer;
@@ -152,10 +153,7 @@ public class HookahMenu extends AbstractContainerMenu {
     }
 
     public boolean hasAllConsumables() {
-        if (blockEntity != null) return blockEntity.hasAllConsumables();
-        return !container.getItem(HookahBlockEntity.SLOT_TOBACCO).isEmpty()
-                && !container.getItem(HookahBlockEntity.SLOT_COAL).isEmpty()
-                && !container.getItem(HookahBlockEntity.SLOT_WATER).isEmpty();
+        return HookahHost.hasAllConsumables(container::getItem);
     }
 
     private ItemStack getWearerStack() {

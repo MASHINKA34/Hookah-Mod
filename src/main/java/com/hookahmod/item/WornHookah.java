@@ -2,17 +2,14 @@ package com.hookahmod.item;
 
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.event.ActiveSessions;
-import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.network.WornHookahSyncPayload;
 import com.hookahmod.registry.ModItems;
-import com.hookahmod.smoke.HookahSmoke;
-import com.hookahmod.smoking.IntoxicationState;
+import com.hookahmod.smoking.HookahHost;
 import com.hookahmod.smoking.HookahProgress;
+import com.hookahmod.smoking.HookahSessions;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
@@ -23,10 +20,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
 
 import java.util.List;
 import java.util.UUID;
@@ -66,11 +61,7 @@ public final class WornHookah {
     }
 
     public static boolean hasAllConsumables(ItemStack stack) {
-        ItemContainerContents contents = stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
-        return contents.getSlots() > HookahBlockEntity.SLOT_WATER
-                && !contents.getStackInSlot(HookahBlockEntity.SLOT_TOBACCO).isEmpty()
-                && !contents.getStackInSlot(HookahBlockEntity.SLOT_COAL).isEmpty()
-                && !contents.getStackInSlot(HookahBlockEntity.SLOT_WATER).isEmpty();
+        return HookahHost.hasAllConsumables(slot -> itemAt(stack, slot));
     }
 
     public static boolean hasCoal(ItemStack stack) {
@@ -113,35 +104,8 @@ public final class WornHookah {
     }
 
     public static boolean tryTakeMouthpiece(ServerPlayer player, ServerPlayer wearer, ItemStack stack) {
-        if (wearer.getItemBySlot(EquipmentSlot.CHEST) != stack || !isHookahStack(stack)
-                || !player.isAlive() || !wearer.isAlive() || player.isSpectator() || wearer.isSpectator()
-                || player.level() != wearer.level()) return false;
-        clearStaleSession(stack);
-        HookahHoseType hoseType = getHoseType(stack);
-        if (!hoseType.isPresent()) {
-            player.displayClientMessage(Component.translatable("message.hookahmod.install_hose"), true);
-            return false;
-        }
-        if (!isUserInRange(player, wearer, stack)) return false;
-
-        UUID active = getActivePlayerUuid(stack);
-        if (active != null && !active.equals(player.getUUID())) {
-            player.displayClientMessage(Component.translatable("message.hookahmod.busy"), true);
-            return false;
-        }
-        if (active != null) {
-            releaseMouthpiece(wearer, stack);
-            return true;
-        }
-        if (!playerHasMouthpiece(player)) {
-            player.displayClientMessage(Component.translatable("message.hookahmod.no_mouthpiece"), true);
-            return false;
-        }
-
-        ActiveSessions.server().beginWorn(player, wearer, stack);
-        setActivePlayerUuid(stack, player.getUUID());
-        PacketDistributor.sendToPlayer(player, WornHookahSyncPayload.claim(wearer.getUUID()));
-        return true;
+        if (!isHookahStack(stack) || wearer.getItemBySlot(EquipmentSlot.CHEST) != stack) return false;
+        return HookahSessions.toggle(player, new WornHookahHost(wearer, stack));
     }
 
     public static boolean playerHasMouthpiece(Player player) {
@@ -180,43 +144,10 @@ public final class WornHookah {
     }
 
     public static void applyExhale(ServerPlayer player, ServerPlayer wearer, ItemStack stack, float charge) {
-        if (!(player.level() instanceof ServerLevel server)) return;
-        if (!ActiveSessions.server().owns(player.getUUID(), stack)
-                || wearer.getItemBySlot(EquipmentSlot.CHEST) != stack
-                || !isUserInRange(player, wearer, stack) || !hasAllConsumables(stack)) return;
-
-        NonNullList<ItemStack> items = getItems(stack);
-        ItemStack tobaccoStack = items.get(HookahBlockEntity.SLOT_TOBACCO);
-        HookahTier tier = HookahTier.fromStack(stack);
-        Vector3f smokeColor = tobaccoStack.getItem() instanceof AbstractTobaccoItem tobaccoForSmoke
-                ? tobaccoForSmoke.smokeColor()
-                : null;
-        Vec3 hookahPoint = wearer.position().add(0, wearer.getBbHeight() * 0.72, 0);
-        HookahSmoke.spawnExhaleSmoke(server, hookahPoint, player, charge, smokeColor);
-
-        player.level().playSound(null, wearer.blockPosition(), net.minecraft.sounds.SoundEvents.GENERIC_DRINK,
-                net.minecraft.sounds.SoundSource.PLAYERS, 0.15f + charge * 0.4f, 1.6f);
-
-        if (tobaccoStack.getItem() instanceof AbstractTobaccoItem tobacco) {
-            IntoxicationState.add(player, IntoxicationState.gain(tobacco.intoxication(), charge));
-            tobacco.onExhale(
-                    server,
-                    player,
-                    charge,
-                    tier.effectMult(),
-                    tier.combatMult() * KingdomsIntegration.hookahCombatMultiplier(player, wearer)
-            );
-        } else {
-            IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.plainTobaccoIntoxication(), charge));
-        }
-
-        KingdomsIntegration.onHookahPuff(player, charge);
-        if (!KingdomsIntegration.hasHookahMastery(player, wearer)) {
-            depleteConsumables(stack, player);
-        }
+        HookahSessions.exhale(player, new WornHookahHost(wearer, stack), charge);
     }
 
-    private static void depleteConsumables(ItemStack stack, ServerPlayer player) {
+    static void depleteConsumables(ItemStack stack, ServerPlayer player) {
         NonNullList<ItemStack> items = getItems(stack);
         HookahProgress.Consumption consumed = HookahProgress.read(stack).consume(items);
         consumed.progress().write(stack);

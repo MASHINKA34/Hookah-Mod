@@ -135,6 +135,19 @@ public final class IntoxicationState {
         return IntoxicationBand.SOBER;
     }
 
+    /**
+     * How strongly the trip should show, from the same thresholds the bands use
+     * so a server that moves them moves the visuals with them. Clients scale
+     * this further with their own accessibility settings.
+     */
+    public static float tripVisualStrength(float value) {
+        float trip = HookahConfig.tripThreshold;
+        if (value < trip) return 0.0f;
+        float ramp = Math.max(1.0f, trip * 0.9f);
+        float ceiling = value >= HookahConfig.overdoseThreshold ? 1.0f : 0.72f;
+        return Mth.clamp((value - ramp) / ramp, 0.22f, ceiling);
+    }
+
     public static float gain(float tobaccoIntoxication, float charge) {
         return tobaccoIntoxication * (0.4f + 0.6f * Mth.clamp(charge, 0.0f, 1.0f));
     }

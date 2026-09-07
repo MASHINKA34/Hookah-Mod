@@ -219,8 +219,8 @@ public final class TripManager {
     }
 
     private static float visualStrength(float intoxication) {
-        if (intoxication < 100.0f || !HookahClientConfig.tripVisuals) return 0.0f;
-        return Mth.clamp((intoxication - 90.0f) / 90.0f, 0.22f, intoxication >= 150.0f ? 1.0f : 0.72f);
+        if (!HookahClientConfig.tripVisuals) return 0.0f;
+        return IntoxicationState.tripVisualStrength(intoxication);
     }
 
     private static float motionStrength() {

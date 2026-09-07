@@ -9,7 +9,6 @@ import com.hookahmod.item.HookahBlockItem;
 import com.hookahmod.item.WornHookah;
 import com.hookahmod.recipe.WhiteMonsterBrewingRecipe;
 import com.hookahmod.recipe.SweetWaterBrewingRecipe;
-import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModBlocks;
 import com.hookahmod.smoke.HookahSmoke;
 import com.hookahmod.smoking.IntoxicationState;
@@ -28,12 +27,13 @@ import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
-import net.minecraft.world.entity.animal.Chicken;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.ModList;
@@ -43,7 +43,6 @@ import net.neoforged.neoforge.event.entity.living.LivingEquipmentChangeEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.neoforge.event.brewing.RegisterBrewingRecipesEvent;
-import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 
@@ -55,6 +54,10 @@ public final class ServerEvents {
 
     private static final Map<UUID, GlobalPos> WORN_LIGHTS = new ConcurrentHashMap<>();
     private static final int WORN_LIGHT_INTERVAL = 4;
+    // The light is decoration: it only has to reach clients and relight the area.
+    // Skipping neighbour and shape updates keeps a walking wearer from poking
+    // redstone and observers once per block travelled.
+    private static final int LIGHT_UPDATE_FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
     private static final ResourceLocation PALPALYCH_LOCK_ID = HookahMod.id("palpalych_trip_lock");
 
     private ServerEvents() {}
@@ -80,17 +83,6 @@ public final class ServerEvents {
         if (event.getEntity() instanceof ServerPlayer sp) {
             IntoxicationState.sync(sp);
         }
-    }
-
-    @SubscribeEvent
-    public static void onEntityTick(EntityTickEvent.Pre event) {
-        if (!(event.getEntity() instanceof Chicken chicken)) return;
-        if (!(chicken.level() instanceof ServerLevel)) return;
-        if (!chicken.isAlive() || chicken.isBaby() || chicken.isChickenJockey()) return;
-        if (chicken.eggTime != 1) return;
-        if (chicken.getRandom().nextFloat() >= HookahConfig.chickenPoopChance) return;
-
-        chicken.spawnAtLocation(ModItems.CHICKEN_POOP.get());
     }
 
     @SubscribeEvent
@@ -304,7 +296,7 @@ public final class ServerEvents {
         if (!state.isAir()) return;
         if (!level.mayInteract(player, pos) || !KingdomsIntegration.canMoveHookahBlock(player, pos)) return;
 
-        if (level.setBlock(pos, ModBlocks.HOOKAH_LIGHT.get().defaultBlockState(), 3)) {
+        if (level.setBlock(pos, ModBlocks.HOOKAH_LIGHT.get().defaultBlockState(), LIGHT_UPDATE_FLAGS)) {
             WORN_LIGHTS.put(uuid, next);
         }
     }
@@ -316,7 +308,7 @@ public final class ServerEvents {
         if (level == null || !level.hasChunkAt(old.pos())) return;
         BlockState state = level.getBlockState(old.pos());
         if (state.is(ModBlocks.HOOKAH_LIGHT.get())) {
-            level.removeBlock(old.pos(), false);
+            level.setBlock(old.pos(), Blocks.AIR.defaultBlockState(), LIGHT_UPDATE_FLAGS);
         }
     }
 }

@@ -51,7 +51,6 @@ public final class ClientSetup {
     public static void onClientSetup(FMLClientSetupEvent event) {
         NeoForge.EVENT_BUS.addListener(ClientSetup::onKeyInput);
         NeoForge.EVENT_BUS.addListener(ClientSetup::onClientTick);
-        NeoForge.EVENT_BUS.addListener(HookahBackLayer::tickCoalParticles);
         NeoForge.EVENT_BUS.addListener(TripManager::render);
         NeoForge.EVENT_BUS.addListener(TripManager::renderScreamer);
         NeoForge.EVENT_BUS.addListener(TripManager::computeFov);
@@ -137,7 +136,9 @@ public final class ClientSetup {
     }
 
     private static void onClientTick(ClientTickEvent.Post event) {
-        if (Minecraft.getInstance().level == null) com.hookahmod.event.ActiveSessions.client().clear();
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.level == null) com.hookahmod.event.ActiveSessions.client().clear();
+        else if (!mc.isPaused()) HookahBackLayer.tickCoalParticles(mc.level);
         HookahSmokingSound.tickLocal();
         TripManager.tick(event);
         HashishTripManager.tick(event);

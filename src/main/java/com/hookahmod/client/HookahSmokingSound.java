@@ -6,7 +6,6 @@ import com.hookahmod.item.WornHookah;
 import com.hookahmod.registry.ModItems;
 import com.hookahmod.registry.ModSounds;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.sounds.SoundSource;
@@ -14,11 +13,16 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.UUID;
+
 public final class HookahSmokingSound extends AbstractTickableSoundInstance {
 
-    private final LocalPlayer player;
+    private final Player player;
 
-    public HookahSmokingSound(LocalPlayer player) {
+    public HookahSmokingSound(Player player) {
         super(ModSounds.SMOKING.get(), SoundSource.PLAYERS, SoundInstance.createUnseededRandom());
         this.player = player;
         this.looping = true;
@@ -31,7 +35,7 @@ public final class HookahSmokingSound extends AbstractTickableSoundInstance {
 
     @Override
     public void tick() {
-        if (!shouldKeepPlaying()) {
+        if (!shouldPlayFor(player)) {
             stop();
             return;
         }
@@ -40,12 +44,6 @@ public final class HookahSmokingSound extends AbstractTickableSoundInstance {
 
     public void halt() {
         stop();
-    }
-
-    private boolean shouldKeepPlaying() {
-        return !player.isRemoved()
-                && player.isUsingItem()
-                && player.getUseItem().is(ModItems.HOOKAH_MOUTHPIECE.get());
     }
 
     private void updatePosition() {
@@ -71,43 +69,58 @@ public final class HookahSmokingSound extends AbstractTickableSoundInstance {
         z = player.getZ();
     }
 
-    public static boolean shouldPlayFor(LocalPlayer player) {
-        if (player == null || !player.isUsingItem()) return false;
+    public static boolean shouldPlayFor(Player player) {
+        if (player == null || player.isRemoved() || !player.isAlive() || !player.isUsingItem()) return false;
         ItemStack stack = player.getUseItem();
         return stack.is(ModItems.HOOKAH_MOUTHPIECE.get());
     }
 
+    /**
+     * Every player draws audibly, not just the local one. The used-item slot is
+     * already synchronised for remote players, so bystanders can be served from
+     * the client without a packet of our own.
+     */
     public static void tickLocal() {
         Minecraft mc = Minecraft.getInstance();
-        if (mc.player == null || mc.level == null) {
-            HookahSmokingSoundController.stop(mc);
+        if (mc.level == null) {
+            HookahSmokingSoundController.stopAll(mc);
             return;
         }
-        HookahSmokingSoundController.tick(mc, mc.player);
+        HookahSmokingSoundController.tick(mc);
     }
 }
 
 final class HookahSmokingSoundController {
 
-    private static HookahSmokingSound current;
+    private static final Map<UUID, HookahSmokingSound> ACTIVE = new HashMap<>();
 
     private HookahSmokingSoundController() {}
 
-    static void tick(Minecraft mc, LocalPlayer player) {
-        if (HookahSmokingSound.shouldPlayFor(player)) {
-            if (current == null || current.isStopped()) {
-                current = new HookahSmokingSound(player);
-                mc.getSoundManager().play(current);
-            }
-        } else {
-            stop(mc);
+    static void tick(Minecraft mc) {
+        Iterator<Map.Entry<UUID, HookahSmokingSound>> iterator = ACTIVE.entrySet().iterator();
+        while (iterator.hasNext()) {
+            HookahSmokingSound sound = iterator.next().getValue();
+            if (!sound.isStopped()) continue;
+            mc.getSoundManager().stop(sound);
+            iterator.remove();
+        }
+
+        if (mc.level == null) return;
+        for (Player player : mc.level.players()) {
+            if (!HookahSmokingSound.shouldPlayFor(player)) continue;
+            if (ACTIVE.containsKey(player.getUUID())) continue;
+            HookahSmokingSound sound = new HookahSmokingSound(player);
+            ACTIVE.put(player.getUUID(), sound);
+            mc.getSoundManager().play(sound);
         }
     }
 
-    static void stop(Minecraft mc) {
-        if (current == null) return;
-        current.halt();
-        mc.getSoundManager().stop(current);
-        current = null;
+    static void stopAll(Minecraft mc) {
+        if (ACTIVE.isEmpty()) return;
+        for (HookahSmokingSound sound : ACTIVE.values()) {
+            sound.halt();
+            mc.getSoundManager().stop(sound);
+        }
+        ACTIVE.clear();
     }
 }

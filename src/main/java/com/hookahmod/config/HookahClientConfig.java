@@ -13,6 +13,7 @@ public final class HookahClientConfig {
     private static final ModConfigSpec.BooleanValue VIDEO_TRIP;
     private static final ModConfigSpec.BooleanValue SPIRAL_SHADER;
     private static final ModConfigSpec.DoubleValue CAMERA_MOTION;
+    private static final ModConfigSpec.BooleanValue SHOW_LUXURY_PREVIEW;
 
     public static boolean tripVisuals = true;
     public static boolean tripVisions = true;
@@ -20,6 +21,7 @@ public final class HookahClientConfig {
     public static boolean videoTrip = true;
     public static boolean spiralShader = true;
     public static float cameraMotion = 1.0f;
+    public static boolean showLuxuryPreview = false;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -47,6 +49,14 @@ public final class HookahClientConfig {
         CAMERA_MOTION = builder
                 .comment("Scales trip camera sway, roll and field-of-view pulsing. 0 disables the motion.")
                 .defineInRange("cameraMotion", 1.0, 0.0, 1.0);
+        builder.pop();
+
+        builder.comment("Items that are still work in progress.").push("preview");
+        SHOW_LUXURY_PREVIEW = builder
+                .comment(
+                        "Show the unfinished luxury hookah in the creative tab.",
+                        "Reload resources (F3+T) after changing this so the tab is rebuilt.")
+                .define("showLuxuryHookah", false);
         builder.pop();
 
         SPEC = builder.build();
@@ -89,5 +99,6 @@ public final class HookahClientConfig {
         videoTrip = VIDEO_TRIP.get();
         spiralShader = SPIRAL_SHADER.get();
         cameraMotion = CAMERA_MOTION.get().floatValue();
+        showLuxuryPreview = SHOW_LUXURY_PREVIEW.get();
     }
 }

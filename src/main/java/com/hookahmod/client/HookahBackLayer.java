@@ -11,6 +11,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -22,6 +23,7 @@ import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -193,22 +195,28 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         return new Vec3(x + rightX + fwdX, y, z + rightZ + fwdZ);
     }
 
-    public static void tickCoalParticles(net.neoforged.neoforge.event.tick.EntityTickEvent.Post event) {
-        if (!(event.getEntity() instanceof AbstractClientPlayer player)) return;
-        ItemStack stack = player.getItemBySlot(EquipmentSlot.CHEST);
-        if (!WornHookah.isHookahStack(stack) || !WornHookah.hasCoal(stack)) return;
-        if (player.clientLevel.random.nextInt(6) != 0) return;
-        float yaw = (float) Math.toRadians(player.yBodyRot);
-        double px = player.getX() + Math.sin(yaw) * 0.42;
-        double py = player.getY() + player.getBbHeight() * 0.92;
-        double pz = player.getZ() - Math.cos(yaw) * 0.42;
-        player.clientLevel.addParticle(ParticleTypes.SMALL_FLAME,
-                px + (player.clientLevel.random.nextDouble() - 0.5) * 0.12,
-                py + player.clientLevel.random.nextDouble() * 0.08,
-                pz + (player.clientLevel.random.nextDouble() - 0.5) * 0.12,
-                0.0,
-                0.015 + player.clientLevel.random.nextDouble() * 0.02,
-                0.0);
+    /**
+     * Swept once per client tick over the player list instead of hooking every
+     * entity tick in the level: only players can wear a hookah, and there are a
+     * few dozen of them against thousands of entities.
+     */
+    public static void tickCoalParticles(ClientLevel level) {
+        for (Player player : level.players()) {
+            ItemStack stack = player.getItemBySlot(EquipmentSlot.CHEST);
+            if (!WornHookah.isHookahStack(stack) || !WornHookah.hasCoal(stack)) continue;
+            if (level.random.nextInt(6) != 0) continue;
+            float yaw = (float) Math.toRadians(player.yBodyRot);
+            double px = player.getX() + Math.sin(yaw) * 0.42;
+            double py = player.getY() + player.getBbHeight() * 0.92;
+            double pz = player.getZ() - Math.cos(yaw) * 0.42;
+            level.addParticle(ParticleTypes.SMALL_FLAME,
+                    px + (level.random.nextDouble() - 0.5) * 0.12,
+                    py + level.random.nextDouble() * 0.08,
+                    pz + (level.random.nextDouble() - 0.5) * 0.12,
+                    0.0,
+                    0.015 + level.random.nextDouble() * 0.02,
+                    0.0);
+        }
     }
 
     private static int litBlockLight(int packedLight, int min) {

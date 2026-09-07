@@ -1,6 +1,5 @@
 package com.hookahmod.block;
 
-import com.hookahmod.item.AbstractTobaccoItem;
 import com.hookahmod.item.WhiteMonsterItem;
 import com.hookahmod.item.HookahHoseItem;
 import com.hookahmod.item.HookahHoseType;
@@ -11,9 +10,9 @@ import com.hookahmod.integration.KingdomsIntegration;
 import com.hookahmod.network.HookahSyncPayload;
 import com.hookahmod.network.WornHookahSyncPayload;
 import com.hookahmod.registry.ModBlockEntities;
-import com.hookahmod.smoke.HookahSmoke;
-import com.hookahmod.smoking.IntoxicationState;
+import com.hookahmod.smoking.HookahHost;
 import com.hookahmod.smoking.HookahProgress;
+import com.hookahmod.smoking.HookahSessions;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.component.DataComponentMap;
@@ -39,11 +38,10 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
 
 import java.util.UUID;
 
-public class HookahBlockEntity extends BlockEntity {
+public class HookahBlockEntity extends BlockEntity implements HookahHost {
 
     public static final int SLOT_HOSE = 0;
     public static final int SLOT_TOBACCO = 1;
@@ -114,36 +112,13 @@ public class HookahBlockEntity extends BlockEntity {
     @Nullable
     public UUID getActivePlayerUuid() { return activePlayerUuid; }
 
+    @Override
     public boolean hasAllConsumables() {
-        return !items.get(SLOT_TOBACCO).isEmpty()
-                && !items.get(SLOT_COAL).isEmpty()
-                && !items.get(SLOT_WATER).isEmpty();
+        return HookahHost.hasAllConsumables(items::get);
     }
 
     public boolean tryTakeMouthpiece(ServerPlayer player) {
-        if (player.level() != level || !player.isAlive() || player.isSpectator()) return false;
-        if (activePlayerUuid != null && !ActiveSessions.server().owns(activePlayerUuid, this)) releaseMouthpiece();
-        if (!getHoseType().isPresent()) {
-            player.displayClientMessage(Component.translatable("message.hookahmod.install_hose"), true);
-            return false;
-        }
-        if (!isPlayerInRange(player)) return false;
-        if (activePlayerUuid != null && !activePlayerUuid.equals(player.getUUID())) {
-            player.displayClientMessage(Component.translatable("message.hookahmod.busy"), true);
-            return false;
-        }
-        if (activePlayerUuid != null) {
-            releaseMouthpiece();
-            return true;
-        }
-        if (!WornHookah.playerHasMouthpiece(player)) {
-            player.displayClientMessage(Component.translatable("message.hookahmod.no_mouthpiece"), true);
-            return false;
-        }
-        ActiveSessions.server().beginBlock(player, this);
-        activePlayerUuid = player.getUUID();
-        setChangedAndSync();
-        return true;
+        return HookahSessions.toggle(player, this);
     }
 
     public boolean isPlayerInRange(Player player) {
@@ -199,47 +174,74 @@ public class HookahBlockEntity extends BlockEntity {
     }
 
     public void applyExhale(ServerPlayer player, float charge) {
-        if (!(level instanceof ServerLevel server)) return;
-        if (!ActiveSessions.server().owns(player.getUUID(), this) || !isPlayerInRange(player) || !hasAllConsumables()) return;
+        HookahSessions.exhale(player, this, charge);
+    }
 
-        ItemStack tobaccoStack = items.get(SLOT_TOBACCO);
-        Vector3f smokeColor = tobaccoStack.getItem() instanceof AbstractTobaccoItem tobaccoForSmoke
-                ? tobaccoForSmoke.smokeColor()
-                : null;
-        Vec3 hookahPoint = new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.75, worldPosition.getZ() + 0.5);
-        HookahSmoke.spawnExhaleSmoke(server, hookahPoint, player, charge, smokeColor);
+    // ── HookahHost ──────────────────────────────────────────────────
+    @Override
+    public Object sessionKey() { return this; }
 
-        float volume = 0.15f + charge * 0.4f;
-        level.playSound(null, worldPosition, net.minecraft.sounds.SoundEvents.GENERIC_DRINK,
-                net.minecraft.sounds.SoundSource.PLAYERS, volume, 1.6f);
+    @Override
+    public HookahHoseType hoseType() { return getHoseType(); }
 
-        if (tobaccoStack.getItem() instanceof AbstractTobaccoItem tobacco) {
-            HookahTier tier = getBlockState().hasProperty(HookahBlock.TIER)
-                    ? getBlockState().getValue(HookahBlock.TIER)
-                    : HookahTier.NORMAL;
-            IntoxicationState.add(player, IntoxicationState.gain(tobacco.intoxication(), charge));
-            tobacco.onExhale(
-                    server,
-                    player,
-                    charge,
-                    tier.effectMult(),
-                    tier.combatMult() * KingdomsIntegration.hookahCombatMultiplier(player)
-            );
-        } else {
-            IntoxicationState.add(player, IntoxicationState.gain(IntoxicationState.plainTobaccoIntoxication(), charge));
-        }
+    @Override
+    public HookahTier tier() {
+        return getBlockState().hasProperty(HookahBlock.TIER)
+                ? getBlockState().getValue(HookahBlock.TIER)
+                : HookahTier.NORMAL;
+    }
 
-        KingdomsIntegration.onHookahPuff(player, charge);
-        if (KingdomsIntegration.hasHookahMastery(player)) {
-            return;
-        }
+    @Nullable
+    @Override
+    public UUID activePlayer() { return activePlayerUuid; }
 
+    @Override
+    public ItemStack consumable(int slot) { return items.get(slot); }
+
+    @Override
+    public boolean canBeUsedBy(ServerPlayer player) {
+        return !isRemoved() && player.level() == level && player.isAlive() && !player.isSpectator();
+    }
+
+    @Override
+    public boolean inRange(Player player) { return isPlayerInRange(player); }
+
+    @Override
+    public Vec3 exhaleOrigin() {
+        return new Vec3(worldPosition.getX() + 0.5, worldPosition.getY() + 1.75, worldPosition.getZ() + 0.5);
+    }
+
+    @Override
+    public BlockPos soundPosition() { return worldPosition; }
+
+    @Override
+    public float combatMultiplier(ServerPlayer smoker) {
+        return KingdomsIntegration.hookahCombatMultiplier(smoker);
+    }
+
+    @Override
+    public boolean keepsCharge(ServerPlayer smoker) {
+        return KingdomsIntegration.hasHookahMastery(smoker);
+    }
+
+    @Override
+    public void consumeCharge(ServerPlayer smoker) {
         HookahProgress.Consumption consumed = progress.consume(items);
         progress = consumed.progress();
-        if (consumed.emptyCan()) WhiteMonsterItem.giveEmptyCan(player);
+        if (consumed.emptyCan()) WhiteMonsterItem.giveEmptyCan(smoker);
         if (consumed.itemsChanged()) setChangedAndSync();
         else setChanged();
     }
+
+    @Override
+    public void claim(ServerPlayer player) {
+        ActiveSessions.server().beginBlock(player, this);
+        activePlayerUuid = player.getUUID();
+        setChangedAndSync();
+    }
+
+    @Override
+    public void release() { releaseMouthpiece(); }
 
     public void clientTick(Level level, BlockPos pos, BlockState state) {
         if (!(state.getBlock() instanceof HookahBlock hookah) || !hookah.hasDynamicParts()) return;
@@ -260,6 +262,10 @@ public class HookahBlockEntity extends BlockEntity {
         setChanged();
         if (level instanceof ServerLevel server) {
             BlockState s = getBlockState();
+            // Reached from onRemove while the position already holds the new
+            // state. Writing the hookah back here would resurrect the block the
+            // player just picked up, so bail out once it is gone.
+            if (isRemoved() || !server.getBlockState(worldPosition).is(s.getBlock())) return;
             boolean hasCoal = !items.get(SLOT_COAL).isEmpty();
             if (s.hasProperty(HookahBlock.HAS_COAL)
                     && s.getValue(HookahBlock.HAS_COAL) != hasCoal) {

@@ -18,6 +18,7 @@ import net.minecraft.world.level.block.DoorBlock;
 import net.minecraft.world.level.block.FenceGateBlock;
 import net.minecraft.world.level.block.TrapDoorBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
@@ -36,7 +37,7 @@ public final class HookahSmoke {
     private static final int OPEN_LINGER_TICKS = 45;
     private static final int MAX_ROOM_DISTANCE = 64;
     private static final int ROOM_MIN_PUFFS = 5;
-    private static final int ROOM_RECHECK_TICKS = 60;
+    private static final int ROOM_RECHECK_TICKS = 120;
     private static final int PROBE_PRUNE_INTERVAL = 100;
     private static final int PROBE_CELL_BITS = 2;
     private static final float ROOM_MAX_DENSITY = 14.0f;
@@ -216,7 +217,7 @@ public final class HookahSmoke {
                 continue;
             }
 
-            if (smoke.puffs >= ROOM_MIN_PUFFS && smoke.ticks % 5 == 0) {
+            if (smoke.puffs >= ROOM_MIN_PUFFS && smoke.ticks % 5 == 0 && hasNearbyPlayer(level, smoke.origin)) {
                 spawnRoomSmoke(level, smoke, false);
             }
         }
@@ -306,14 +307,13 @@ public final class HookahSmoke {
         return null;
     }
 
+    // Open to the sky means the puff escapes upwards and no room forms. The
+    // heightmap answers that in constant time instead of walking the column.
     private static boolean hasVerticalLeak(ServerLevel level, BlockPos start) {
-        int maxY = Math.min(level.getMaxBuildHeight() - 1, start.getY() + MAX_ROOM_DISTANCE);
-        for (int y = start.getY() + 1; y <= maxY; y++) {
-            if (!canSmokeOccupy(level, new BlockPos(start.getX(), y, start.getZ()))) {
-                return false;
-            }
-        }
-        return true;
+        var chunk = level.getChunkSource().getChunkNow(start.getX() >> 4, start.getZ() >> 4);
+        if (chunk == null) return true;
+        int firstFree = chunk.getHeight(Heightmap.Types.MOTION_BLOCKING, start.getX() & 15, start.getZ() & 15) + 1;
+        return firstFree <= start.getY() + 1;
     }
 
     private static boolean isOutsideProbeBounds(ServerLevel level, BlockPos origin, BlockPos pos) {
@@ -339,6 +339,17 @@ public final class HookahSmoke {
 
     private static boolean isChunkLoaded(ServerLevel level, BlockPos pos) {
         return level.getChunkSource().getChunkNow(pos.getX() >> 4, pos.getZ() >> 4) != null;
+    }
+
+    // Nobody in range means every particle packet would be dropped anyway, so
+    // an empty room costs one distance check per burst window instead of a
+    // scatter of random block lookups.
+    private static boolean hasNearbyPlayer(ServerLevel level, BlockPos pos) {
+        double rangeSqr = (double) HookahConfig.smokeParticleRange * HookahConfig.smokeParticleRange;
+        for (ServerPlayer player : level.players()) {
+            if (player.distanceToSqr(Vec3.atCenterOf(pos)) <= rangeSqr) return true;
+        }
+        return false;
     }
 
     private static void sendSmoke(ServerLevel level, double x, double y, double z,

@@ -1,5 +1,6 @@
 package com.hookahmod.config;
 
+import com.hookahmod.event.ChickenPoopHandler;
 import net.neoforged.fml.event.config.ModConfigEvent;
 import net.neoforged.neoforge.common.ModConfigSpec;
 
@@ -37,7 +38,6 @@ public final class HookahConfig {
 
     private static final ModConfigSpec.BooleanValue WORN_HOOKAH_LIGHT;
     private static final ModConfigSpec.DoubleValue CHICKEN_POOP_CHANCE;
-    private static final ModConfigSpec.BooleanValue SHOW_LUXURY_PREVIEW;
 
     public static int shortHoseRange = 5;
     public static int longHoseRange = 10;
@@ -69,7 +69,6 @@ public final class HookahConfig {
 
     public static boolean wornHookahLight = true;
     public static float chickenPoopChance = 0.35f;
-    public static boolean showLuxuryPreview = true;
 
     static {
         ModConfigSpec.Builder builder = new ModConfigSpec.Builder();
@@ -163,11 +162,8 @@ public final class HookahConfig {
                 .comment("Let a lit worn hookah place a temporary light block.")
                 .define("wornHookahLight", true);
         CHICKEN_POOP_CHANCE = builder
-                .comment("Chance a chicken drops chicken poop when it lays an egg.")
+                .comment("Chance a chicken drops chicken poop when it lays an egg. 0 unhooks the entity tick listener entirely.")
                 .defineInRange("chickenPoopChance", 0.35, 0.0, 1.0);
-        SHOW_LUXURY_PREVIEW = builder
-                .comment("Show the unfinished luxury hookah preview in the creative tab.")
-                .define("showLuxuryPreview", true);
         builder.pop();
 
         SPEC = builder.build();
@@ -214,6 +210,7 @@ public final class HookahConfig {
 
         wornHookahLight = WORN_HOOKAH_LIGHT.get();
         chickenPoopChance = CHICKEN_POOP_CHANCE.get().floatValue();
-        showLuxuryPreview = SHOW_LUXURY_PREVIEW.get();
+
+        ChickenPoopHandler.syncRegistration();
     }
 }

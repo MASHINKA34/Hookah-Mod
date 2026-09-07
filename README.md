@@ -28,6 +28,7 @@ built-in guidebook.
   their own visuals.
 - **Intoxication** — five bands from sober to overdose, read with the tonometer, decaying over time.
 - **Smoke** — exhaled smoke lingers, drifts, and fills enclosed rooms.
+- **Sound** — a draw is audible to everyone nearby, not only to the smoker.
 
 ## Configuration
 
@@ -42,7 +43,7 @@ on both sides. Changing the file and reloading applies without a restart.
 | `[intoxication]` | Meter ceiling, decay per second, plain-tobacco gain, and the four band thresholds |
 | `[combat]` | Master switch for combat cones, whether fire may ignite and ice may freeze blocks, cone reach and half-angle |
 | `[smoke]` | Room smoke on/off, particle range, largest room mapped, concurrent smoke-filled rooms, linger time, failed-probe cooldown |
-| `[misc]` | Worn-hookah light block, chicken poop chance, luxury preview visibility |
+| `[misc]` | Worn-hookah light block, chicken poop chance (0 unhooks its entity-tick listener) |
 
 Servers that want no PvP impact can set `combat.enabled = false`; servers on tight CPU budgets can
 lower `smoke.maxRoomAirBlocks` or turn `smoke.roomSmokeEnabled` off entirely.
@@ -50,7 +51,11 @@ lower `smoke.maxRoomAirBlocks` or turn `smoke.roomSmokeEnabled` off entirely.
 Trip visuals are separate. `hookahmod-client.toml` (in `config/`) is local to each player and never
 affects gameplay, so anyone sensitive to flashing images, jump scares or camera motion can turn off
 the in-world visions, the screamer, the full-screen video, the spiral shader, or the camera sway
-on its own — `trips.enabled = false` disables all of them at once.
+on its own — `trips.enabled = false` disables all of them at once. How strong the visuals get follows
+the server's `tripThreshold` and `overdoseThreshold`, so moving the bands moves the visuals with them.
+
+`[preview]` in the same file hides or shows the unfinished luxury hookah in the creative tab. It is
+off by default; reload resources (F3+T) after switching it so the tab is rebuilt.
 
 ## Building
 
@@ -63,14 +68,14 @@ The jar lands in `build/libs/`.
 | Task | What it does |
 |---|---|
 | `./gradlew build` | Compiles and packages the mod |
-| `./gradlew test` | 8 JUnit regression tests on an ephemeral server |
-| `./gradlew runGameTestServer` | 33 in-world GameTests |
+| `./gradlew test` | 10 JUnit regression tests on an ephemeral server |
+| `./gradlew runGameTestServer` | 37 in-world GameTests |
 | `./gradlew runClient` | Dev client |
 | `./gradlew runServer` | Dev dedicated server |
 | `./gradlew runClient2` | Second client (`run2/`) for multiplayer testing |
 
-`libs/flywheel-neoforge-1.21.1-1.0.6.jar` is a dev-runtime-only dependency for the optional Create
-integration; it is not part of the published jar.
+Flywheel is pinned as a dev-runtime-only dependency for the optional Create integration
+(`flywheel_version` in `gradle.properties`); it is not part of the published jar.
 
 ## Layout
 
@@ -82,7 +87,7 @@ src/main/java/com/hookahmod/
   menu/        container menu and filtered slots
   network/     payloads (NeoForge play network)
   registry/    DeferredRegister holders
-  smoking/     intoxication state, progress, attachments
+  smoking/     session rules shared by both carriers, intoxication, progress, attachments
   smoke/       lingering and room smoke simulation
   combat/      cone targeting and protection-aware block edits
   client/      renderers, screens, particles, trip effects

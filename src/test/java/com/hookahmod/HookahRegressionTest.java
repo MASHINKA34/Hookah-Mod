@@ -189,6 +189,50 @@ class HookahRegressionTest {
         }
     }
 
+    @Test
+    void tripVisualsFollowTheConfiguredBands(MinecraftServer server) {
+        float previousTrip = HookahConfig.tripThreshold;
+        float previousOverdose = HookahConfig.overdoseThreshold;
+        try {
+            assertEquals(0.0f, IntoxicationState.tripVisualStrength(99.0f));
+            assertTrue(IntoxicationState.tripVisualStrength(100.0f) > 0.0f);
+            assertTrue(IntoxicationState.tripVisualStrength(140.0f) > IntoxicationState.tripVisualStrength(110.0f));
+            // Only the overdose band is allowed to reach full strength.
+            assertTrue(IntoxicationState.tripVisualStrength(149.0f) <= 0.72f);
+            assertEquals(1.0f, IntoxicationState.tripVisualStrength(400.0f), 0.0001f);
+
+            HookahConfig.tripThreshold = 40.0f;
+            HookahConfig.overdoseThreshold = 60.0f;
+            assertEquals(0.0f, IntoxicationState.tripVisualStrength(39.0f),
+                    "Visuals must stay off below the configured trip band");
+            assertTrue(IntoxicationState.tripVisualStrength(40.0f) > 0.0f,
+                    "Visuals must start at the configured trip band");
+            assertTrue(IntoxicationState.tripVisualStrength(59.0f) <= 0.72f);
+            assertEquals(1.0f, IntoxicationState.tripVisualStrength(400.0f), 0.0001f);
+        } finally {
+            HookahConfig.tripThreshold = previousTrip;
+            HookahConfig.overdoseThreshold = previousOverdose;
+        }
+    }
+
+    @Test
+    void consumableCheckIsSharedByEveryCarrier(MinecraftServer server) {
+        ItemStack stack = filledHookah();
+        assertTrue(WornHookah.hasAllConsumables(stack));
+
+        HookahBlockEntity hookah = new HookahBlockEntity(BlockPos.ZERO, ModBlocks.HOOKAH.get().defaultBlockState());
+        hookah.loadItemsFromStack(stack);
+        assertTrue(hookah.hasAllConsumables());
+
+        hookah.getInventory().removeItemNoUpdate(HookahBlockEntity.SLOT_COAL);
+        assertFalse(hookah.hasAllConsumables());
+
+        NonNullList<ItemStack> items = WornHookah.getItems(stack);
+        items.set(HookahBlockEntity.SLOT_WATER, ItemStack.EMPTY);
+        WornHookah.setItems(stack, items);
+        assertFalse(WornHookah.hasAllConsumables(stack));
+    }
+
     private static ItemStack filledHookah() {
         ItemStack stack = new ItemStack(ModItems.HOOKAH.get());
         WornHookah.setItems(stack, List.of(

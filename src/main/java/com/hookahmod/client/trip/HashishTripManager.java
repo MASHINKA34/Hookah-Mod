@@ -49,6 +49,7 @@ public final class HashishTripManager {
             return;
         }
 
+        ensurePostEffect();
         if (mc.isPaused()) return;
         tickCount++;
         MobEffectInstance effect = mc.player.getEffect(ModMobEffects.HASHISH_TRIP);
@@ -94,14 +95,19 @@ public final class HashishTripManager {
     }
 
     private static void ensurePostEffect() {
-        if (loadFailed || remainingTicks <= 0 || !HookahClientConfig.spiralShaderEnabled()) return;
-
         Minecraft mc = Minecraft.getInstance();
         PostChain current = mc.gameRenderer.currentEffect();
+        if (!HookahClientConfig.spiralShaderEnabled()) {
+            if (isHashishEffect(current)) mc.gameRenderer.shutdownEffect();
+            return;
+        }
+        if (loadFailed || remainingTicks <= 0) return;
         if (isHashishEffect(current)) return;
+        if (current != null) return;
 
         try {
             mc.gameRenderer.loadEffect(EFFECT);
+            loadFailed = !isHashishEffect(mc.gameRenderer.currentEffect());
         } catch (RuntimeException ex) {
             loadFailed = true;
             HookahMod.LOGGER.warn("Failed to load hashish trip shader: {}", EFFECT, ex);

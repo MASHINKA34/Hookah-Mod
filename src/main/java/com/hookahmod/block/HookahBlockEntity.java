@@ -288,7 +288,9 @@ public class HookahBlockEntity extends BlockEntity implements HookahHost {
         items.clear();
         ContainerHelper.loadAllItems(tag, items, lookup);
         activePlayerUuid = null;
-        progress = new HookahProgress(tag.getInt("SmokeTimer"), tag.getInt("WaterTimer"));
+        progress = (tag.contains("HookahProgress") ? HookahProgress.read(tag.getCompound("HookahProgress"))
+                : new HookahProgress(tag.getInt("SmokeTimer"), tag.getInt("WaterTimer")))
+                .bind(items.get(SLOT_TOBACCO), items.get(SLOT_WATER));
     }
 
     @Override
@@ -297,6 +299,7 @@ public class HookahBlockEntity extends BlockEntity implements HookahHost {
         ContainerHelper.saveAllItems(tag, items, lookup);
         tag.putInt("SmokeTimer", progress.smokePuffs());
         tag.putInt("WaterTimer", progress.waterPuffs());
+        tag.put("HookahProgress", progress.update(CustomData.EMPTY).copyTag());
     }
 
     @Override

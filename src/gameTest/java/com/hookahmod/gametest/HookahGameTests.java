@@ -412,7 +412,7 @@ public class HookahGameTests {
             helper.assertTrue(helper.getLevel().getBlockState(hookah.getBlockPos()).isAir(), "Allowed pickup must remove the block");
             helper.assertTrue(original.get(DataComponents.CONTAINER).equals(pickedUp.get(DataComponents.CONTAINER)), "Pickup must preserve contents");
             helper.assertTrue(original.get(DataComponents.CUSTOM_NAME).equals(pickedUp.get(DataComponents.CUSTOM_NAME)), "Pickup must preserve the name");
-            helper.assertTrue(new HookahProgress(19, 199).equals(HookahProgress.read(pickedUp)), "Pickup must preserve partial consumption");
+            helper.assertTrue(HookahProgress.read(original).equals(HookahProgress.read(pickedUp)), "Pickup must preserve partial consumption");
             helper.assertTrue(ActiveSessions.server().get(player.getUUID()) == null && WornHookah.getActivePlayerUuid(pickedUp) == null, "Pickup must end the session");
             helper.succeed();
         }

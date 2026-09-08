@@ -42,7 +42,9 @@ public final class WornHookah {
     }
 
     public static void setItems(ItemStack stack, List<ItemStack> items) {
+        HookahProgress progress = HookahProgress.read(stack);
         stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+        progress.write(stack);
     }
 
     public static Container containerFor(ItemStack stack, @Nullable Player wearer) {

@@ -40,6 +40,7 @@ public class GuideScreen extends Screen {
     private BookButton nextButton;
     private BookButton contentsButton;
     private ItemStack hoveredStack = ItemStack.EMPTY;
+    private float layoutScale = 1.0f;
 
     public GuideScreen() {
         super(Component.translatable("guide.hookahmod.screen_title"));
@@ -48,9 +49,11 @@ public class GuideScreen extends Screen {
     @Override
     protected void init() {
         this.chapterButtons.clear();
+        this.layoutScale = Math.min(1.0f, Math.min(this.width / (BOOK_WIDTH + 16.0f),
+                this.height / (BOOK_HEIGHT + 40.0f)));
 
-        int bookX = (this.width - BOOK_WIDTH) / 2;
-        int bookY = (this.height - BOOK_HEIGHT) / 2;
+        int bookX = (int) (this.width / this.layoutScale - BOOK_WIDTH) / 2;
+        int bookY = (int) (this.height / this.layoutScale - BOOK_HEIGHT) / 2;
         int tabWidth = 64;
         int tabGap = 3;
         int tabsWidth = GuideContent.CHAPTERS.size() * tabWidth + (GuideContent.CHAPTERS.size() - 1) * tabGap;
@@ -90,18 +93,22 @@ public class GuideScreen extends Screen {
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         this.hoveredStack = ItemStack.EMPTY;
-        super.render(graphics, mouseX, mouseY, partialTick);
+        super.renderBackground(graphics, mouseX, mouseY, partialTick);
+        int localMouseX = (int) (mouseX / this.layoutScale);
+        int localMouseY = (int) (mouseY / this.layoutScale);
+        graphics.pose().pushPose();
+        graphics.pose().scale(this.layoutScale, this.layoutScale, 1.0f);
+        renderBook(graphics, localMouseX, localMouseY);
+        for (var renderable : this.renderables) renderable.render(graphics, localMouseX, localMouseY, partialTick);
+        graphics.pose().popPose();
         if (!this.hoveredStack.isEmpty()) {
             graphics.renderTooltip(this.font, this.hoveredStack, mouseX, mouseY);
         }
     }
 
-    @Override
-    public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.renderBackground(graphics, mouseX, mouseY, partialTick);
-
-        int bookX = (this.width - BOOK_WIDTH) / 2;
-        int bookY = (this.height - BOOK_HEIGHT) / 2;
+    private void renderBook(GuiGraphics graphics, int mouseX, int mouseY) {
+        int bookX = (int) (this.width / this.layoutScale - BOOK_WIDTH) / 2;
+        int bookY = (int) (this.height / this.layoutScale - BOOK_HEIGHT) / 2;
         drawBook(graphics, bookX, bookY);
 
         int leftPageIndex = this.spreadIndex * 2;
@@ -468,12 +475,28 @@ public class GuideScreen extends Screen {
     }
 
     @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        return super.mouseClicked(mouseX / this.layoutScale, mouseY / this.layoutScale, button);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        return super.mouseReleased(mouseX / this.layoutScale, mouseY / this.layoutScale, button);
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        return super.mouseDragged(mouseX / this.layoutScale, mouseY / this.layoutScale, button,
+                dragX / this.layoutScale, dragY / this.layoutScale);
+    }
+
+    @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
         if (scrollY != 0.0D) {
             changeSpread(scrollY < 0.0D ? 1 : -1);
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        return super.mouseScrolled(mouseX / this.layoutScale, mouseY / this.layoutScale, scrollX, scrollY);
     }
 
     @Override

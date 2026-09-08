@@ -53,7 +53,7 @@ class HookahRegressionTest {
             assertEquals(HookahMod.id("hookah_" + tier), net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(result.getItem()));
             assertEquals(base.get(DataComponents.CONTAINER), result.get(DataComponents.CONTAINER));
             assertEquals(base.get(DataComponents.CUSTOM_NAME), result.get(DataComponents.CUSTOM_NAME));
-            assertEquals(new HookahProgress(19, 199), HookahProgress.read(result));
+            assertEquals(HookahProgress.read(base), HookahProgress.read(result));
             assertNull(WornHookah.getActivePlayerUuid(result));
             assertNotNull(WornHookah.getActivePlayerUuid(base));
         }
@@ -78,7 +78,7 @@ class HookahRegressionTest {
         assertEquals("Keep me", pickedUp.get(DataComponents.CUSTOM_DATA).copyTag().getString("OwnerNote"));
         assertNull(WornHookah.getActivePlayerUuid(pickedUp));
         assertEquals(original.get(DataComponents.CONTAINER), pickedUp.get(DataComponents.CONTAINER));
-        assertEquals(new HookahProgress(19, 199), HookahProgress.read(pickedUp));
+        assertEquals(HookahProgress.read(original), HookahProgress.read(pickedUp));
         NonNullList<ItemStack> items = WornHookah.getItems(pickedUp);
         var consumed = HookahProgress.read(pickedUp).consume(items);
         assertEquals(HookahProgress.EMPTY, consumed.progress());
@@ -136,7 +136,8 @@ class HookahRegressionTest {
             NonNullList<ItemStack> items = WornHookah.getItems(filledHookah());
 
             var afterFirst = new HookahProgress(0, 0).consume(items);
-            assertEquals(new HookahProgress(1, 1), afterFirst.progress());
+            assertEquals(1, afterFirst.progress().smokePuffs());
+            assertEquals(1, afterFirst.progress().waterPuffs());
             assertFalse(afterFirst.itemsChanged());
             assertEquals(2, items.get(HookahBlockEntity.SLOT_TOBACCO).getCount());
 
@@ -231,6 +232,102 @@ class HookahRegressionTest {
         items.set(HookahBlockEntity.SLOT_WATER, ItemStack.EMPTY);
         WornHookah.setItems(stack, items);
         assertFalse(WornHookah.hasAllConsumables(stack));
+    }
+
+    @Test
+    void switchingTobaccosKeepsTheirConsumptionAcrossBlockAndItemSaves(MinecraftServer server) {
+        ItemStack stack = filledHookah();
+        var items = WornHookah.getItems(stack);
+        ItemStack combat = new ItemStack(ModItems.TOBACCO_FIRE.get(), 2);
+        ItemStack regular = items.get(HookahBlockEntity.SLOT_TOBACCO);
+        items.set(HookahBlockEntity.SLOT_TOBACCO, combat);
+        HookahProgress progress = HookahProgress.EMPTY;
+        for (int puff = 0; puff < 9; puff++) progress = progress.consume(items).progress();
+        items.set(HookahBlockEntity.SLOT_TOBACCO, regular);
+        for (int puff = 0; puff < 11; puff++) progress = progress.consume(items).progress();
+        WornHookah.setItems(stack, items);
+        progress.write(stack);
+        HookahBlockEntity block = new HookahBlockEntity(BlockPos.ZERO, ModBlocks.HOOKAH.get().defaultBlockState());
+        block.loadItemsFromStack(stack);
+        block = assertInstanceOf(HookahBlockEntity.class, BlockEntity.loadStatic(BlockPos.ZERO, block.getBlockState(),
+                block.saveWithFullMetadata(server.registryAccess()), server.registryAccess()));
+        ItemStack restored = new ItemStack(ModItems.HOOKAH.get());
+        block.saveItemsToStack(restored);
+        items = WornHookah.getItems(restored);
+        items.set(HookahBlockEntity.SLOT_TOBACCO, combat);
+        progress = HookahProgress.read(restored).consume(items).progress();
+        assertEquals(1, combat.getCount());
+        assertEquals(2, regular.getCount());
+        assertEquals(1, items.get(HookahBlockEntity.SLOT_COAL).getCount());
+        items.set(HookahBlockEntity.SLOT_TOBACCO, regular);
+        for (int puff = 0; puff < 9; puff++) progress = progress.consume(items).progress();
+        assertEquals(1, regular.getCount());
+        assertTrue(items.get(HookahBlockEntity.SLOT_COAL).isEmpty());
+    }
+
+    @Test
+    void switchingLiquidsCannotTransferConsumptionOrCreateFreeCans(MinecraftServer server) {
+        var items = WornHookah.getItems(filledHookah());
+        items.get(HookahBlockEntity.SLOT_TOBACCO).setCount(64);
+        items.get(HookahBlockEntity.SLOT_COAL).setCount(64);
+        ItemStack water = items.get(HookahBlockEntity.SLOT_WATER);
+        HookahProgress progress = HookahProgress.EMPTY;
+        for (int puff = 0; puff < 199; puff++) progress = progress.consume(items).progress();
+        ItemStack monster = new ItemStack(ModItems.WHITE_MONSTER.get(), 2);
+        items.set(HookahBlockEntity.SLOT_WATER, monster);
+        var consumed = progress.consume(items);
+        assertFalse(consumed.emptyCan());
+        assertEquals(2, monster.getCount());
+        items.set(HookahBlockEntity.SLOT_WATER, water);
+        consumed = consumed.progress().consume(items);
+        assertEquals(1, water.getCount());
+        assertFalse(consumed.emptyCan());
+        items.set(HookahBlockEntity.SLOT_WATER, monster);
+        progress = consumed.progress();
+        for (int puff = 0; puff < 198; puff++) progress = progress.consume(items).progress();
+        consumed = progress.consume(items);
+        assertTrue(consumed.emptyCan());
+        assertEquals(1, monster.getCount());
+    }
+
+    @Test
+    void legacyProgressIsBoundBeforeReplacingWornContents(MinecraftServer server) {
+        ItemStack stack = filledHookah();
+        new HookahProgress(19, 199).write(stack);
+        var items = WornHookah.getItems(stack);
+        ItemStack regular = items.get(HookahBlockEntity.SLOT_TOBACCO);
+        items.set(HookahBlockEntity.SLOT_TOBACCO, new ItemStack(ModItems.TOBACCO_FIRE.get(), 2));
+        WornHookah.setItems(stack, items);
+        var consumed = HookahProgress.read(stack).consume(items);
+        assertEquals(2, items.get(HookahBlockEntity.SLOT_TOBACCO).getCount());
+        items.set(HookahBlockEntity.SLOT_TOBACCO, regular);
+        consumed.progress().consume(items);
+        assertEquals(1, regular.getCount());
+    }
+
+    @Test
+    void emptyHookahProgressCanBeRead(MinecraftServer server) {
+        assertEquals(HookahProgress.EMPTY, HookahProgress.read(new ItemStack(ModItems.HOOKAH.get())));
+    }
+
+    @Test
+    void legacyBlockCountersMigrateWithoutLosingPartialCharges(MinecraftServer server) {
+        HookahBlockEntity block = new HookahBlockEntity(BlockPos.ZERO, ModBlocks.HOOKAH.get().defaultBlockState());
+        block.loadItemsFromStack(filledHookah());
+        var saved = block.saveWithFullMetadata(server.registryAccess());
+        saved.remove("HookahProgress");
+        saved.putInt("SmokeTimer", 19);
+        saved.putInt("WaterTimer", 199);
+        block = assertInstanceOf(HookahBlockEntity.class, BlockEntity.loadStatic(BlockPos.ZERO, block.getBlockState(),
+                saved, server.registryAccess()));
+        ItemStack restored = new ItemStack(ModItems.HOOKAH.get());
+        block.saveItemsToStack(restored);
+        var items = WornHookah.getItems(restored);
+        var consumed = HookahProgress.read(restored).consume(items);
+        assertEquals(HookahProgress.EMPTY, consumed.progress());
+        assertEquals(1, items.get(HookahBlockEntity.SLOT_TOBACCO).getCount());
+        assertEquals(1, items.get(HookahBlockEntity.SLOT_COAL).getCount());
+        assertEquals(1, items.get(HookahBlockEntity.SLOT_WATER).getCount());
     }
 
     private static ItemStack filledHookah() {

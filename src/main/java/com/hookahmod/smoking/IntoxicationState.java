@@ -74,9 +74,9 @@ public final class IntoxicationState {
         IntoxicationBand band = band(value);
         boolean locked = updateTripLock(player, band, value);
         if (band == IntoxicationBand.RELAXED) {
-            if (!locked) player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 60, 0, true, false, true));
+            if (!locked) applyRegeneration(player);
         } else if (band == IntoxicationBand.HIGH) {
-            if (!locked) player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 80, 0, true, false, true));
+            if (!locked) applyRegeneration(player);
             player.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 80, 0, true, false, true));
         } else if (band == IntoxicationBand.TRIP) {
             player.addEffect(new MobEffectInstance(MobEffects.CONFUSION, 100, 0, true, false, true));
@@ -95,6 +95,12 @@ public final class IntoxicationState {
         player.setData(ModAttachments.ABYSS_TRIP_TICKS.get(), ABYSS_TRIP_WINDOW);
     }
 
+    private static void applyRegeneration(ServerPlayer player) {
+        if (!player.hasEffect(MobEffects.REGENERATION)) {
+            player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 100, 0, true, false, true));
+        }
+    }
+
     public static void spawnTripVision(ServerPlayer player) {
         TripVisionType type = TripVisionType.random(player.getRandom());
         PacketDistributor.sendToPlayer(player, new TripEventPayload(type, player.getRandom().nextLong()));
@@ -102,11 +108,14 @@ public final class IntoxicationState {
 
     private static void tickTripVisions(ServerPlayer player, IntoxicationBand band) {
         int remaining = player.getData(ModAttachments.ABYSS_TRIP_TICKS.get());
-        if (remaining <= 0) return;
         if (!band.atLeast(IntoxicationBand.TRIP) || !player.hasEffect(ModMobEffects.ABYSS_TRIP)) {
             player.setData(ModAttachments.ABYSS_TRIP_TICKS.get(), 0);
             player.removeEffect(ModMobEffects.ABYSS_TRIP);
             return;
+        }
+        if (remaining <= 0) {
+            remaining = Math.clamp((player.getEffect(ModMobEffects.ABYSS_TRIP).getDuration() + 19) / 20,
+                    1, ABYSS_TRIP_WINDOW);
         }
         player.setData(ModAttachments.ABYSS_TRIP_TICKS.get(), remaining - 1);
         if (player.getRandom().nextFloat() < TRIP_VISION_CHANCE) {

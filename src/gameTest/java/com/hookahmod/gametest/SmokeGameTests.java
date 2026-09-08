@@ -160,6 +160,9 @@ public class SmokeGameTests {
             HookahConfig.roomSmokeEnabled = true;
             exhale(helper.getLevel(), absolute);
             helper.assertTrue(rooms().size() == 1, "Re-enabling room smoke must resume discovery");
+            HookahConfig.roomSmokeEnabled = false;
+            HookahSmoke.serverTick(helper.getLevel().getServer());
+            helper.assertTrue(rooms().isEmpty() && failedProbes().isEmpty(), "Disabling room smoke must clear existing rooms");
             helper.succeed();
         } finally {
             HookahConfig.roomSmokeEnabled = previous;

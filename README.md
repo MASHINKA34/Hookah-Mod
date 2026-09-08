@@ -30,6 +30,14 @@ built-in guidebook.
 - **Smoke** — exhaled smoke lingers, drifts, and fills enclosed rooms.
 - **Sound** — a draw is audible to everyone nearby, not only to the smoker.
 
+Partial tobacco and liquid consumption is tracked separately for each item type within a hookah.
+Switching blends or bottles preserves that progress through inventory changes, crafting upgrades,
+placing, pickup and world reloads. Existing saves with the older counters are migrated automatically.
+Regeneration uses the vanilla healing cadence, and abyss trips retain their remaining time on reconnect.
+
+When Kingdoms is installed, unavailable or failing permission checks deny hookah movement and equipping.
+Transient call failures are retried on the next action. Without Kingdoms, normal hookah gameplay is available.
+
 ## Configuration
 
 Balance lives in `hookahmod-server.toml`, a per-world **server** config
@@ -68,8 +76,8 @@ The jar lands in `build/libs/`.
 | Task | What it does |
 |---|---|
 | `./gradlew build` | Compiles and packages the mod |
-| `./gradlew test` | 10 JUnit regression tests on an ephemeral server |
-| `./gradlew runGameTestServer` | 37 in-world GameTests |
+| `./gradlew test` | 18 JUnit tests covering persistence, consumption, recipes, configuration and integration failures |
+| `./gradlew runGameTestServer` | 42 in-world GameTests, including regeneration, reconnects and hand selection |
 | `./gradlew runClient` | Dev client |
 | `./gradlew runServer` | Dev dedicated server |
 | `./gradlew runClient2` | Second client (`run2/`) for multiplayer testing |

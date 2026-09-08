@@ -1,6 +1,7 @@
 package com.hookahmod.client;
 
 import com.hookahmod.HookahMod;
+import com.hookahmod.smoking.MouthpiecePosition;
 import com.hookahmod.block.HookahBlock;
 import com.hookahmod.item.HookahHoseType;
 import com.hookahmod.item.HookahTier;
@@ -21,19 +22,18 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.joml.Vector3f;
 
 import java.util.UUID;
 
 public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerModel<AbstractClientPlayer>> {
 
     private static final int SEGMENTS = 28;
-    private static final int SIDES = 8;
     private static final float HOSE_THICKNESS = 0.04F;
     private static final ResourceLocation HOSE_TEX = HookahMod.id("textures/entity/hookah_hose.png");
     private static final ResourceLocation COAL_TEX = HookahMod.id("textures/entity/hookah_charcoal_cube.png");
@@ -138,17 +138,17 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         Vec3 p0 = new Vec3(0.3125, 0.96875, 0.5);
         Vec3 p3 = idleHoseEnd();
 
+        pose.pushPose();
+        applyBackHookahTransform(pose);
         UUID activeUuid = WornHookah.getActivePlayerUuid(hookahStack);
         if (activeUuid != null && wearer.level().getPlayerByUUID(activeUuid) instanceof AbstractClientPlayer active) {
-            p3 = handPointInHookahSpace(wearer, active, partialTick);
+            p3 = handPointInHookahSpace(pose, active, partialTick);
         }
 
         Vec3 p1 = p0.add(-0.45, -0.15, 0.0);
         Vec3 p2 = p3.add(0.15, 0.25, 0.0);
 
-        pose.pushPose();
-        applyBackHookahTransform(pose);
-        drawBezier(pose, vc, p0, p1, p2, p3, packedLight);
+        HoseRenderer.draw(pose, vc, p0, p1, p2, p3, SEGMENTS, HOSE_THICKNESS, packedLight);
         pose.popPose();
     }
 
@@ -156,43 +156,12 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
         return new Vec3(-0.2375, 0.06, 0.5);
     }
 
-    private static Vec3 handPointInHookahSpace(AbstractClientPlayer wearer, AbstractClientPlayer active, float partialTick) {
-        Vec3 wearerPos = interpolatedPosition(wearer, partialTick);
-        Vec3 hand = getPlayerHandPoint(active, partialTick);
-        Vec3 delta = hand.subtract(wearerPos);
-
-        float yaw = (float) Math.toRadians(Mth.lerp(partialTick, wearer.yBodyRotO, wearer.yBodyRot));
-        double cos = Math.cos(yaw);
-        double sin = Math.sin(yaw);
-
-        double localX = delta.x * cos + delta.z * sin;
-        double localZ = -delta.x * sin + delta.z * cos;
-        double localY = 0.75 - delta.y;
-        return new Vec3(
-                (localX - BACK_X) / BACK_SCALE,
-                (BACK_Y - localY) / BACK_SCALE,
-                (BACK_Z - localZ) / BACK_SCALE
-        );
-    }
-
-    private static Vec3 interpolatedPosition(AbstractClientPlayer player, float partialTick) {
-        return new Vec3(
-                Mth.lerp(partialTick, player.xo, player.getX()),
-                Mth.lerp(partialTick, player.yo, player.getY()),
-                Mth.lerp(partialTick, player.zo, player.getZ())
-        );
-    }
-
-    private static Vec3 getPlayerHandPoint(AbstractClientPlayer player, float partialTick) {
-        double x = Mth.lerp(partialTick, player.xo, player.getX());
-        double y = Mth.lerp(partialTick, player.yo, player.getY()) + player.getEyeHeight() * 0.62;
-        double z = Mth.lerp(partialTick, player.zo, player.getZ());
-        float yawRad = (float) Math.toRadians(Mth.lerp(partialTick, player.yBodyRotO, player.yBodyRot));
-        double rightX = Math.cos(yawRad) * 0.35;
-        double rightZ = Math.sin(yawRad) * 0.35;
-        double fwdX = -Math.sin(yawRad) * 0.2;
-        double fwdZ = Math.cos(yawRad) * 0.2;
-        return new Vec3(x + rightX + fwdX, y, z + rightZ + fwdZ);
+    private static Vec3 handPointInHookahSpace(PoseStack pose, AbstractClientPlayer active, float partialTick) {
+        Vec3 hand = MouthpiecePosition.hand(active, partialTick)
+                .subtract(Minecraft.getInstance().gameRenderer.getMainCamera().getPosition());
+        Vector3f local = new Matrix4f(pose.last().pose()).invert()
+                .transformPosition(new Vector3f((float) hand.x, (float) hand.y, (float) hand.z));
+        return new Vec3(local.x, local.y, local.z);
     }
 
     /**
@@ -271,65 +240,4 @@ public class HookahBackLayer extends RenderLayer<AbstractClientPlayer, PlayerMod
                 .setNormal(nx, ny, nz);
     }
 
-    private static void drawBezier(PoseStack pose, VertexConsumer vc, Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, int light) {
-        Vec3 prev = p0;
-        for (int i = 1; i <= SEGMENTS; i++) {
-            float t = (float) i / SEGMENTS;
-            Vec3 cur = bezier(p0, p1, p2, p3, t);
-            float vOff = ((i - 1) * 0.25F) % 1.0F;
-            drawSegment(pose, vc, prev, cur, vOff, light);
-            prev = cur;
-        }
-    }
-
-    private static Vec3 bezier(Vec3 a, Vec3 b, Vec3 c, Vec3 d, float t) {
-        float omt = 1.0F - t;
-        double x = omt * omt * omt * a.x + 3 * omt * omt * t * b.x + 3 * omt * t * t * c.x + t * t * t * d.x;
-        double y = omt * omt * omt * a.y + 3 * omt * omt * t * b.y + 3 * omt * t * t * c.y + t * t * t * d.y;
-        double z = omt * omt * omt * a.z + 3 * omt * omt * t * b.z + 3 * omt * t * t * c.z + t * t * t * d.z;
-        return new Vec3(x, y, z);
-    }
-
-    private static void drawSegment(PoseStack pose, VertexConsumer vc, Vec3 a, Vec3 b, float vOff, int light) {
-        Matrix4f mat = pose.last().pose();
-        Vec3 dir = b.subtract(a);
-        if (dir.lengthSqr() < 1.0E-6) return;
-        Vec3 worldUp = Math.abs(dir.y) < 0.99 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
-        Vec3 nd = dir.normalize();
-        Vec3 right = nd.cross(worldUp).normalize().scale(HOSE_THICKNESS);
-        Vec3 up = right.cross(nd).normalize().scale(HOSE_THICKNESS);
-
-        Vec3[] aRing = new Vec3[SIDES];
-        Vec3[] bRing = new Vec3[SIDES];
-        for (int i = 0; i < SIDES; i++) {
-            double angle = 2 * Math.PI * i / SIDES;
-            Vec3 offset = right.scale(Math.cos(angle)).add(up.scale(Math.sin(angle)));
-            aRing[i] = a.add(offset);
-            bRing[i] = b.add(offset);
-        }
-
-        for (int i = 0; i < SIDES; i++) {
-            int next = (i + 1) % SIDES;
-            float u0 = (float) i / SIDES;
-            float u1 = (float) (i + 1) / SIDES;
-            quadUV(mat, vc, aRing[i], aRing[next], bRing[next], bRing[i], u0, u1, vOff, vOff + 0.25F, light);
-        }
-    }
-
-    private static void quadUV(Matrix4f mat, VertexConsumer vc, Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4,
-                               float u0, float u1, float v0, float v1f, int light) {
-        vertHose(mat, vc, v1, u0, v0, light);
-        vertHose(mat, vc, v2, u1, v0, light);
-        vertHose(mat, vc, v3, u1, v1f, light);
-        vertHose(mat, vc, v4, u0, v1f, light);
-    }
-
-    private static void vertHose(Matrix4f mat, VertexConsumer vc, Vec3 v, float u, float vTex, int light) {
-        vc.addVertex(mat, (float) v.x, (float) v.y, (float) v.z)
-                .setColor(255, 255, 255, 255)
-                .setUv(u, vTex)
-                .setOverlay(OverlayTexture.NO_OVERLAY)
-                .setLight(light)
-                .setNormal(0, 1, 0);
-    }
 }

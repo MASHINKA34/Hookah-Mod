@@ -56,7 +56,7 @@ public final class VideoTripManager {
         boolean alive = mc.player != null && mc.player.isAlive() && mc.level != null
                 && mc.player.getEffect(ModMobEffects.PALPALYCH_TRIP) != null
                 && currentFrame() < FRAME_COUNT;
-        if (!alive) {
+        if (!alive || !HookahClientConfig.videoTripEnabled()) {
             stop();
             return;
         }

@@ -36,6 +36,7 @@ public final class HookahSmoke {
 
     private static final int OPEN_LINGER_TICKS = 45;
     private static final int MAX_ROOM_DISTANCE = 64;
+    private static final Direction[] DIRECTIONS = Direction.values();
     private static final int ROOM_MIN_PUFFS = 5;
     private static final int ROOM_RECHECK_TICKS = 120;
     private static final int PROBE_PRUNE_INTERVAL = 100;
@@ -96,6 +97,11 @@ public final class HookahSmoke {
 
     public static void serverTick(MinecraftServer server) {
         tickLingeringSmoke(server);
+        if (!HookahConfig.roomSmokeEnabled) {
+            ROOM_SMOKE.clear();
+            FAILED_PROBES.clear();
+            return;
+        }
         tickRoomSmoke(server);
         if (server.getTickCount() % PROBE_PRUNE_INTERVAL == 0) pruneFailedProbes(server.getTickCount());
     }
@@ -142,6 +148,7 @@ public final class HookahSmoke {
             applyPuffToRoom(level, active, strength, color);
             return;
         }
+        if (ROOM_SMOKE.size() >= HookahConfig.maxRoomClouds) return;
 
         // Slow path: discover the enclosing room with a one-off flood fill.
         int tickCount = level.getServer().getTickCount();
@@ -157,7 +164,6 @@ public final class HookahSmoke {
             return;
         }
         FAILED_PROBES.remove(probeKey);
-        if (!ROOM_SMOKE.containsKey(probe.key) && ROOM_SMOKE.size() >= HookahConfig.maxRoomClouds) return;
 
         RoomSmoke smoke = ROOM_SMOKE.computeIfAbsent(probe.key, key -> new RoomSmoke(key, probe.airBlocks, probe.airLookup));
         smoke.airBlocks = probe.airBlocks;
@@ -281,10 +287,10 @@ public final class HookahSmoke {
 
             if (airBlocks.size() > HookahConfig.maxRoomAirBlocks) return null;
 
-            for (Direction direction : Direction.values()) {
+            for (Direction direction : DIRECTIONS) {
                 BlockPos next = current.relative(direction);
                 if (isOutsideProbeBounds(level, origin, next)) return null;
-                if (!canSmokeOccupy(level, next) || !visited.add(next)) continue;
+                if (visited.contains(next) || !canSmokeOccupy(level, next) || !visited.add(next)) continue;
                 queue.add(next);
             }
         }

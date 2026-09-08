@@ -1,6 +1,7 @@
 package com.hookahmod.client;
 
 import com.hookahmod.HookahMod;
+import com.hookahmod.smoking.MouthpiecePosition;
 import com.hookahmod.block.HookahBlock;
 import com.hookahmod.block.HookahBlockEntity;
 import com.hookahmod.item.HookahHoseType;
@@ -30,7 +31,6 @@ import java.util.UUID;
 public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBlockEntity> {
 
     private static final int SEGMENTS = 40;
-    private static final int SIDES = 8;
     private static final float HOSE_THICKNESS = 0.065F;
     private static final float MAX_SAG = 1.1F;
     private static final ResourceLocation HOSE_TEX = HookahMod.id("textures/entity/hookah_hose.png");
@@ -86,7 +86,7 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
     private void renderActiveHose(PoseStack pose, VertexConsumer vc, Vec3 connectorLocal, BlockPos pos,
                                   AbstractClientPlayer player, float partialTick, HookahHoseType type, int packedLight) {
         Vec3 worldConnector = Vec3.atLowerCornerOf(pos).add(connectorLocal);
-        Vec3 hand = getPlayerHandPoint(player, partialTick);
+        Vec3 hand = MouthpiecePosition.hand(player, partialTick);
         double distance = worldConnector.distanceTo(hand);
         int maxLength = Math.max(1, type.getMaxLength());
         float tension = (float) Mth.clamp(distance / maxLength, 0.0, 1.0);
@@ -98,7 +98,7 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
         Vec3 p2 = p3.add(0, -sag * 0.5, 0);
 
         pose.pushPose();
-        drawBezier(pose, vc, p0, p1, p2, p3, packedLight);
+        HoseRenderer.draw(pose, vc, p0, p1, p2, p3, SEGMENTS, HOSE_THICKNESS, packedLight);
         pose.popPose();
     }
 
@@ -111,7 +111,7 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
         Vec3 p1 = p0.add(outDir.scale(0.45)).add(0, -0.15, 0);
         Vec3 p2 = p3.add(0, 0.25, 0).add(outDir.scale(-0.15));
         pose.pushPose();
-        drawBezier(pose, vc, p0, p1, p2, p3, packedLight);
+        HoseRenderer.draw(pose, vc, p0, p1, p2, p3, SEGMENTS, HOSE_THICKNESS, packedLight);
         drawCap(pose, vc, p3, packedLight);
         pose.popPose();
     }
@@ -189,17 +189,6 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
         pose.popPose();
     }
 
-    private static void drawBezier(PoseStack pose, VertexConsumer vc, Vec3 p0, Vec3 p1, Vec3 p2, Vec3 p3, int light) {
-        Vec3 prev = p0;
-        for (int i = 1; i <= SEGMENTS; i++) {
-            float t = (float) i / SEGMENTS;
-            Vec3 cur = bezier(p0, p1, p2, p3, t);
-            float vOff = ((i - 1) * 0.25F) % 1.0F;
-            drawSegment(pose, vc, prev, cur, vOff, light);
-            prev = cur;
-        }
-    }
-
     private static Vec3 rotateLocal(Vec3 v, Direction facing) {
         double cx = v.x - 0.5, cz = v.z - 0.5;
         return switch (facing) {
@@ -208,42 +197,6 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
             case WEST -> new Vec3(0.5 + cz, v.y, 0.5 - cx);
             default -> v;
         };
-    }
-
-    private static Vec3 bezier(Vec3 a, Vec3 b, Vec3 c, Vec3 d, float t) {
-        float omt = 1.0F - t;
-        double x = omt * omt * omt * a.x + 3 * omt * omt * t * b.x + 3 * omt * t * t * c.x + t * t * t * d.x;
-        double y = omt * omt * omt * a.y + 3 * omt * omt * t * b.y + 3 * omt * t * t * c.y + t * t * t * d.y;
-        double z = omt * omt * omt * a.z + 3 * omt * omt * t * b.z + 3 * omt * t * t * c.z + t * t * t * d.z;
-        return new Vec3(x, y, z);
-    }
-
-    private static void drawSegment(PoseStack pose, VertexConsumer vc, Vec3 a, Vec3 b, float vOff, int light) {
-        Matrix4f mat = pose.last().pose();
-        float th = HOSE_THICKNESS;
-        Vec3 dir = b.subtract(a);
-        Vec3 worldUp = Math.abs(dir.y) < 0.99 ? new Vec3(0, 1, 0) : new Vec3(1, 0, 0);
-        Vec3 nd = dir.normalize();
-        Vec3 right = nd.cross(worldUp).normalize().scale(th);
-        Vec3 up = right.cross(nd).normalize().scale(th);
-
-        Vec3[] aRing = new Vec3[SIDES];
-        Vec3[] bRing = new Vec3[SIDES];
-        for (int i = 0; i < SIDES; i++) {
-            double angle = 2 * Math.PI * i / SIDES;
-            double ca = Math.cos(angle), sa = Math.sin(angle);
-            Vec3 offset = right.scale(ca).add(up.scale(sa));
-            aRing[i] = a.add(offset);
-            bRing[i] = b.add(offset);
-        }
-
-        float segV = 0.25F; // texture repeats every 4 segments along length
-        for (int i = 0; i < SIDES; i++) {
-            int next = (i + 1) % SIDES;
-            float u0 = (float) i / SIDES;
-            float u1 = (float) (i + 1) / SIDES;
-            quadUV(mat, vc, aRing[i], aRing[next], bRing[next], bRing[i], u0, u1, vOff, vOff + segV, light);
-        }
     }
 
     private static void drawCap(PoseStack pose, VertexConsumer vc, Vec3 c, int light) {
@@ -261,14 +214,6 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
         vertHose(mat, vc, v2, 0, 1, light);
         vertHose(mat, vc, v3, 1, 1, light);
         vertHose(mat, vc, v4, 1, 0, light);
-    }
-
-    private static void quadUV(Matrix4f mat, VertexConsumer vc, Vec3 v1, Vec3 v2, Vec3 v3, Vec3 v4,
-                                float u0, float u1, float v0, float v1f, int light) {
-        vertHose(mat, vc, v1, u0, v0, light);
-        vertHose(mat, vc, v2, u1, v0, light);
-        vertHose(mat, vc, v3, u1, v1f, light);
-        vertHose(mat, vc, v4, u0, v1f, light);
     }
 
     private static void vertHose(Matrix4f mat, VertexConsumer vc, Vec3 v, float u, float vTex, int light) {
@@ -332,19 +277,7 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
                 .setNormal(nx, ny, nz);
     }
 
-    private static Vec3 getPlayerHandPoint(AbstractClientPlayer player, float partialTick) {
-        double x = Mth.lerp(partialTick, player.xo, player.getX());
-        double y = Mth.lerp(partialTick, player.yo, player.getY()) + player.getEyeHeight() * 0.62;
-        double z = Mth.lerp(partialTick, player.zo, player.getZ());
-        // right hand offset: perpendicular to body yaw, shifted to right side
-        float yawRad = (float) Math.toRadians(Mth.lerp(partialTick, player.yBodyRotO, player.yBodyRot));
-        double rightX = Math.cos(yawRad) * 0.35;
-        double rightZ = Math.sin(yawRad) * 0.35;
-        // forward offset so hose connects near mouthpiece tip
-        double fwdX = -Math.sin(yawRad) * 0.2;
-        double fwdZ =  Math.cos(yawRad) * 0.2;
-        return new Vec3(x + rightX + fwdX, y, z + rightZ + fwdZ);
-    }
+
 
     // Coal cube, tobacco disc and the (possibly long, draped) hose render
     // outside the 1x1x1 block cell. Without a widened box the BER gets
@@ -352,12 +285,12 @@ public class HookahBlockEntityRenderer implements BlockEntityRenderer<HookahBloc
     // coal vanishes when you tilt the camera up at close range.
     @Override
     public AABB getRenderBoundingBox(HookahBlockEntity be) {
-        return new AABB(be.getBlockPos()).inflate(10.0);
+        return new AABB(be.getBlockPos()).inflate(Math.max(2.0, be.getHoseType().getMaxLength() + 1.0));
     }
 
     @Override
     public boolean shouldRenderOffScreen(HookahBlockEntity be) { return false; }
 
     @Override
-    public int getViewDistance() { return 32; }
+    public int getViewDistance() { return Math.max(32, (int) Math.sqrt(HookahHoseType.maxRangeSqr()) + 16); }
 }

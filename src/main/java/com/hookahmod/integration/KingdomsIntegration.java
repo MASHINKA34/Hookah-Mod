@@ -1,15 +1,8 @@
 package com.hookahmod.integration;
 
-import com.hookahmod.HookahMod;
-
-import java.lang.reflect.Method;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.fml.ModList;
-import org.jetbrains.annotations.Nullable;
 
 public final class KingdomsIntegration {
 
@@ -21,16 +14,15 @@ public final class KingdomsIntegration {
     private static final Class<?>[] PLAYER_CHARGE = { ServerPlayer.class, float.class };
     private static final Class<?>[] PLAYER_POS = { ServerPlayer.class, BlockPos.class };
 
-    private static final Map<String, Optional<Method>> METHODS = new ConcurrentHashMap<>();
-
-    private static volatile Class<?> integrationClass;
-    private static volatile boolean classResolved;
+    private static final KingdomsBridge BRIDGE = new KingdomsBridge(
+            () -> ModList.get().isLoaded(KINGDOMS_MOD_ID), HOOKAH_INTEGRATION_CLASS);
 
     private KingdomsIntegration() {}
 
     public static float hookahCombatMultiplier(ServerPlayer player) {
         Object value = invoke("combatMultiplier", PLAYER, player);
-        return value instanceof Number number ? Math.max(1.0F, number.floatValue()) : 1.0F;
+        return value instanceof Number number && Float.isFinite(number.floatValue())
+                ? Math.max(1.0F, number.floatValue()) : 1.0F;
     }
 
     public static float hookahCombatMultiplier(ServerPlayer player, ServerPlayer wearer) {
@@ -54,11 +46,11 @@ public final class KingdomsIntegration {
     }
 
     public static boolean canEquipHookah(ServerPlayer player) {
-        return invokeBoolean("canEquipHookah", true, PLAYER, player);
+        return BRIDGE.permission("canEquipHookah", PLAYER, player);
     }
 
     public static boolean canMoveHookahBlock(ServerPlayer player, BlockPos pos) {
-        return invokeBoolean("canMoveHookahBlock", true, PLAYER_POS, player, pos);
+        return BRIDGE.permission("canMoveHookahBlock", PLAYER_POS, player, pos);
     }
 
     private static boolean invokeBoolean(String name, boolean fallback, Class<?>[] parameters, Object... args) {
@@ -66,60 +58,7 @@ public final class KingdomsIntegration {
         return value instanceof Boolean bool ? bool : fallback;
     }
 
-    @Nullable
     private static Object invoke(String name, Class<?>[] parameters, Object... args) {
-        for (Object arg : args) {
-            if (arg == null) return null;
-        }
-        Method method = resolveMethod(name, parameters);
-        if (method == null) return null;
-        try {
-            return method.invoke(null, args);
-        } catch (ReflectiveOperationException | RuntimeException exception) {
-            HookahMod.LOGGER.warn("Kingdoms integration call '{}' failed and is now disabled for this session", name, exception);
-            METHODS.put(name, Optional.empty());
-            return null;
-        }
-    }
-
-    @Nullable
-    private static Method resolveMethod(String name, Class<?>[] parameters) {
-        return METHODS.computeIfAbsent(name, key -> {
-            Class<?> integration = resolveIntegrationClass();
-            if (integration == null) return Optional.empty();
-            try {
-                return Optional.of(integration.getMethod(key, parameters));
-            } catch (ReflectiveOperationException | RuntimeException exception) {
-                HookahMod.LOGGER.debug("Kingdoms integration has no method '{}', using the built-in behaviour", key);
-                return Optional.empty();
-            }
-        }).orElse(null);
-    }
-
-    @Nullable
-    private static Class<?> resolveIntegrationClass() {
-        if (classResolved) {
-            return integrationClass;
-        }
-        synchronized (KingdomsIntegration.class) {
-            if (classResolved) {
-                return integrationClass;
-            }
-            if (ModList.get().isLoaded(KINGDOMS_MOD_ID)) {
-                try {
-                    integrationClass = Class.forName(
-                            HOOKAH_INTEGRATION_CLASS,
-                            false,
-                            KingdomsIntegration.class.getClassLoader()
-                    );
-                } catch (ReflectiveOperationException | RuntimeException exception) {
-                    HookahMod.LOGGER.warn("Kingdoms is loaded but {} is missing; falling back to the built-in behaviour",
-                            HOOKAH_INTEGRATION_CLASS, exception);
-                    integrationClass = null;
-                }
-            }
-            classResolved = true;
-            return integrationClass;
-        }
+        return BRIDGE.invoke(name, parameters, args);
     }
 }

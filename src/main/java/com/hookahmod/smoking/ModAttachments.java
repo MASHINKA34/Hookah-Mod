@@ -24,7 +24,7 @@ public final class ModAttachments {
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Integer>> ABYSS_TRIP_TICKS = ATTACHMENTS.register(
             "abyss_trip_ticks",
-            () -> AttachmentType.builder(() -> 0).build()
+            () -> AttachmentType.builder(() -> 0).serialize(Codec.intRange(0, 36), value -> value > 0).build()
     );
 
     public static final DeferredHolder<AttachmentType<?>, AttachmentType<Long>> LAST_EXHALE_TICK = ATTACHMENTS.register(

@@ -81,13 +81,20 @@ public final class TripManager {
 
     public static void tick(ClientTickEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
-        tickCount++;
-        if (mc.player == null || mc.level == null) {
+        if (mc.player == null || mc.level == null || !mc.player.isAlive() || !HookahClientConfig.tripVisuals) {
             VISIONS.clear();
             skyShiftTicks = 0;
             runnerScreamerTicks = 0;
             return;
         }
+        if (!HookahClientConfig.visionsEnabled()) {
+            VISIONS.clear();
+            skyShiftTicks = 0;
+            runnerScreamerTicks = 0;
+        }
+        if (!HookahClientConfig.screamerEnabled()) runnerScreamerTicks = 0;
+        if (mc.isPaused()) return;
+        tickCount++;
         float intoxication = ClientIntoxication.get();
         if (IntoxicationState.band(intoxication).atLeast(IntoxicationBand.TRIP)) {
             spawnAmbientParticles(mc, intoxication);
@@ -175,6 +182,7 @@ public final class TripManager {
     }
 
     public static void fogColor(ViewportEvent.ComputeFogColor event) {
+        if (!HookahClientConfig.tripVisuals) return;
         float strength = Math.max(visualStrength(), skyShiftTicks > 0 ? 0.55f : 0.0f);
         if (strength <= 0.0f) return;
         float pulse = 0.5f + 0.5f * Mth.sin((tickCount + (float) event.getPartialTick()) * 0.04f);
@@ -198,6 +206,7 @@ public final class TripManager {
     private static void spawnAmbientParticles(Minecraft mc, float intoxication) {
         if (mc.level == null || mc.player == null || tickCount % 4 != 0) return;
         float strength = visualStrength(intoxication);
+        if (strength <= 0.0f) return;
         Vec3 look = mc.player.getLookAngle();
         Vec3 right = horizontal(new Vec3(-look.z, 0.0, look.x));
         double side = (mc.level.random.nextDouble() - 0.5) * 1.8;

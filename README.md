@@ -1,4 +1,4 @@
-# Hookah Mod
+# Hookahs
 
 Functional hookahs for Minecraft 1.21.1 / NeoForge: a placeable hookah block with hoses, a mouthpiece,
 shared smoking sessions, tobacco blends with combat and buff effects, an intoxication system and a

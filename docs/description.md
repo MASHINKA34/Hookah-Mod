@@ -1,4 +1,4 @@
-# Hookah Mod
+# Hookahs
 
 Craftable hookahs for Minecraft. Set one up, fill it with tobacco, charcoal and water, and smoke it with your friends.
 Sixteen tobacco blends give you buffs, turn your exhale into a combat cone or send you on a trip,
@@ -71,7 +71,7 @@ Each of them can be turned off in `hookahmod-client.toml`. `trips.enabled = fals
 
 ---
 
-# Hookah Mod (RU)
+# Hookahs (RU)
 
 Кальяны, которые можно скрафтить. Поставь кальян, заправь его табаком, углём и водой и кури вместе с друзьями.
 Шестнадцать табаков дают бафы, превращают выдох в боевой конус или отправляют в трип,

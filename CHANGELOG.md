@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to Hookah Mod. Versions target Minecraft 1.21.1 / NeoForge.
+All notable changes to Hookahs. Versions target Minecraft 1.21.1 / NeoForge.
 
 ## [1.0.5] - 2026-09-09
 

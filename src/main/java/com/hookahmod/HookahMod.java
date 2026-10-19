@@ -22,6 +22,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,7 +60,8 @@ public final class HookahMod {
 
         NeoForge.EVENT_BUS.register(ServerEvents.class);
 
-        LOGGER.info("Hookah Mod loaded");
+        LOGGER.info("Hookahs {} loaded on {}: registries, network handlers and configs registered",
+                container.getModInfo().getVersion(), FMLEnvironment.dist);
     }
 
     public static ResourceLocation id(String path) {

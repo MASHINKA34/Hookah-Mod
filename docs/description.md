@@ -1,10 +1,10 @@
-# Hookahs
+![Hookahs](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/header.png)
 
 Craftable hookahs for Minecraft. Set one up, fill it with tobacco, charcoal and water, and smoke it with your friends.
 Sixteen tobacco blends give you buffs, turn your exhale into a combat cone or send you on a trip,
 and an intoxication meter keeps track of how much you have smoked.
 
-## Getting started
+![Getting started](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_en_getting_started.png)
 
 1. Craft a bowl, a shaft and a flask, combine them into a hookah and place it.
 2. Open the hookah and attach a hose: short (5 blocks) or long (10 blocks).
@@ -17,7 +17,7 @@ One hose serves one player at a time.
 The **Hookah Guide** (a book plus tobacco) explains everything in game.
 With JEI installed, every recipe is shown there.
 
-## Features
+![Features](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_en_features.png)
 
 - **Six hookah tiers** - normal, leather, gold, iron, diamond and netherite. Upgrading a hookah keeps everything inside it.
 - **Wear your hookah** - shift-right-click a placed hookah with an empty hand to put it in your chest slot.
@@ -45,7 +45,7 @@ With JEI installed, every recipe is shown there.
 - **Crops** - tobacco, mint and lavender. Their seeds drop from grass.
 - **Extras** - White Monster and Sweet Water drinks from the brewing stand, and chickens that sometimes leave Chicken Poop.
 
-## Compatibility
+![Compatibility](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_en_compatibility.png)
 
 - **Required:** Minecraft 1.21.1, NeoForge 21.1, GeckoLib 4.7 or newer. Install the mod on both the client and the server.
 - **Optional:**
@@ -53,18 +53,18 @@ With JEI installed, every recipe is shown there.
   - Create - filling, emptying and mixing recipes for Sweet Water and White Monster.
   - Croptopia - citrus and coffee blends use its fruit and coffee beans.
 
-## Configuration
+![Configuration](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_en_configuration.png)
 
 - `hookahmod-server.toml` - per world, synced to players: hose reach, puff timing, consumption,
   intoxication bands, combat smoke and room smoke.
 - `hookahmod-client.toml` - per player: trip visuals.
 
-## Photosensitivity warning
+![Photosensitivity warning](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_en_photosensitivity.png)
 
 Trips include flashing images, a jump scare, a full-screen video, a spiral shader and camera sway.
 Each of them can be turned off in `hookahmod-client.toml`. `trips.enabled = false` turns off all of them at once.
 
-## Notes
+![Notes](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_en_notes.png)
 
 - Some of the textures were made with the help of AI image tools.
 - Bugs and suggestions: [GitHub Issues](https://github.com/MASHINKA34/Hookah-Mod/issues)
@@ -77,7 +77,7 @@ Each of them can be turned off in `hookahmod-client.toml`. `trips.enabled = fals
 Шестнадцать табаков дают бафы, превращают выдох в боевой конус или отправляют в трип,
 а шкала накуренности следит за тем, сколько ты выкурил.
 
-## С чего начать
+![С чего начать](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_ru_getting_started.png)
 
 1. Скрафти чашу, шахту и колбу, собери из них кальян и поставь его.
 2. Открой кальян и поставь шланг: короткий (5 блоков) или длинный (10 блоков).
@@ -90,7 +90,7 @@ Each of them can be turned off in `hookahmod-client.toml`. `trips.enabled = fals
 **Руководство по кальяну** (книга и табак) рассказывает обо всём прямо в игре.
 Если установлен JEI, все рецепты видны в нём.
 
-## Возможности
+![Возможности](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_ru_features.png)
 
 - **Шесть уровней кальяна** - обычный, кожаный, золотой, железный, алмазный и незеритовый. При улучшении всё содержимое сохраняется.
 - **Кальян на спине** - Shift+ПКМ пустой рукой по поставленному кальяну надевает его в слот нагрудника.
@@ -118,7 +118,7 @@ Each of them can be turned off in `hookahmod-client.toml`. `trips.enabled = fals
 - **Растения** - табак, мята и лаванда. Семена выпадают из травы.
 - **Разное** - напитки Белый Монстр и Сладкая вода из варочной стойки и куры, которые иногда оставляют Куриный помёт.
 
-## Совместимость
+![Совместимость](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_ru_compatibility.png)
 
 - **Обязательно:** Minecraft 1.21.1, NeoForge 21.1, GeckoLib 4.7 или новее. Мод ставится и на клиент, и на сервер.
 - **Необязательно:**
@@ -126,18 +126,18 @@ Each of them can be turned off in `hookahmod-client.toml`. `trips.enabled = fals
   - Create - рецепты наполнения, опустошения и смешивания для Сладкой воды и Белого Монстра.
   - Croptopia - цитрусовый и кофейный табаки делаются из её фруктов и кофейных зёрен.
 
-## Настройки
+![Настройки](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_ru_configuration.png)
 
 - `hookahmod-server.toml` - для каждого мира, синхронизируется с игроками: длина шлангов, темп затяжек, расход,
   пороги накуренности, боевой дым и дым в комнатах.
 - `hookahmod-client.toml` - у каждого игрока свой: визуальные эффекты трипов.
 
-## Предупреждение о вспышках
+![Предупреждение о вспышках](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_ru_photosensitivity.png)
 
 В трипах есть мигающие картинки, скример, полноэкранное видео, спиральный шейдер и качание камеры.
 Каждый эффект выключается в `hookahmod-client.toml`, а `trips.enabled = false` выключает все сразу.
 
-## Примечания
+![Примечания](https://raw.githubusercontent.com/MASHINKA34/Hookah-Mod/main/docs/images/section_ru_notes.png)
 
 - Часть текстур сделана с помощью ИИ-инструментов для изображений.
 - Баги и предложения: [GitHub Issues](https://github.com/MASHINKA34/Hookah-Mod/issues)
